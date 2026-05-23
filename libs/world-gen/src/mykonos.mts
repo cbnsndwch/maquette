@@ -38,11 +38,11 @@ export const TILE_CLASS: Record<MykonosTile, number> = {
  */
 export const BASE_WEIGHTS: Record<MykonosTile, number> = {
     water: 0.4,
-    sand: 1.2,
-    grass: 3,
-    path: 1.2,
-    plaza: 1.2,
-    rock: 1.8,
+    sand: 1.0,
+    grass: 1.6,
+    path: 1.6,
+    plaza: 3.2,
+    rock: 1.0,
     stairs: 0.4,
     wall: 1.6,
     rooftop: 1,
