@@ -1,11 +1,11 @@
 {
-    "name": "@cbnsndwch/music-worlds",
-    "description": "MusicWorlds — song-to-tiny-world generator. Turns a track into a deterministic or LLM-composed 3D world rendered with Three.js.",
+    "name": "@cbnsndwch/maquette",
+    "description": "Maquette: song-to-tiny-world generator. Turns a track into a deterministic or LLM-composed 3D world rendered with Three.js.",
     "version": "0.0.0",
     "type": "module",
     "license": "MIT",
     "private": true,
-    "repository": "https://github.com/cbnsndwch/music-worlds",
+    "repository": "https://github.com/cbnsndwch/maquette",
     "author": {
         "name": "cbnsndwch LLC",
         "url": "https://github.com/cbnsndwch"
