@@ -10,6 +10,7 @@ import {
     type PostFx,
     type Prop,
     type Rng,
+    type Structure,
     type Tile,
     type TimeOfDay,
     type Weather,
@@ -65,6 +66,15 @@ export interface Biome {
     resolveKnobs(features: AudioFeatures, rng: Rng): BiomeKnobs;
     /** Scatter props over the resolved tile-id grid. */
     placeProps(tileIds: string[][], density: number, rng: Rng): Prop[];
+    /**
+     * Optionally place multi-cell composite buildings. Footprint cells are
+     * leveled and reserved (props won't spawn on them) by {@link generateWorld}.
+     */
+    placeStructures?(
+        tileIds: string[][],
+        features: AudioFeatures,
+        rng: Rng
+    ): Structure[];
 }
 
 /** The classic gradient adjacency rule: classes within `maxDelta` may touch. */
@@ -150,7 +160,29 @@ export function generateWorld(
         })
     );
 
-    const props = biome.placeProps(tileIds, knobs.propDensity, decorRng);
+    const structures =
+        biome.placeStructures?.(tileIds, features, decorRng) ?? [];
+
+    // Level the ground under each structure and reserve its footprint cells so
+    // props don't spawn through the walls.
+    const occupied = new Set<string>();
+    for (const s of structures) {
+        const baseH = heightmap[s.y]?.[s.x] ?? 0;
+        for (let dy = 0; dy < s.footprint; dy++) {
+            for (let dx = 0; dx < s.footprint; dx++) {
+                const cx = s.x + dx;
+                const cy = s.y + dy;
+                occupied.add(`${cx},${cy}`);
+                if (heightmap[cy]?.[cx] !== undefined) {
+                    heightmap[cy]![cx] = baseH;
+                }
+            }
+        }
+    }
+
+    const props = biome
+        .placeProps(tileIds, knobs.propDensity, decorRng)
+        .filter(p => !occupied.has(`${Math.round(p.x)},${Math.round(p.y)}`));
 
     return {
         version: WORLD_SPEC_VERSION,
@@ -161,6 +193,7 @@ export function generateWorld(
         terrain: { heightmap },
         tiles: worldTiles,
         props,
+        structures,
         weather: options.weather ?? knobs.weather,
         timeOfDay: options.timeOfDay ?? knobs.timeOfDay,
         postFx: { ...DEFAULT_POST_FX, ...options.postFx }
