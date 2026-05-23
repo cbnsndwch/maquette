@@ -6,7 +6,7 @@ import {
     TextRenderable,
     type KeyEvent
 } from '@opentui/core';
-import { ThreeCliRenderer } from '@opentui/three';
+import { ThreeCliRenderer, SuperSampleType } from '@opentui/three';
 import { buildScene, suggestCameraPosition } from '@cbnsndwch/world-core';
 import type { WorldSpec } from '@cbnsndwch/contracts';
 
@@ -42,6 +42,7 @@ export async function render3d(spec: WorldSpec, header: string): Promise<void> {
         height: HEIGHT,
         focalLength: 8,
         backgroundColor: RGBA.fromValues(0, 0, 0, 1),
+        superSample: SuperSampleType.NONE,
     });
     await engine.init();
 
