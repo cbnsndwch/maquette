@@ -7,9 +7,14 @@ import {
     buildScene,
     createPostFx,
     disposeScene,
+    getBiomeRenderer,
     hasPostFx,
+    registerBiomeRenderer,
     suggestCameraPosition,
-    type PostFxChain
+    VoxAssetCache,
+    withVoxAssets,
+    type PostFxChain,
+    type VoxManifest
 } from '@cbnsndwch/world-core';
 import {
     generateLlmWorld,
@@ -36,6 +41,41 @@ const paradigm = params.get('paradigm') === 'llm' ? 'llm' : 'wfc';
 
 // ?biome= explicitly overrides automatic biome selection.
 const biomeOverride = params.get('biome') ?? undefined;
+
+// ?voxassets=1 (or a biome id) loads the pre-baked .vox hero props from
+// apps/voxel-pipeline-ab and overlays them onto matching prop ids, proving the
+// local CUDA voxel pipeline's output renders in the real scene. Off by default.
+const voxAssetsFlag = params.get('voxassets');
+
+/**
+ * Preload the baked .vox manifest and wrap the target biome's renderer so any
+ * prop id with a baked asset resolves from it (others keep their hand-coded
+ * recipe). Must run before the first synchronous {@link buildScene}.
+ */
+async function maybeRegisterVoxAssets(): Promise<void> {
+    if (!voxAssetsFlag) {
+        return;
+    }
+    const biomeId =
+        voxAssetsFlag === '1' || voxAssetsFlag === 'all'
+            ? (biomeOverride ?? 'mykonos')
+            : voxAssetsFlag;
+    try {
+        const res = await fetch('/assets/voxels/manifest.json');
+        if (!res.ok) {
+            return;
+        }
+        const manifest = (await res.json()) as { assets: VoxManifest };
+        const cache = new VoxAssetCache();
+        await cache.preload(manifest.assets);
+        registerBiomeRenderer(
+            biomeId,
+            withVoxAssets(getBiomeRenderer(biomeId), cache)
+        );
+    } catch {
+        // Non-fatal: fall back to the biome's built-in props.
+    }
+}
 
 // Talks to the live Musicologia API + MusicBrainz through the Vite dev proxy
 // (vite.config.ts), which injects the admin key and the MB User-Agent so
@@ -260,6 +300,7 @@ async function main() {
     }
     animate();
 
+    await maybeRegisterVoxAssets();
     setupBiomePicker(showWorld);
     showWorld(await generate());
 }

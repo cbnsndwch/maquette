@@ -1,0 +1,95 @@
+{
+  "biome": "mykonos",
+  "assets": {
+    "tree": "/assets/voxels/tree.vox",
+    "cypress": "/assets/voxels/cypress.vox",
+    "arch": "/assets/voxels/arch.vox",
+    "flat-building": "/assets/voxels/flat-building.vox",
+    "domed-building": "/assets/voxels/domed-building.vox",
+    "wall-segment": "/assets/voxels/wall-segment.vox",
+    "ground-cover": "/assets/voxels/ground-cover.vox",
+    "well": "/assets/voxels/well.vox"
+  },
+  "details": [
+    {
+      "id": "tree",
+      "size": [
+        12,
+        12,
+        16
+      ],
+      "voxels": 452,
+      "colors": 2
+    },
+    {
+      "id": "cypress",
+      "size": [
+        12,
+        12,
+        18
+      ],
+      "voxels": 264,
+      "colors": 2
+    },
+    {
+      "id": "arch",
+      "size": [
+        12,
+        12,
+        11
+      ],
+      "voxels": 64,
+      "colors": 1
+    },
+    {
+      "id": "flat-building",
+      "size": [
+        12,
+        12,
+        8
+      ],
+      "voxels": 260,
+      "colors": 3
+    },
+    {
+      "id": "domed-building",
+      "size": [
+        12,
+        12,
+        11
+      ],
+      "voxels": 328,
+      "colors": 3
+    },
+    {
+      "id": "wall-segment",
+      "size": [
+        12,
+        12,
+        5
+      ],
+      "voxels": 90,
+      "colors": 2
+    },
+    {
+      "id": "ground-cover",
+      "size": [
+        12,
+        12,
+        3
+      ],
+      "voxels": 31,
+      "colors": 2
+    },
+    {
+      "id": "well",
+      "size": [
+        12,
+        12,
+        4
+      ],
+      "voxels": 40,
+      "colors": 2
+    }
+  ]
+}
