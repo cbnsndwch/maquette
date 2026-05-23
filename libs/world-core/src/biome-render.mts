@@ -1,5 +1,15 @@
 import * as THREE from 'three';
 
+import {
+    box,
+    compose,
+    cylinder,
+    dome,
+    mergeVoxels,
+    shell,
+    type Voxel
+} from './voxel.mjs';
+
 /**
  * Per-biome rendering: how a biome's tile ids map to palette slots, and how its
  * prop ids become meshes. This is the *view* half of a biome (the *generation*
@@ -12,6 +22,35 @@ export interface BiomeRenderer {
     tilePaletteIndex(tileId: string): number;
     /** Build a prop mesh for a biome-local prop id. */
     buildProp(propId: string, palette: THREE.Color[]): THREE.Object3D;
+    /**
+     * Optional rich voxel detailing. When present, `buildScene` overlays a
+     * sub-tile patterned surface and multi-voxel props instead of the plain
+     * box-per-tile + simple-mesh path. Biomes without it render as before.
+     */
+    voxels?: BiomeVoxels;
+}
+
+export interface BiomeVoxels {
+    /** Sub-tile resolution: voxels per tile edge (e.g. 4). */
+    perTile: number;
+    /**
+     * Voxels for one tile's top surface, in local coords (0..perTile, z up).
+     * The grid cell (gx,gy) is passed so patterns can vary deterministically.
+     */
+    surface(tileId: string, gx: number, gy: number): Voxel[];
+    /** Voxels for a prop, in local coords (footprint perTile wide, z up). */
+    prop(propId: string): Voxel[];
+    /**
+     * Voxels for a multi-cell composite building, spanning footprint*perTile per
+     * side in local coords. Optional: biomes without it place no buildings.
+     */
+    structure?(type: string): Voxel[];
+    /** Object ids by category, for the standalone inspector page. */
+    catalog?: {
+        surfaces: readonly string[];
+        props: readonly string[];
+        structures: readonly string[];
+    };
 }
 
 function standard(
@@ -123,9 +162,649 @@ function mykonosProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
     return group;
 }
 
+// Sun-bleached Cycladic palette (ported from the mykonos-voxels reference).
+const MP = {
+    white: '#fafaf5',
+    whiteShadow: '#e6e2d3',
+    whiteDeep: '#cfc9b7',
+    cobalt: '#1b5ba8',
+    cobaltLight: '#2e6fbc',
+    cobaltDeep: '#134680',
+    grass: '#7eaa5f',
+    grassDark: '#5c8a44',
+    grassLight: '#9bc377',
+    sand: '#e8d4a8',
+    sandDark: '#c9b084',
+    sandLight: '#f1e1bd',
+    path: '#d9cdb6',
+    pathDark: '#c2b59c',
+    pathLight: '#e8ddc8',
+    sea: '#6ec8e0',
+    seaDeep: '#4da8c4',
+    seaShine: '#a8e0ee',
+    stone: '#c9c3b5',
+    stoneDark: '#a8a292',
+    stoneLight: '#ddd8ca',
+    cypress: '#3d7355',
+    cypressDark: '#28533a',
+    cypressLight: '#5a8d6e',
+    olive: '#7a9460',
+    oliveDark: '#5a7448',
+    oliveLight: '#9bb37e',
+    trunk: '#7a5a3a',
+    trunkDark: '#5a3f25',
+    terracotta: '#c4622e',
+    terraLight: '#dc7d44',
+    terraDark: '#9a4720',
+    bougain: '#d85b8e',
+    bougainLight: '#ee84ad',
+    bougainDark: '#b03a6a',
+    leaf: '#4a7a3e',
+    leafDark: '#2f5527',
+    agave: '#a4b87a',
+    agaveDark: '#7a8e54',
+    flower: '#e16ea6',
+    flowerWhite: '#fff8e6',
+    flowerYellow: '#f4d168',
+    soil: '#7a5a3c',
+    iron: '#3a3833',
+    ironLight: '#5a5750',
+    flame: '#ffc24a'
+} as const;
+
+// Real assets are ~12 voxels per tile edge (see assets/sand.png), not 4.
+const VPT = 12;
+const MID = VPT / 2;
+
+/** A 1-voxel-thick tile floor with optional per-voxel accent coloring. */
+function mFloor(
+    color: string,
+    accents?: (ix: number, iy: number) => string | undefined
+): Voxel[] {
+    const out: Voxel[] = [];
+    for (let ix = 0; ix < VPT; ix++) {
+        for (let iy = 0; iy < VPT; iy++) {
+            out.push({ x: ix, y: iy, z: 0, c: accents?.(ix, iy) ?? color });
+        }
+    }
+    return out;
+}
+
+/**
+ * Tile surfaces. Flat ground scatters a few shades per voxel so the chunky
+ * grain reads under flat lighting; built tiles (wall/dome/rooftop) get vertical
+ * structure. (Composite buildings supersede the built tiles in a later pass.)
+ */
+function mykonosSurface(tileId: string, gx: number, gy: number): Voxel[] {
+    const hash = (ix: number, iy: number) =>
+        (ix * 7 + iy * 13 + gx * 5 + gy * 11) % 7;
+
+    switch (tileId) {
+        case 'water':
+            return mFloor(MP.sea, (ix, iy) => {
+                if ((ix + iy * 2 + gx) % 5 === 0) return MP.seaShine;
+                const k = hash(ix, iy);
+                return k === 0 || k === 3 ? MP.seaDeep : undefined;
+            });
+        case 'sand':
+            return mFloor(MP.sand, (ix, iy) => {
+                const k = hash(ix, iy);
+                return k === 0
+                    ? MP.sandDark
+                    : k === 2
+                      ? MP.sandLight
+                      : undefined;
+            });
+        case 'grass':
+            return mFloor(MP.grass, (ix, iy) => {
+                const k = hash(ix, iy);
+                return k === 0
+                    ? MP.grassDark
+                    : k === 1
+                      ? MP.grassLight
+                      : undefined;
+            });
+        case 'rock':
+            return mFloor(MP.stone, (ix, iy) => {
+                const k = hash(ix, iy);
+                return k === 0
+                    ? MP.stoneDark
+                    : k === 2
+                      ? MP.stoneLight
+                      : undefined;
+            });
+        case 'path':
+            return mFloor(MP.path, (ix, iy) => {
+                const band = Math.floor(iy / 3);
+                const off = (band % 2) * 2;
+                if (iy % 3 === 0 || (ix + off) % 4 === 0) return MP.pathDark;
+                return hash(ix, iy) === 0 ? MP.pathLight : undefined;
+            });
+        case 'plaza':
+            return mFloor(MP.white, (ix, iy) => {
+                const k = hash(ix, iy);
+                return k === 0
+                    ? MP.whiteShadow
+                    : k === 3
+                      ? MP.whiteDeep
+                      : undefined;
+            });
+        case 'wall':
+            // Flat whitewashed roof with a low parapet — courtyard wall / roof.
+            return compose(
+                box(0, 0, 0, VPT, VPT, 1, MP.whiteShadow),
+                shell(0, 0, 1, VPT, VPT, 1, MP.white)
+            );
+        case 'rooftop':
+            return compose(
+                box(0, 0, 0, VPT, VPT, 1, MP.whiteShadow),
+                shell(0, 0, 1, VPT, VPT, 1, MP.white),
+                box(0, 0, 1, VPT, 1, 1, MP.cobalt)
+            );
+        case 'dome':
+            return compose(
+                box(0, 0, 0, VPT, VPT, 1, MP.white),
+                cylinder(MID, MID, 1, 4, 1, MP.white),
+                dome(MID, MID, 2, 4, MP.cobalt),
+                box(MID, MID, 7, 1, 1, 2, MP.white)
+            );
+        case 'stairs': {
+            const out = box(0, 0, 0, VPT, VPT, 1, MP.white);
+            for (let s = 0; s < 4; s++) {
+                out.push(
+                    ...box(
+                        0,
+                        s * 3,
+                        1 + s,
+                        VPT,
+                        3,
+                        1,
+                        s % 2 ? MP.whiteShadow : MP.white
+                    )
+                );
+            }
+            return out;
+        }
+        default:
+            return mFloor(MP.white, (ix, iy) =>
+                hash(ix, iy) === 0 ? MP.whiteShadow : undefined
+            );
+    }
+}
+
+/** One slim conical cypress, tapering from radius ~2 at base to a point. */
+function cypressTree(cx: number, cy: number, h: number): Voxel[] {
+    const out: Voxel[] = box(cx - 1, cy - 1, 0, 2, 2, 3, MP.trunk);
+    for (let z = 2; z < h; z++) {
+        const r = Math.max(
+            0,
+            Math.round(2.2 * (1 - ((z - 2) / (h - 2)) * 0.7))
+        );
+        for (let dx = -r; dx <= r; dx++) {
+            for (let dy = -r; dy <= r; dy++) {
+                if (dx * dx + dy * dy > r * r + 0.5) continue;
+                const n = (dx + dy + z) % 3;
+                const c =
+                    n === 0
+                        ? MP.cypressDark
+                        : (dx * 7 + dy * 13 + z) % 5 === 0
+                          ? MP.cypressLight
+                          : MP.cypress;
+                out.push({ x: cx + dx, y: cy + dy, z, c });
+            }
+        }
+    }
+    return out;
+}
+
+function cypressProp(): Voxel[] {
+    return mergeVoxels(cypressTree(5, 6, 16), cypressTree(8, 5, 12));
+}
+
+function oliveProp(): Voxel[] {
+    const canopy = dome(MID, MID, 4, 4, MP.olive);
+    for (const v of canopy) {
+        const k = (v.x * 3 + v.y * 5 + v.z * 7) % 4;
+        if (k === 0) v.c = MP.oliveDark;
+        else if (k === 1) v.c = MP.oliveLight;
+    }
+    return mergeVoxels(box(5, 5, 0, 2, 2, 5, MP.trunk), canopy);
+}
+
+function bougainvilleaProp(): Voxel[] {
+    const canopy = dome(MID, MID, 7, 4, MP.bougain);
+    for (const v of canopy) {
+        const k = (v.x * 5 + v.y * 7 + v.z * 3) % 5;
+        if (k === 0) v.c = MP.bougainDark;
+        else if (k === 1) v.c = MP.bougainLight;
+        else if (k === 2) v.c = MP.leafDark;
+    }
+    return mergeVoxels(
+        box(4, 4, 0, 4, 4, 2, MP.terracotta),
+        box(4, 4, 2, 4, 4, 1, MP.terraDark),
+        box(5, 5, 3, 2, 2, 5, MP.trunkDark),
+        canopy
+    );
+}
+
+function potProp(): Voxel[] {
+    return compose(
+        box(4, 4, 0, 4, 4, 2, MP.terracotta),
+        box(4, 4, 2, 4, 4, 1, MP.terraDark),
+        box(4, 4, 3, 4, 4, 2, MP.leaf),
+        box(5, 5, 5, 2, 2, 1, MP.bougain),
+        [
+            { x: 4, y: 5, z: 5, c: MP.flowerWhite },
+            { x: 7, y: 6, z: 5, c: MP.flowerYellow },
+            { x: 6, y: 4, z: 6, c: MP.bougainLight }
+        ]
+    );
+}
+
+function lanternProp(): Voxel[] {
+    return mergeVoxels(
+        box(5, 5, 0, 2, 2, 8, MP.iron),
+        shell(4, 4, 8, 4, 4, 3, MP.ironLight),
+        box(5, 5, 9, 2, 2, 1, MP.flame),
+        box(4, 4, 11, 4, 4, 1, MP.iron)
+    );
+}
+
+function agaveProp(): Voxel[] {
+    const out: Voxel[] = [];
+    const cx = MID;
+    const cy = MID;
+    for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4;
+        for (let s = 0; s <= 4; s++) {
+            const dx = Math.round(Math.cos(a) * s);
+            const dy = Math.round(Math.sin(a) * s);
+            out.push({
+                x: cx + dx,
+                y: cy + dy,
+                z: Math.floor(s / 2),
+                c: s >= 4 ? MP.agaveDark : MP.agave
+            });
+        }
+    }
+    return mergeVoxels(out);
+}
+
+function wellProp(): Voxel[] {
+    return compose(
+        cylinder(MID, MID, 0, 4, 3, MP.stone),
+        cylinder(MID, MID, 1, 2, 2, MP.seaDeep),
+        box(4, 4, 3, 1, 1, 5, MP.trunk),
+        box(7, 7, 3, 1, 1, 5, MP.trunk),
+        box(4, 4, 8, 4, 4, 1, MP.trunkDark)
+    );
+}
+
+function benchProp(): Voxel[] {
+    return compose(
+        box(3, 5, 0, 6, 2, 1, MP.stone),
+        box(3, 5, 1, 6, 2, 1, MP.trunk),
+        box(3, 5, 2, 1, 2, 1, MP.trunk),
+        box(8, 5, 2, 1, 2, 1, MP.trunk),
+        box(3, 6, 3, 6, 1, 1, MP.trunk)
+    );
+}
+
+function windmillProp(): Voxel[] {
+    const out = compose(
+        cylinder(MID, MID, 0, 3, 9, MP.white),
+        cylinder(MID, MID, 9, 3, 1, MP.whiteShadow)
+    );
+    // Conical thatched roof.
+    for (let iz = 0; iz < 4; iz++) {
+        out.push(
+            ...cylinder(
+                MID,
+                MID,
+                10 + iz,
+                Math.max(0, 3 - iz),
+                1,
+                iz >= 3 ? MP.terraDark : MP.terracotta
+            )
+        );
+    }
+    // Four blades on the front face.
+    const by = 2;
+    out.push({ x: MID, y: by, z: 7, c: MP.iron });
+    for (let i = 1; i <= 4; i++) {
+        out.push({ x: MID + i, y: by, z: 7, c: MP.trunk });
+        out.push({ x: MID - i, y: by, z: 7, c: MP.trunk });
+        out.push({ x: MID, y: by, z: 7 + i, c: MP.trunk });
+        out.push({ x: MID, y: by, z: 7 - i, c: MP.trunk });
+    }
+    return out;
+}
+
+function boatProp(): Voxel[] {
+    return compose(
+        box(2, 4, 0, 8, 4, 1, MP.trunkDark),
+        shell(2, 4, 1, 8, 4, 1, MP.trunk),
+        box(5, 5, 2, 1, 1, 3, MP.white)
+    );
+}
+
+function mykonosVoxelProp(propId: string): Voxel[] {
+    switch (propId) {
+        case 'cypress':
+            return cypressProp();
+        case 'olive-tree':
+            return oliveProp();
+        case 'bougainvillea':
+            return bougainvilleaProp();
+        case 'pot':
+            return potProp();
+        case 'lamp':
+            return lanternProp();
+        case 'well':
+            return wellProp();
+        case 'bench':
+            return benchProp();
+        case 'agave':
+            return agaveProp();
+        case 'windmill':
+            return windmillProp();
+        case 'boat':
+            return boatProp();
+        default:
+            return potProp();
+    }
+}
+
+// --- Composite buildings (footprint F tiles => F*VPT voxels per side) --------
+
+/** Cobalt-framed windows spaced along all four faces at height z. */
+function windowsAt(w: number, d: number, z: number): Voxel[] {
+    const out: Voxel[] = [];
+    for (let x = 4; x < w - 4; x += 8) {
+        out.push(...box(x, 0, z, 3, 1, 4, MP.cobalt));
+        out.push(...box(x, d - 1, z, 3, 1, 4, MP.cobalt));
+    }
+    for (let y = 4; y < d - 4; y += 8) {
+        out.push(...box(0, y, z, 1, 3, 4, MP.cobalt));
+        out.push(...box(w - 1, y, z, 1, 3, 4, MP.cobalt));
+    }
+    return out;
+}
+
+/** A cascade of bougainvillea climbing a building corner. */
+function bougainCascade(): Voxel[] {
+    return compose(
+        box(0, 0, 1, 2, 2, 11, MP.bougain),
+        box(0, 2, 4, 1, 2, 5, MP.bougainLight),
+        box(2, 0, 4, 2, 1, 5, MP.bougainDark),
+        box(0, 0, 12, 3, 3, 2, MP.bougainLight)
+    );
+}
+
+/** A cobalt door centered on the front (y=0) face. */
+function doorAt(w: number): Voxel[] {
+    return box(Math.floor(w / 2) - 1, 0, 1, 3, 1, 6, MP.cobaltDeep);
+}
+
+/** Whitewashed box with a closed flat roof + parapet. */
+function whiteBlock(w: number, d: number, h: number): Voxel[] {
+    return compose(
+        box(0, 0, 0, w, d, 1, MP.whiteShadow),
+        shell(0, 0, 0, w, d, h, MP.white),
+        box(0, 0, h - 1, w, d, 1, MP.whiteShadow),
+        shell(0, 0, h, w, d, 1, MP.white)
+    );
+}
+
+/** Cobalt railing (posts + top rail) around a w×d roof perimeter at height z. */
+function roofRailing(w: number, d: number, z: number): Voxel[] {
+    const out: Voxel[] = [];
+    const post = (x: number, y: number): void => {
+        out.push({ x, y, z, c: MP.cobalt }, { x, y, z: z + 1, c: MP.cobalt });
+    };
+    for (let x = 0; x < w; x++) {
+        out.push({ x, y: 0, z: z + 1, c: MP.cobaltLight });
+        out.push({ x, y: d - 1, z: z + 1, c: MP.cobaltLight });
+        if (x % 3 === 0) {
+            post(x, 0);
+            post(x, d - 1);
+        }
+    }
+    for (let y = 0; y < d; y++) {
+        out.push({ x: 0, y, z: z + 1, c: MP.cobaltLight });
+        out.push({ x: w - 1, y, z: z + 1, c: MP.cobaltLight });
+        if (y % 3 === 0) {
+            post(0, y);
+            post(w - 1, y);
+        }
+    }
+    return out;
+}
+
+/** A cobalt pergola: corner posts + slatted top over a w×d terrace at z. */
+function pergola(
+    x: number,
+    y: number,
+    w: number,
+    d: number,
+    z: number
+): Voxel[] {
+    const h = 5;
+    const out: Voxel[] = [];
+    for (const [px, py] of [
+        [x, y],
+        [x + w - 1, y],
+        [x, y + d - 1],
+        [x + w - 1, y + d - 1]
+    ] as const) {
+        out.push(...box(px, py, z, 1, 1, h, MP.cobalt));
+    }
+    for (let iy = y; iy < y + d; iy++) {
+        const c = iy % 2 === 0 ? MP.cobalt : MP.cobaltLight;
+        for (let ix = x; ix < x + w; ix++) {
+            out.push({ x: ix, y: iy, z: z + h, c });
+        }
+    }
+    return out;
+}
+
+/** A line of n terracotta pots (with a sprig), optionally stepping up in z. */
+function potLine(
+    x: number,
+    y: number,
+    axis: 'x' | 'y',
+    n: number,
+    z0: number,
+    dz: number
+): Voxel[] {
+    const out: Voxel[] = [];
+    for (let i = 0; i < n; i++) {
+        const px = axis === 'x' ? x + i * 2 : x;
+        const py = axis === 'y' ? y + i * 2 : y;
+        const z = z0 + i * dz;
+        out.push({ x: px, y: py, z, c: MP.terracotta });
+        out.push({ x: px, y: py, z: z + 1, c: MP.olive });
+        out.push({ x: px, y: py, z: z + 2, c: MP.bougain });
+    }
+    return out;
+}
+
+function cubeHouse(): Voxel[] {
+    const w = 2 * VPT;
+    return mergeVoxels(
+        whiteBlock(w, w, 15),
+        windowsAt(w, w, 7),
+        doorAt(w),
+        roofRailing(w, w, 15),
+        potLine(3, 3, 'x', 3, 15, 0),
+        bougainCascade()
+    );
+}
+
+function twoStory(): Voxel[] {
+    const w = 3 * VPT;
+    const h1 = 16;
+    const stairs: Voxel[] = [];
+    for (let s = 0; s < 7; s++) {
+        stairs.push(
+            ...box(w - 3, 4 + s * 3, 1 + s * 2, 3, 3, 2, MP.whiteShadow)
+        );
+    }
+    // Upper room sits at the back; the front half of the roof is an open terrace.
+    const up = w - 14;
+    return mergeVoxels(
+        box(0, 0, 0, w, w, 1, MP.whiteShadow),
+        shell(0, 0, 0, w, w, h1, MP.white),
+        box(0, 0, h1 - 1, w, w, 1, MP.whiteShadow),
+        whiteBlock(up, up, 14).map(v => ({
+            ...v,
+            x: v.x + 4,
+            y: v.y + 10,
+            z: v.z + h1
+        })),
+        windowsAt(w, w, 7),
+        windowsAt(up, up, 5).map(v => ({
+            ...v,
+            x: v.x + 4,
+            y: v.y + 10,
+            z: v.z + h1
+        })),
+        doorAt(w),
+        roofRailing(w, w, h1),
+        pergola(3, 1, w - 6, 7, h1),
+        potLine(2, 1, 'y', 5, h1, 0),
+        stairs,
+        potLine(w - 6, 4, 'y', 6, 1, 2),
+        bougainCascade()
+    );
+}
+
+function chapel(): Voxel[] {
+    const w = 2 * VPT;
+    const c = w / 2;
+    const h = 14;
+    return mergeVoxels(
+        whiteBlock(w, w, h),
+        cylinder(c, c, h, 6, 1, MP.white),
+        dome(c, c, h + 1, 6, MP.cobalt),
+        box(c, c, h + 8, 1, 1, 4, MP.white),
+        box(c - 1, c, h + 10, 3, 1, 1, MP.white),
+        windowsAt(w, w, 7),
+        doorAt(w)
+    );
+}
+
+function windmill(): Voxel[] {
+    const w = 2 * VPT;
+    const c = w / 2;
+    const parts: Voxel[][] = [
+        cylinder(c, c, 0, 7, 18, MP.white),
+        cylinder(c, c, 18, 7, 1, MP.whiteShadow),
+        doorAt(w)
+    ];
+    for (let iz = 0; iz < 6; iz++) {
+        parts.push(
+            cylinder(
+                c,
+                c,
+                19 + iz,
+                Math.max(0, 7 - iz),
+                1,
+                iz >= 5 ? MP.terraDark : MP.terracotta
+            )
+        );
+    }
+    const blades: Voxel[] = [{ x: c, y: 4, z: 14, c: MP.iron }];
+    for (let i = 1; i <= 7; i++) {
+        blades.push(
+            { x: c + i, y: 4, z: 14, c: MP.trunk },
+            { x: c - i, y: 4, z: 14, c: MP.trunk },
+            { x: c, y: 4, z: 14 + i, c: MP.trunk },
+            { x: c, y: 4, z: 14 - i, c: MP.trunk }
+        );
+    }
+    parts.push(blades);
+    return mergeVoxels(...parts);
+}
+
+function villa(): Voxel[] {
+    const w = 4 * VPT;
+    const up = Math.floor(w * 0.55);
+    return mergeVoxels(
+        whiteBlock(w, w, 16),
+        // upper wing at the back-left corner; rest of the roof is a terrace
+        whiteBlock(up, up, 13).map(v => ({
+            ...v,
+            y: v.y + (w - up),
+            z: v.z + 16
+        })),
+        windowsAt(w, w, 7),
+        windowsAt(up, up, 5).map(v => ({
+            ...v,
+            y: v.y + (w - up),
+            z: v.z + 16
+        })),
+        doorAt(w),
+        roofRailing(w, w, 16),
+        pergola(2, 2, w - up - 2, w - 6, 16),
+        potLine(2, 2, 'x', 6, 16, 0),
+        bougainCascade()
+    );
+}
+
+function mykonosStructure(type: string): Voxel[] {
+    switch (type) {
+        case 'two-story':
+            return twoStory();
+        case 'chapel':
+            return chapel();
+        case 'windmill':
+            return windmill();
+        case 'villa':
+            return villa();
+        default:
+            return cubeHouse();
+    }
+}
+
+const mykonosVoxels: BiomeVoxels = {
+    perTile: VPT,
+    surface: mykonosSurface,
+    prop: mykonosVoxelProp,
+    structure: mykonosStructure,
+    catalog: {
+        surfaces: [
+            'water',
+            'sand',
+            'grass',
+            'rock',
+            'plaza',
+            'path',
+            'wall',
+            'rooftop',
+            'dome',
+            'stairs'
+        ],
+        props: [
+            'olive-tree',
+            'cypress',
+            'bougainvillea',
+            'pot',
+            'lamp',
+            'well',
+            'bench',
+            'agave',
+            'windmill',
+            'boat'
+        ],
+        structures: ['cube-house', 'two-story', 'chapel', 'villa', 'windmill']
+    }
+};
+
 const mykonosRenderer: BiomeRenderer = {
     tilePaletteIndex: id => MYKONOS_TILE_SLOT[id] ?? 0,
-    buildProp: mykonosProp
+    buildProp: mykonosProp,
+    voxels: mykonosVoxels
 };
 
 // ---------------------------------------------------------------------------
@@ -293,7 +972,10 @@ const CUBAN_BEACH_TILE_SLOT: Record<string, number> = {
     'thatch-roof': 4
 };
 
-function cubanBeachProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function cubanBeachProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const sand = palette[0] ?? new THREE.Color('#f5e6c8');
     const terracotta = palette[2] ?? new THREE.Color('#d97942');
@@ -427,7 +1109,10 @@ const RAVE_FESTIVAL_TILE_SLOT: Record<string, number> = {
     'main-stage': 4
 };
 
-function raveFestivalProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function raveFestivalProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const violet = palette[1] ?? new THREE.Color('#7f2cff');
     const cyan = palette[2] ?? new THREE.Color('#00f5ff');
@@ -1156,7 +1841,10 @@ const JAZZ_QUARTER_TILE_SLOT: Record<string, number> = {
     'clock-tower': 3
 };
 
-function jazzQuarterProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function jazzQuarterProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const nightPlum = palette[0] ?? new THREE.Color('#1b1720');
     const brass = palette[2] ?? new THREE.Color('#c29a5b');
@@ -1302,7 +1990,10 @@ const NORDIC_FJORD_TILE_SLOT: Record<string, number> = {
     'aurora-peak': 7
 };
 
-function nordicFjordProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function nordicFjordProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const fjordBlue = palette[1] ?? new THREE.Color('#1f4e5f');
     const lichenGray = palette[2] ?? new THREE.Color('#6f7d6b');
@@ -1436,7 +2127,10 @@ const TOKYO_CITY_POP_TILE_SLOT: Record<string, number> = {
     'tower-screen': 2
 };
 
-function tokyoCityPopProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function tokyoCityPopProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const indigoNight = palette[0] ?? new THREE.Color('#16162a');
     const pinkNeon = palette[1] ?? new THREE.Color('#ff6fb1');
@@ -1571,7 +2265,10 @@ const DESERT_OASIS_TILE_SLOT: Record<string, number> = {
     'dune-crest': 1
 };
 
-function desertOasisProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function desertOasisProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const goldSand = palette[0] ?? new THREE.Color('#f2c879');
     const mudbrick = palette[2] ?? new THREE.Color('#8a4f2a');
@@ -1713,7 +2410,10 @@ const RIO_CARNIVAL_TILE_SLOT: Record<string, number> = {
     'sun-statue': 1
 };
 
-function rioCarnivalProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function rioCarnivalProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const bayBlue = palette[0] ?? new THREE.Color('#00a6d6');
     const sunYellow = palette[1] ?? new THREE.Color('#ffd23f');
@@ -1724,7 +2424,13 @@ function rioCarnivalProp(propId: string, palette: THREE.Color[]): THREE.Object3D
 
     switch (propId) {
         case 'confetti-burst': {
-            const colors = [carnivalPink, sunYellow, violet, tropicalGreen, orange];
+            const colors = [
+                carnivalPink,
+                sunYellow,
+                violet,
+                tropicalGreen,
+                orange
+            ];
             for (let i = 0; i < 5; i++) {
                 const fleck = new THREE.Mesh(
                     new THREE.BoxGeometry(0.06, 0.06, 0.02),
@@ -1849,7 +2555,10 @@ const JUNGLE_CANOPY_TILE_SLOT: Record<string, number> = {
     'mist-crown': 7
 };
 
-function jungleCanopyProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function jungleCanopyProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const deepJungle = palette[0] ?? new THREE.Color('#0b3d2e');
     const leafBright = palette[2] ?? new THREE.Color('#55a630');
@@ -1888,7 +2597,11 @@ function jungleCanopyProp(propId: string, palette: THREE.Color[]): THREE.Object3
                     new THREE.CylinderGeometry(0.06, 0.05, 0.18, 8),
                     standard(wood)
                 );
-                drum.position.set(Math.cos(angle) * 0.18, 0.09, Math.sin(angle) * 0.18);
+                drum.position.set(
+                    Math.cos(angle) * 0.18,
+                    0.09,
+                    Math.sin(angle) * 0.18
+                );
                 group.add(drum);
             }
             break;
@@ -1974,7 +2687,10 @@ const ARCTIC_BASE_TILE_SLOT: Record<string, number> = {
     'ice-ridge': 1
 };
 
-function arcticBaseProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
+function arcticBaseProp(
+    propId: string,
+    palette: THREE.Color[]
+): THREE.Object3D {
     const group = new THREE.Group();
     const snowWhite = palette[0] ?? new THREE.Color('#eef7ff');
     const iceBlue = palette[1] ?? new THREE.Color('#b9d8e8');
@@ -2392,7 +3108,11 @@ function oceanReefProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
                     new THREE.BoxGeometry(0.1, 0.04, 0.06),
                     standard(coralGold)
                 );
-                fish.position.set((i - 1.5) * 0.12, 0.3 + i * 0.04, (i % 2) * 0.08);
+                fish.position.set(
+                    (i - 1.5) * 0.12,
+                    0.3 + i * 0.04,
+                    (i % 2) * 0.08
+                );
                 group.add(fish);
             }
             break;
@@ -2425,7 +3145,7 @@ function oceanReefProp(propId: string, palette: THREE.Color[]): THREE.Object3D {
                     })
                 );
                 bubble.position.set(
-                    (i % 2 === 0 ? 0.03 : -0.03),
+                    i % 2 === 0 ? 0.03 : -0.03,
                     i * 0.12 + 0.05,
                     0
                 );
@@ -2795,7 +3515,7 @@ const registry = new Map<string, BiomeRenderer>([
     ['ancient-acropolis', ancientAcropolisRenderer],
     ['ocean-reef', oceanReefRenderer],
     ['west-african-savanna', westAfricanSavannaRenderer],
-    ['polynesian-atoll', polynesianAtollRenderer],
+    ['polynesian-atoll', polynesianAtollRenderer]
 ]);
 
 export function registerBiomeRenderer(
