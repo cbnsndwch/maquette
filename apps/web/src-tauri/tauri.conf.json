@@ -1,0 +1,35 @@
+{
+    "$schema": "https://schema.tauri.app/config/2",
+    "productName": "Musicologia",
+    "version": "0.0.0",
+    "identifier": "io.cbnsndwch.musicologia",
+    "build": {
+        "frontendDist": "../dist",
+        "devUrl": "http://localhost:5173",
+        "beforeDevCommand": "pnpm dev",
+        "beforeBuildCommand": "pnpm build"
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "Musicologia",
+                "width": 1100,
+                "height": 720,
+                "resizable": true
+            }
+        ],
+        "security": {
+            "csp": null
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ]
+    }
+}

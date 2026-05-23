@@ -1,0 +1,32 @@
+{
+    "name": "web",
+    "description": "Musicologia browser render target (Vite + Three.js)",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "private": true,
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview",
+        "format": "oxfmt --write src",
+        "lint": "oxlint ./src",
+        "lint:fix": "oxlint ./src --fix",
+        "typecheck": "tsc --noEmit",
+        "tauri": "tauri"
+    },
+    "dependencies": {
+        "@cbnsndwch/contracts": "workspace:*",
+        "@cbnsndwch/world-core": "workspace:*",
+        "@cbnsndwch/world-gen": "workspace:*",
+        "three": "^0.184.0"
+    },
+    "devDependencies": {
+        "@cbnsndwch/tsconfig": "workspace:*",
+        "@tauri-apps/api": "^2.11.0",
+        "@tauri-apps/cli": "^2.11.2",
+        "@types/three": "^0.184.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.0.0"
+    }
+}

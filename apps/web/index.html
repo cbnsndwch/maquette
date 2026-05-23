@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Musicologia</title>
+        <style>
+            :root {
+                color-scheme: light dark;
+            }
+            html,
+            body {
+                margin: 0;
+                height: 100%;
+                overflow: hidden;
+                font-family:
+                    ui-sans-serif, system-ui, -apple-system, sans-serif;
+            }
+            #app {
+                position: fixed;
+                inset: 0;
+            }
+            canvas {
+                display: block;
+            }
+            #hud {
+                position: fixed;
+                left: 12px;
+                bottom: 12px;
+                padding: 8px 12px;
+                border-radius: 8px;
+                background: rgba(0, 0, 0, 0.45);
+                color: #f4f1ea;
+                font-size: 13px;
+                line-height: 1.4;
+                backdrop-filter: blur(4px);
+                pointer-events: none;
+            }
+            #hud .seed {
+                opacity: 0.7;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app"></div>
+        <div id="hud">
+            <div><strong>Musicologia</strong> — sample world</div>
+            <div class="seed" id="seed"></div>
+            <div>drag to orbit · scroll to zoom</div>
+        </div>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>
