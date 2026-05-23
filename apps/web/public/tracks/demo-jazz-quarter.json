@@ -1,0 +1,59 @@
+{
+  "_id": "demo-jazz-quarter",
+  "title": "Third Street Shuffle",
+  "artist": "The Magnolia Jazz Ensemble",
+  "album": "Late Set at the Funnel",
+  "artistSlug": "magnolia-jazz-ensemble",
+  "trackSlug": "third-street-shuffle",
+  "durationMs": 318000,
+  "isInstrumental": true,
+  "tempo": 92,
+  "timeSignature": 4,
+  "key": 10,
+  "mode": 0,
+  "energy": 0.52,
+  "valence": 0.61,
+  "audioFeaturesEstimated": true,
+  "audioFeaturesSource": "musicbrainz",
+  "palette": {
+    "primary": "#2b1b0e",
+    "secondary": "#c49a3c",
+    "accent": "#8b3a2a",
+    "background": "#1a1008",
+    "text": "#f0e0c0",
+    "grain": 0.3,
+    "contrast": "medium",
+    "mood": "warm"
+  },
+  "motionProfile": {
+    "speed": 0.38,
+    "cameraAggression": 0.22,
+    "particleDensity": 0.35,
+    "jitter": 0.09,
+    "bloomIntensity": 0.3
+  },
+  "sceneGrammar": {
+    "primaryMotif": "brick-club",
+    "transitionStyle": "cross-fade"
+  },
+  "sections": [
+    { "startMs": 0,      "endMs": 32000,  "type": "intro",   "label": "Walk-In"               },
+    { "startMs": 32000,  "endMs": 100000, "type": "head",    "label": "Main Theme"            },
+    { "startMs": 100000, "endMs": 168000, "type": "solo",    "label": "Trumpet Solo"          },
+    { "startMs": 168000, "endMs": 224000, "type": "solo",    "label": "Piano Solo"            },
+    { "startMs": 224000, "endMs": 286000, "type": "head",    "label": "Return"                },
+    { "startMs": 286000, "endMs": 318000, "type": "outro",   "label": "Tag & Out"             }
+  ],
+  "lore": {
+    "tagline": "A late-night shuffle from the storied back-room of the French Quarter.",
+    "story": "The Magnolia Jazz Ensemble cut this live at a narrow club on Frenchmen Street, two nights before Mardi Gras. The recording captures that specific tension between the tightly swung rhythm section and the loose, searching horns.",
+    "themes": ["jazz", "new-orleans", "blues", "improvisation"],
+    "trivia": [
+      "The piano was an out-of-tune upright that hadn't been serviced since the 1970s — kept for character.",
+      "Two audience members can be heard laughing at bar 48 of the trumpet solo."
+    ]
+  },
+  "genres": ["jazz", "soul", "blues", "new-orleans-jazz"],
+  "tags": ["jazz-quarter", "swing", "trumpet", "piano", "frenchmen-street"],
+  "origin": "us"
+}

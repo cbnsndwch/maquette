@@ -1,0 +1,59 @@
+{
+  "_id": "demo-bollywood-ghats",
+  "title": "Ganga Lehren",
+  "artist": "Devara & the Varanasi Players",
+  "album": "Ghats at Golden Hour",
+  "artistSlug": "devara-varanasi-players",
+  "trackSlug": "ganga-lehren",
+  "durationMs": 264000,
+  "isInstrumental": false,
+  "tempo": 118,
+  "timeSignature": 4,
+  "key": 4,
+  "mode": 1,
+  "energy": 0.72,
+  "valence": 0.75,
+  "audioFeaturesEstimated": true,
+  "audioFeaturesSource": "musicbrainz",
+  "palette": {
+    "primary": "#f5a623",
+    "secondary": "#d6264e",
+    "accent": "#7b3fa0",
+    "background": "#fff8ef",
+    "text": "#2b0a0a",
+    "grain": 0.14,
+    "contrast": "high",
+    "mood": "warm"
+  },
+  "motionProfile": {
+    "speed": 0.62,
+    "cameraAggression": 0.5,
+    "particleDensity": 0.65,
+    "jitter": 0.18,
+    "bloomIntensity": 0.6
+  },
+  "sceneGrammar": {
+    "primaryMotif": "ghat-steps",
+    "transitionStyle": "dissolve"
+  },
+  "sections": [
+    { "startMs": 0,      "endMs": 28000,  "type": "intro",   "label": "Aarti Preparation"    },
+    { "startMs": 28000,  "endMs": 96000,  "type": "verse",   "label": "Pilgrims at the Ghat" },
+    { "startMs": 96000,  "endMs": 132000, "type": "chorus",  "label": "Ganga Aarti"          },
+    { "startMs": 132000, "endMs": 196000, "type": "verse",   "label": "Boat on the River"    },
+    { "startMs": 196000, "endMs": 232000, "type": "chorus"                                   },
+    { "startMs": 232000, "endMs": 264000, "type": "outro",   "label": "Diyas on the Water"   }
+  ],
+  "lore": {
+    "tagline": "Bollywood orchestration meets Hindustani devotional at the sacred ghats.",
+    "story": "Devara composed this track during the golden hour aarti ceremony on the Varanasi ghats, weaving sitar and tabla into a Bollywood-scale orchestral arrangement that mirrors the drama of oil lamps floating on the Ganga.",
+    "themes": ["devotion", "river", "pilgrimage", "ceremony"],
+    "trivia": [
+      "The sitar solo was recorded outdoors beside the river; the ambient rush of water is untreated.",
+      "The tabla player performed using traditional bayan tuned to the specific raga of the composition."
+    ]
+  },
+  "genres": ["bollywood", "hindustani-classical", "filmi"],
+  "tags": ["bollywood-ghats", "varanasi", "aarti", "sitar", "tabla"],
+  "origin": "in"
+}

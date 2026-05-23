@@ -1,0 +1,59 @@
+{
+  "_id": "demo-mykonos",
+  "title": "Aegean Drift",
+  "artist": "Solis & the Whitewash Trio",
+  "album": "Cycladic Sessions",
+  "artistSlug": "solis-whitewash-trio",
+  "trackSlug": "aegean-drift",
+  "durationMs": 234000,
+  "isInstrumental": false,
+  "tempo": 96,
+  "timeSignature": 4,
+  "key": 9,
+  "mode": 1,
+  "energy": 0.45,
+  "valence": 0.78,
+  "audioFeaturesEstimated": true,
+  "audioFeaturesSource": "musicbrainz",
+  "palette": {
+    "primary": "#ffffff",
+    "secondary": "#2a9fd6",
+    "accent": "#f4d35e",
+    "background": "#eef4f8",
+    "text": "#1a2636",
+    "grain": 0.12,
+    "contrast": "medium",
+    "mood": "warm"
+  },
+  "motionProfile": {
+    "speed": 0.35,
+    "cameraAggression": 0.2,
+    "particleDensity": 0.3,
+    "jitter": 0.08,
+    "bloomIntensity": 0.25
+  },
+  "sceneGrammar": {
+    "primaryMotif": "whitewashed-cube",
+    "transitionStyle": "dissolve"
+  },
+  "sections": [
+    { "startMs": 0,      "endMs": 32000,  "type": "intro",   "label": "Sunrise on the Agora" },
+    { "startMs": 32000,  "endMs": 96000,  "type": "verse",   "label": "Harbour Walk" },
+    { "startMs": 96000,  "endMs": 128000, "type": "chorus",  "label": "Blue-Dome Reverie" },
+    { "startMs": 128000, "endMs": 192000, "type": "verse"                                  },
+    { "startMs": 192000, "endMs": 224000, "type": "chorus"                                 },
+    { "startMs": 224000, "endMs": 234000, "type": "outro",   "label": "Fading Cicadas"     }
+  ],
+  "lore": {
+    "tagline": "Salt air and siesta rhythms from the Cyclades.",
+    "story": "Recorded on a rooftop terrace above Ornos Bay, this track captures the unhurried pace of a Greek summer afternoon — the clink of iced coffee, the distant groan of a ferry, the shimmering heat on whitewashed walls.",
+    "themes": ["mediterranean", "summer", "leisure", "travel"],
+    "trivia": [
+      "The bouzouki line was improvised in a single take.",
+      "Field recordings of Aegean waves are buried in the low-mid frequency band."
+    ]
+  },
+  "genres": ["lounge", "mediterranean-pop", "greek-folk"],
+  "tags": ["mykonos", "aegean", "summer", "whitewash", "bouzouki"],
+  "origin": "gr"
+}

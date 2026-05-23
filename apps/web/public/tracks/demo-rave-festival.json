@@ -1,0 +1,59 @@
+{
+  "_id": "demo-rave-festival",
+  "title": "Infinite Horizon",
+  "artist": "Stellar Grid",
+  "album": "Open Field Sessions Vol. 2",
+  "artistSlug": "stellar-grid",
+  "trackSlug": "infinite-horizon",
+  "durationMs": 392000,
+  "isInstrumental": true,
+  "tempo": 128,
+  "timeSignature": 4,
+  "key": 6,
+  "mode": 0,
+  "energy": 0.91,
+  "valence": 0.68,
+  "audioFeaturesEstimated": true,
+  "audioFeaturesSource": "musicbrainz",
+  "palette": {
+    "primary": "#0d0d1a",
+    "secondary": "#ff6bff",
+    "accent": "#00ffc8",
+    "background": "#08080f",
+    "text": "#e8e0ff",
+    "grain": 0.18,
+    "contrast": "high",
+    "mood": "cool"
+  },
+  "motionProfile": {
+    "speed": 0.9,
+    "cameraAggression": 0.8,
+    "particleDensity": 0.9,
+    "jitter": 0.3,
+    "bloomIntensity": 0.95
+  },
+  "sceneGrammar": {
+    "primaryMotif": "festival-stage",
+    "transitionStyle": "strobe"
+  },
+  "sections": [
+    { "startMs": 0,      "endMs": 32000,  "type": "intro",   "label": "Pre-Drop Tension"      },
+    { "startMs": 32000,  "endMs": 96000,  "type": "build",   "label": "Riser"                 },
+    { "startMs": 96000,  "endMs": 192000, "type": "drop",    "label": "Peak Hour"             },
+    { "startMs": 192000, "endMs": 224000, "type": "break",   "label": "Breakdown"             },
+    { "startMs": 224000, "endMs": 320000, "type": "drop",    "label": "Second Wave"           },
+    { "startMs": 320000, "endMs": 392000, "type": "outro",   "label": "Sunrise Cooldown"      }
+  ],
+  "lore": {
+    "tagline": "Peak-time techno built for the open field at first light.",
+    "story": "Stellar Grid wrote this set-closer during a week-long residency at an abandoned airfield, designing every element to play as loud as possible outdoors under a dawning sky.",
+    "themes": ["rave", "community", "transcendence", "electronic"],
+    "trivia": [
+      "The bass line is a single oscillator running through twelve parallel saturation stages.",
+      "Mastered at 0.2 dB short of brickwall to preserve the low-end transient punch."
+    ]
+  },
+  "genres": ["techno", "house", "edm", "trance"],
+  "tags": ["rave-festival", "techno", "drop", "open-air", "festival"],
+  "origin": "de"
+}

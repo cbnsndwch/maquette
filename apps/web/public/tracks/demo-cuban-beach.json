@@ -1,0 +1,59 @@
+{
+  "_id": "demo-cuban-beach",
+  "title": "Rumba de la Orilla",
+  "artist": "Buena Onda Quartet",
+  "album": "Costas de Oriente",
+  "artistSlug": "buena-onda-quartet",
+  "trackSlug": "rumba-de-la-orilla",
+  "durationMs": 248000,
+  "isInstrumental": false,
+  "tempo": 104,
+  "timeSignature": 4,
+  "key": 5,
+  "mode": 1,
+  "energy": 0.66,
+  "valence": 0.82,
+  "audioFeaturesEstimated": true,
+  "audioFeaturesSource": "musicbrainz",
+  "palette": {
+    "primary": "#f5e6c8",
+    "secondary": "#1ec8c8",
+    "accent": "#f4d35e",
+    "background": "#fff5e8",
+    "text": "#3b2a1a",
+    "grain": 0.15,
+    "contrast": "medium",
+    "mood": "warm"
+  },
+  "motionProfile": {
+    "speed": 0.55,
+    "cameraAggression": 0.35,
+    "particleDensity": 0.45,
+    "jitter": 0.12,
+    "bloomIntensity": 0.4
+  },
+  "sceneGrammar": {
+    "primaryMotif": "palm-shack",
+    "transitionStyle": "wipe"
+  },
+  "sections": [
+    { "startMs": 0,      "endMs": 24000,  "type": "intro",   "label": "Amanecer Caribeño"   },
+    { "startMs": 24000,  "endMs": 88000,  "type": "verse",   "label": "La Pesca"             },
+    { "startMs": 88000,  "endMs": 120000, "type": "chorus",  "label": "Orilla en Fiesta"     },
+    { "startMs": 120000, "endMs": 184000, "type": "verse"                                    },
+    { "startMs": 184000, "endMs": 216000, "type": "chorus"                                   },
+    { "startMs": 216000, "endMs": 248000, "type": "outro",   "label": "Marea Baja"           }
+  ],
+  "lore": {
+    "tagline": "Son cubano y brisa salada desde la costa oriental.",
+    "story": "The Buena Onda Quartet recorded this number at an open-air social club in Santiago de Cuba, with congas and tres guitar competing against the afternoon surf.",
+    "themes": ["afro-cuban", "beach", "celebration", "son-cubano"],
+    "trivia": [
+      "The tres guitar was recorded through a single-coil mic inside a cardboard box for warmth.",
+      "Background crowd ambience comes from a dominoes game in the next room."
+    ]
+  },
+  "genres": ["son-cubano", "afro-cuban", "tropical"],
+  "tags": ["cuban-beach", "son", "conga", "salsa", "tropical"],
+  "origin": "cu"
+}

@@ -1,0 +1,59 @@
+{
+  "_id": "demo-tobacco-plantation",
+  "title": "Guajira del Veguero",
+  "artist": "Ritmos del Sol",
+  "album": "Tierra y Tabaco",
+  "artistSlug": "ritmos-del-sol",
+  "trackSlug": "guajira-del-veguero",
+  "durationMs": 222000,
+  "isInstrumental": false,
+  "tempo": 88,
+  "timeSignature": 4,
+  "key": 7,
+  "mode": 1,
+  "energy": 0.38,
+  "valence": 0.55,
+  "audioFeaturesEstimated": true,
+  "audioFeaturesSource": "musicbrainz",
+  "palette": {
+    "primary": "#c9a875",
+    "secondary": "#5e8a3a",
+    "accent": "#d97942",
+    "background": "#f0e6cf",
+    "text": "#2e1f0e",
+    "grain": 0.22,
+    "contrast": "medium",
+    "mood": "warm"
+  },
+  "motionProfile": {
+    "speed": 0.28,
+    "cameraAggression": 0.18,
+    "particleDensity": 0.25,
+    "jitter": 0.06,
+    "bloomIntensity": 0.18
+  },
+  "sceneGrammar": {
+    "primaryMotif": "tobacco-row",
+    "transitionStyle": "dissolve"
+  },
+  "sections": [
+    { "startMs": 0,      "endMs": 28000,  "type": "intro",   "label": "Alba en el Tabacal"   },
+    { "startMs": 28000,  "endMs": 84000,  "type": "verse",   "label": "La Cosecha"            },
+    { "startMs": 84000,  "endMs": 116000, "type": "chorus",  "label": "Canto del Veguero"     },
+    { "startMs": 116000, "endMs": 172000, "type": "verse"                                     },
+    { "startMs": 172000, "endMs": 204000, "type": "chorus"                                    },
+    { "startMs": 204000, "endMs": 222000, "type": "outro",   "label": "Brumas del Atardecer"  }
+  ],
+  "lore": {
+    "tagline": "Guajira campesina desde los valles del tabaco de Vuelta Abajo.",
+    "story": "Ritmos del Sol gathered in a Pinar del Río tobacco barn to lay down this slow guajira — acoustic guitar, laúd, and a lone voice that carries the weight of red earth and curing leaves.",
+    "themes": ["rural-cuba", "labor", "nostalgia", "guajira"],
+    "trivia": [
+      "The laúd part was played on an instrument hand-carved from cedar grown on the same farm.",
+      "The room was left open so the wind through the curing barn would breathe on the recording."
+    ]
+  },
+  "genres": ["guajira", "punto-cubano", "roots-cuba"],
+  "tags": ["tobacco-plantation", "guajira", "rural", "acoustic", "vuelta-abajo"],
+  "origin": "cu"
+}

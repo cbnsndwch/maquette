@@ -1,0 +1,59 @@
+{
+  "_id": "demo-solarpunk",
+  "title": "Verdant Frequency",
+  "artist": "The Canopy Collective",
+  "album": "After the Grid",
+  "artistSlug": "canopy-collective",
+  "trackSlug": "verdant-frequency",
+  "durationMs": 212000,
+  "isInstrumental": false,
+  "tempo": 112,
+  "timeSignature": 4,
+  "key": 2,
+  "mode": 1,
+  "energy": 0.58,
+  "valence": 0.85,
+  "audioFeaturesEstimated": true,
+  "audioFeaturesSource": "musicbrainz",
+  "palette": {
+    "primary": "#d4f0a0",
+    "secondary": "#5a9e6f",
+    "accent": "#f9e84e",
+    "background": "#eafae0",
+    "text": "#1a3020",
+    "grain": 0.1,
+    "contrast": "low",
+    "mood": "warm"
+  },
+  "motionProfile": {
+    "speed": 0.45,
+    "cameraAggression": 0.25,
+    "particleDensity": 0.5,
+    "jitter": 0.1,
+    "bloomIntensity": 0.5
+  },
+  "sceneGrammar": {
+    "primaryMotif": "living-roof",
+    "transitionStyle": "bloom-fade"
+  },
+  "sections": [
+    { "startMs": 0,      "endMs": 20000,  "type": "intro",   "label": "Morning Garden"        },
+    { "startMs": 20000,  "endMs": 76000,  "type": "verse",   "label": "Community Commons"     },
+    { "startMs": 76000,  "endMs": 108000, "type": "chorus",  "label": "Verdant Wave"          },
+    { "startMs": 108000, "endMs": 164000, "type": "verse"                                     },
+    { "startMs": 164000, "endMs": 196000, "type": "chorus"                                    },
+    { "startMs": 196000, "endMs": 212000, "type": "outro",   "label": "Bees at Dusk"          }
+  ],
+  "lore": {
+    "tagline": "Dream-pop from a future where the city and the forest are one.",
+    "story": "Recorded partly in a greenhouse and partly in an urban community garden, The Canopy Collective layered field recordings of wind-chimes, running water, and birdsong beneath shimmer-drenched indie-pop guitars.",
+    "themes": ["ecology", "community", "optimism", "solarpunk"],
+    "trivia": [
+      "The vocoder choir effect was created using a repurposed amateur-radio transceiver.",
+      "Solar panels on the studio roof powered the entire recording session."
+    ]
+  },
+  "genres": ["indie-pop", "dream-pop", "folk-electronic"],
+  "tags": ["solarpunk", "green", "utopian", "shimmer", "garden"],
+  "origin": "nz"
+}
