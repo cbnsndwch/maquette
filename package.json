@@ -1,0 +1,57 @@
+{
+    "name": "@cbnsndwch/music-worlds",
+    "description": "MusicWorlds — song-to-tiny-world generator. Turns a track into a deterministic or LLM-composed 3D world rendered with Three.js.",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "private": true,
+    "repository": "https://github.com/cbnsndwch/music-worlds",
+    "author": {
+        "name": "cbnsndwch LLC",
+        "url": "https://github.com/cbnsndwch"
+    },
+    "scripts": {
+        "build": "turbo run build",
+        "dev": "turbo run dev",
+        "typecheck": "turbo run typecheck",
+        "clean": "turbo run clean",
+        "clog": "conventional-changelog -p angular -i CHANGELOG.md -o changelog-temp.md",
+        "deps": "node tools/dep-version-map.js && tools/dep-version-map.json",
+        "format": "turbo run format",
+        "lint:fix": "turbo run lint:fix",
+        "lint": "turbo run lint",
+        "test": "turbo run test",
+        "changeset": "changeset",
+        "changeset:version": "changeset version",
+        "changeset:publish": "changeset publish",
+        "changeset:status": "changeset status --verbose",
+        "release": "pnpm build && pnpm test && pnpm changeset:publish",
+        "vset": "tsx ./scripts/version-bump.ts",
+        "vtag": "tsx ./scripts/create-version-tag.ts"
+    },
+    "devDependencies": {
+        "@changesets/cli": "^2.30.0",
+        "change-case": "^5.4.4",
+        "conventional-changelog-cli": "^5.0.0",
+        "http-server": "^14.1.1",
+        "npm-check-updates": "^19.6.3",
+        "oxfmt": "^0.40.0",
+        "oxlint": "^1.55.0",
+        "turbo": "^2.8.17",
+        "vite": "^8.0.0"
+    },
+    "jest": {
+        "projects": [
+            "<rootDir>/apps/*",
+            "<rootDir>/libs/*"
+        ]
+    },
+    "workspaces": {
+        "packages": [
+            "apps/*",
+            "libs/*",
+            "tools/*"
+        ]
+    },
+    "packageManager": "pnpm@10.32.1+sha512.a706938f0e89ac1456b6563eab4edf1d1faf3368d1191fc5c59790e96dc918e4456ab2e67d613de1043d2e8c81f87303e6b40d4ffeca9df15ef1ad567348f2be"
+}
