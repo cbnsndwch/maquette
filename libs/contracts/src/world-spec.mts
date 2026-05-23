@@ -99,6 +99,22 @@ export const propSchema = z.object({
 });
 export type Prop = z.infer<typeof propSchema>;
 
+/**
+ * A multi-cell building placed on the grid. Unlike a {@link Prop} (a single
+ * decoration), a structure spans a square `footprint` of tiles and is rendered
+ * as one composite voxel asset keyed by `type` (e.g. 'two-story', 'chapel').
+ */
+export const structureSchema = z.object({
+    type: z.string(),
+    /** Anchor cell: the min-x/min-y corner of the footprint. */
+    x: z.number().int(),
+    y: z.number().int(),
+    /** Footprint side length in tiles (square). */
+    footprint: z.number().int().positive().default(1),
+    rotation: rotationSchema.default(0)
+});
+export type Structure = z.infer<typeof structureSchema>;
+
 export const postFxSchema = z.object({
     /** Kuwahara painterly pass. */
     kuwahara: z.boolean().default(false),
@@ -124,6 +140,8 @@ export const worldSpecSchema = z.object({
     }),
     tiles: fixedGrid(tileSchema),
     props: z.array(propSchema),
+    /** Multi-cell composite buildings. Empty for biomes that don't place any. */
+    structures: z.array(structureSchema).default([]),
     weather: weatherSchema,
     timeOfDay: timeOfDaySchema,
     postFx: postFxSchema

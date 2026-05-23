@@ -108,6 +108,7 @@ export function createSampleWorldSpec(seed: string): WorldSpec {
         terrain: { heightmap },
         tiles,
         props,
+        structures: [],
         weather: pick(rng, ['clear', 'clear', 'cloudy'] as const),
         timeOfDay: pick(rng, ['dawn', 'day', 'day', 'dusk'] as const),
         postFx: {
