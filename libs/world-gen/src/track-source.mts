@@ -5,6 +5,9 @@ import {
 } from '@cbnsndwch/contracts';
 
 import { type GenerateOptions } from './biome.mjs';
+import { type GenerateWfcOptions } from './generate-wfc.mjs';
+import { MusicBrainzClient } from './musicbrainz.mjs';
+import { selectBiome, type TrackAffinities } from './select-biome.mjs';
 
 // ---------------------------------------------------------------------------
 // trackToWorldInputs — maps a Musicologia track descriptor → GenerateOptions
@@ -48,6 +51,14 @@ export interface MusicologiaTrackSourceOptions {
     baseUrl: string;
     /** Value for the x-api-key header (ADMIN_API_KEY on the server). */
     apiKey: string;
+    /**
+     * Enrich biome selection with MusicBrainz genres + artist origin (the API
+     * descriptor carries neither). Defaults to true; set false for a fully
+     * offline, mood-only selection. Ignored when a track has no mbRecordingId.
+     */
+    enrichWithMusicBrainz?: boolean;
+    /** Injectable MusicBrainz client (tests/offline). */
+    musicBrainz?: MusicBrainzClient;
 }
 
 /**
@@ -58,10 +69,19 @@ export interface MusicologiaTrackSourceOptions {
 export class MusicologiaTrackSource {
     readonly #baseUrl: string;
     readonly #apiKey: string;
+    readonly #enrich: boolean;
+    readonly #mb: MusicBrainzClient;
 
-    constructor({ baseUrl, apiKey }: MusicologiaTrackSourceOptions) {
+    constructor({
+        baseUrl,
+        apiKey,
+        enrichWithMusicBrainz = true,
+        musicBrainz
+    }: MusicologiaTrackSourceOptions) {
         this.#baseUrl = baseUrl.replace(/\/$/, '');
         this.#apiKey = apiKey;
+        this.#enrich = enrichWithMusicBrainz;
+        this.#mb = musicBrainz ?? new MusicBrainzClient();
     }
 
     /** Fetch a descriptor by Spotify track ID. Returns null on any failure. */
@@ -84,14 +104,50 @@ export class MusicologiaTrackSource {
     }
 
     /**
-     * Resolve GenerateOptions for a Spotify track ID. Returns an empty object
-     * (triggering the featuresFromSeed fallback in the generator) when the track
-     * is not found or the server is unreachable.
+     * Resolve generator inputs for a Spotify track ID: maps audio features and
+     * selects a biome (genres/origin enriched via MusicBrainz when available,
+     * otherwise mood-only). Returns an empty object — triggering the
+     * featuresFromSeed + default-biome fallback — when the track is not found
+     * or the server is unreachable.
      */
-    async getWorldInputs(spotifyTrackId: string): Promise<GenerateOptions> {
+    async getWorldInputs(spotifyTrackId: string): Promise<GenerateWfcOptions> {
         const track = await this.fetchBySpotifyId(spotifyTrackId);
         if (!track) return {};
-        return trackToWorldInputs(track);
+
+        const affinities = await this.resolveAffinities(track);
+        return {
+            ...trackToWorldInputs(track),
+            biomeId: selectBiome(affinities)
+        };
+    }
+
+    /**
+     * Build the selection signal for a track: mood (energy/valence/tempo) and
+     * lore themes always; genres + artist origin added from MusicBrainz when
+     * enrichment is on and the track has a recording MBID.
+     */
+    async resolveAffinities(track: MusicologiaTrack): Promise<TrackAffinities> {
+        const affinities: TrackAffinities = {
+            energy: track.energy,
+            valence: track.valence,
+            tempo: track.tempo,
+            danceability: clamp(
+                track.energy * 0.5 + (track.mode === 1 ? 0.3 : 0.1),
+                0,
+                1
+            ),
+            tags: track.lore?.themes ?? []
+        };
+
+        if (this.#enrich && track.mbRecordingId) {
+            const mb = await this.#mb.enrichByRecording(track.mbRecordingId);
+            if (mb) {
+                affinities.genres = mb.genres;
+                if (mb.origin) affinities.origin = mb.origin;
+            }
+        }
+
+        return affinities;
     }
 
     async #get(path: string): Promise<MusicologiaTrack | null> {
