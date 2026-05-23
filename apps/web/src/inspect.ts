@@ -89,8 +89,12 @@ function show(): void {
     const box = new THREE.Box3().setFromObject(group);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
-    // Center on the grid (XZ) and seat the base on y=0.
-    group.position.set(-center.x, -box.min.y, -center.z);
+    // Snap to the nearest half-integer so voxel centers (always at vx+0.5)
+    // land on whole integers and align with grid lines for both even- and
+    // odd-width assets.
+    const snapX = Math.round(center.x - 0.5) + 0.5;
+    const snapZ = Math.round(center.z - 0.5) + 0.5;
+    group.position.set(-snapX, -box.min.y, -snapZ);
     scene.add(group);
     current = group;
 
