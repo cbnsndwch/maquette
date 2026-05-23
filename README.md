@@ -8,7 +8,7 @@ which is rendered with Three.js. The same `WorldSpec` can target multiple
 renderers (browser today; Tauri and a terminal target later), and can be produced
 either deterministically (Wave Function Collapse over a tile catalog) or by an LLM.
 
-See [`research/`](./research) for the reference survey that motivates the
+See [`docs/research/`](./docs/research) for the reference survey that motivates the
 architecture.
 
 ## The pipeline
@@ -31,14 +31,19 @@ serialize a world to share or replay.
 
 ```
 ├── apps/
-│   └── web/            # Vite + Three.js browser render target
+│   ├── tui/            # Terminal render target (3D via @opentui/three or ASCII fallback)
+│   └── web/            # Vite + Three.js browser render target (also packaged as Tauri desktop app)
 ├── libs/
 │   ├── contracts/      # @cbnsndwch/contracts — WorldSpec Zod schema, seed PRNG, shared types
-│   └── world-core/     # @cbnsndwch/world-core — renderer-agnostic WorldSpec → THREE.Scene builder
+│   ├── wfc/            # @cbnsndwch/wfc — Wave Function Collapse tile solver
+│   ├── world-core/     # @cbnsndwch/world-core — renderer-agnostic WorldSpec → THREE.Scene builder
+│   └── world-gen/      # @cbnsndwch/world-gen — biome registry, WFC and LLM world generators
+├── docs/
+│   └── research/       # OSS reference survey that motivates the architecture
 ├── tools/
 │   ├── tsconfig/       # @cbnsndwch/tsconfig — shared TypeScript configs
 │   └── dep-version-map/
-└── research/           # OSS reference survey
+└── scripts/            # Version bump and tag helpers
 ```
 
 ## Getting started
