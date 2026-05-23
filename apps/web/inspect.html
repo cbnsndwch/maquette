@@ -3,85 +3,123 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Musicologia — Object Inspector</title>
+        <title>Musicologia — Voxel Editor</title>
         <style>
-            :root {
-                color-scheme: light dark;
+            :root { color-scheme: light dark; }
+            html, body {
+                margin: 0; height: 100%; overflow: hidden;
+                font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
             }
-            html,
-            body {
-                margin: 0;
-                height: 100%;
-                overflow: hidden;
-                font-family:
-                    ui-sans-serif, system-ui, -apple-system, sans-serif;
-            }
-            #app {
-                position: fixed;
-                inset: 0;
-            }
-            canvas {
-                display: block;
-            }
+            #app { position: fixed; inset: 0; }
+            canvas { display: block; }
+
+            /* ── Panel ───────────────────────────────────────────────── */
             #panel {
-                position: fixed;
-                top: 12px;
-                left: 12px;
-                z-index: 10;
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-                padding: 12px 14px;
-                border-radius: 10px;
-                background: rgba(20, 24, 28, 0.78);
-                color: #f4f1ea;
-                font-size: 13px;
-                backdrop-filter: blur(6px);
-                min-width: 220px;
+                position: fixed; top: 12px; left: 12px; z-index: 10;
+                display: flex; flex-direction: column; gap: 7px;
+                padding: 12px 14px; border-radius: 10px;
+                background: rgba(20, 24, 28, 0.82); color: #f4f1ea;
+                font-size: 13px; backdrop-filter: blur(6px); min-width: 240px;
             }
-            #panel h1 {
-                font-size: 13px;
-                margin: 0 0 2px;
-                font-weight: 600;
-            }
-            #panel label {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: 8px;
+            #panel h1 { font-size: 13px; margin: 0 0 2px; font-weight: 600; }
+            #panel > label {
+                display: flex; justify-content: space-between;
+                align-items: center; gap: 8px;
             }
             #panel select {
-                flex: 1;
-                background: rgba(255, 255, 255, 0.12);
-                color: inherit;
-                border: 1px solid rgba(255, 255, 255, 0.25);
-                border-radius: 6px;
-                padding: 3px 6px;
-                font: inherit;
+                flex: 1; background: rgba(255,255,255,.12); color: inherit;
+                border: 1px solid rgba(255,255,255,.25); border-radius: 6px;
+                padding: 3px 6px; font: inherit;
             }
-            #panel select option {
-                color: #1a1a1a;
+            #panel select option { color: #1a1a1a; }
+            #info { opacity: .7; font-size: 12px; }
+            .sep { border: none; border-top: 1px solid rgba(255,255,255,.12); margin: 2px 0; }
+
+            /* ── Tool row ────────────────────────────────────────────── */
+            .tool-row { display: flex; align-items: center; gap: 6px; }
+            .tool-row .row-label { opacity: .6; font-size: 11px; min-width: 36px; }
+            #tools { display: flex; gap: 4px; }
+            #tools button {
+                width: 30px; height: 26px; border-radius: 5px; border: none;
+                background: rgba(255,255,255,.1); color: #f4f1ea;
+                font-size: 13px; cursor: pointer; display: flex;
+                align-items: center; justify-content: center;
+                transition: background .12s;
             }
-            #info {
-                opacity: 0.7;
-                font-size: 12px;
+            #tools button:hover { background: rgba(255,255,255,.2); }
+            #tools button.active { background: rgba(99,168,255,.45); }
+
+            /* ── Palette ─────────────────────────────────────────────── */
+            .palette-row { display: flex; align-items: flex-start; gap: 6px; }
+            .palette-row .row-label { opacity: .6; font-size: 11px; min-width: 36px; margin-top: 4px; }
+            #palette { display: flex; flex-wrap: wrap; gap: 3px; flex: 1; }
+            .swatch, .swatch-add {
+                width: 20px; height: 20px; border-radius: 4px; border: 2px solid transparent;
+                cursor: pointer; flex-shrink: 0;
             }
-            #hint {
-                position: fixed;
-                bottom: 12px;
-                left: 12px;
-                opacity: 0.55;
-                font-size: 12px;
+            .swatch.active { border-color: #ffffff; }
+            .swatch-add {
+                background: rgba(255,255,255,.12); color: #f4f1ea;
+                font-size: 14px; line-height: 16px; text-align: center;
+                border-color: rgba(255,255,255,.2);
             }
+            .swatch-add:hover { background: rgba(255,255,255,.22); }
+
+            /* ── Color picker row ────────────────────────────────────── */
+            .color-row { display: flex; align-items: center; gap: 6px; }
+            .color-row .row-label { opacity: .6; font-size: 11px; min-width: 36px; }
+            #colorPicker { width: 28px; height: 22px; padding: 0; border: none; background: none; cursor: pointer; border-radius: 4px; }
+            #colorHex { opacity: .55; font-size: 11px; font-variant-numeric: tabular-nums; }
+
+            /* ── Fill settings ───────────────────────────────────────── */
+            #fillSettings {
+                border: 1px solid rgba(255,255,255,.12); border-radius: 6px;
+                padding: 0 8px;
+            }
+            #fillSettings summary {
+                padding: 5px 0; cursor: pointer; opacity: .8; font-size: 12px;
+                list-style: none; user-select: none;
+            }
+            #fillSettings summary::before { content: '▶ '; font-size: 9px; }
+            #fillSettings[open] summary::before { content: '▼ '; }
+            #fillSettings .fs-body { display: flex; flex-direction: column; gap: 5px; padding: 4px 0 8px; }
+            #fillSettings label {
+                display: flex; align-items: center; gap: 6px; font-size: 12px;
+            }
+            #fillSettings .fs-key { opacity: .6; min-width: 24px; }
+            #fillSettings input[type=range] { flex: 1; accent-color: #63a8ff; }
+            #fillSettings output { min-width: 34px; text-align: right; opacity: .75; font-size: 11px; font-variant-numeric: tabular-nums; }
+            #fillSettings input[type=number] {
+                width: 36px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+                border-radius: 4px; color: inherit; font: inherit; font-size: 12px;
+                padding: 2px 4px; text-align: center;
+            }
+            .dim-row { display: flex; align-items: center; gap: 4px; font-size: 12px; }
+            .dim-row .fs-key { opacity: .6; min-width: 24px; }
+
+            /* ── File ops ────────────────────────────────────────────── */
+            .file-row { display: flex; gap: 6px; }
+            .file-row button {
+                flex: 1; padding: 5px 8px; border-radius: 6px; border: none;
+                background: rgba(255,255,255,.12); color: #f4f1ea;
+                font: inherit; font-size: 12px; cursor: pointer;
+                transition: background .12s;
+            }
+            .file-row button:hover { background: rgba(255,255,255,.22); }
+            #saveBtn { background: rgba(99,168,255,.25); }
+            #saveBtn:hover { background: rgba(99,168,255,.4); }
+
+            /* ── Hint ────────────────────────────────────────────────── */
+            #hint { position: fixed; bottom: 12px; left: 12px; opacity: .5; font-size: 12px; }
         </style>
     </head>
     <body>
         <div id="app"></div>
+
         <div id="panel">
-            <h1>Object Inspector</h1>
+            <h1>Voxel Editor</h1>
             <label>biome <select id="biome"></select></label>
-            <label
-                >category
+            <label>category
                 <select id="category">
                     <option value="props">prop</option>
                     <option value="structures">building</option>
@@ -90,8 +128,73 @@
             </label>
             <label>object <select id="object"></select></label>
             <div id="info"></div>
+
+            <hr class="sep">
+
+            <div class="tool-row">
+                <span class="row-label">tool</span>
+                <div id="tools">
+                    <button data-tool="add"        title="Add voxel — click a face to extrude">+</button>
+                    <button data-tool="delete"     title="Delete voxel — click to remove">✕</button>
+                    <button data-tool="repaint"    title="Repaint voxel — apply active color">✎</button>
+                    <button data-tool="eyedropper" title="Eyedropper — sample color from voxel">⊙</button>
+                    <button data-tool="fill"       title="Fill block — place W×D×H noise-colored voxels">▦</button>
+                </div>
+            </div>
+
+            <div class="palette-row">
+                <span class="row-label">palette</span>
+                <div id="palette"></div>
+            </div>
+
+            <div class="color-row">
+                <span class="row-label">color</span>
+                <input type="color" id="colorPicker" value="#7eaa5f">
+                <span id="colorHex">#7eaa5f</span>
+            </div>
+
+            <details id="fillSettings">
+                <summary>fill settings</summary>
+                <div class="fs-body">
+                    <label>
+                        <span class="fs-key">hue</span>
+                        <input type="range" id="fillHue" min="0" max="359" value="120">
+                        <output id="fillHueOut">120°</output>
+                    </label>
+                    <label>
+                        <span class="fs-key">±std</span>
+                        <input type="range" id="fillStd" min="0" max="90" value="25">
+                        <output id="fillStdOut">25°</output>
+                    </label>
+                    <label>
+                        <span class="fs-key">sat</span>
+                        <input type="range" id="fillSat" min="0" max="100" value="60">
+                        <output id="fillSatOut">60%</output>
+                    </label>
+                    <label>
+                        <span class="fs-key">lit</span>
+                        <input type="range" id="fillLit" min="0" max="100" value="45">
+                        <output id="fillLitOut">45%</output>
+                    </label>
+                    <div class="dim-row">
+                        <span class="fs-key">W×D×H</span>
+                        <input type="number" id="fillW" min="1" max="24" value="3">
+                        <span>×</span>
+                        <input type="number" id="fillD" min="1" max="24" value="3">
+                        <span>×</span>
+                        <input type="number" id="fillH" min="1" max="24" value="3">
+                    </div>
+                </div>
+            </details>
+
+            <div class="file-row">
+                <input type="file" id="loadFile" accept=".json" style="display:none">
+                <button id="loadBtn">load json</button>
+                <button id="saveBtn">save + copy</button>
+            </div>
         </div>
-        <div id="hint">drag to rotate · right-drag to pan · scroll to zoom</div>
+
+        <div id="hint">drag to orbit · right-drag to pan · scroll to zoom · click to edit</div>
         <script type="module" src="/src/inspect.ts"></script>
     </body>
 </html>
