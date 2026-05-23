@@ -39,10 +39,42 @@
             #hud .seed {
                 opacity: 0.7;
             }
+            #controls {
+                position: fixed;
+                top: 12px;
+                left: 12px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 10px;
+                border-radius: 8px;
+                background: rgba(0, 0, 0, 0.45);
+                color: #f4f1ea;
+                font-size: 13px;
+                backdrop-filter: blur(4px);
+            }
+            #controls select {
+                background: rgba(255, 255, 255, 0.1);
+                color: inherit;
+                border: 1px solid rgba(255, 255, 255, 0.25);
+                border-radius: 6px;
+                padding: 3px 6px;
+                font: inherit;
+            }
+            #controls select option {
+                color: #1a1a1a;
+            }
         </style>
     </head>
     <body>
         <div id="app"></div>
+        <div id="controls">
+            <label for="biome-picker">biome</label>
+            <select id="biome-picker">
+                <option value="">auto (from track)</option>
+            </select>
+            <label><input type="checkbox" id="orbit-toggle" checked /> orbit</label>
+        </div>
         <div id="hud">
             <div><strong>Musicologia</strong> — sample world</div>
             <div class="seed" id="seed"></div>

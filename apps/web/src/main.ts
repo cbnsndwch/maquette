@@ -6,12 +6,15 @@ import { musicologiaTrackSchema } from '@cbnsndwch/contracts';
 import {
     buildScene,
     createPostFx,
+    disposeScene,
     hasPostFx,
-    suggestCameraPosition
+    suggestCameraPosition,
+    type PostFxChain
 } from '@cbnsndwch/world-core';
 import {
     generateLlmWorld,
     generateWfcWorld,
+    listBiomes,
     selectBiome,
     trackToWorldInputs,
     MusicBrainzClient,
@@ -56,7 +59,7 @@ const trackId = seed.startsWith('spotify:track:')
  * Returns {} (seed-derived features + default biome) when nothing matches.
  */
 async function resolveWorldInputs(): Promise<GenerateWfcOptions> {
-    if (biomeOverride !== undefined) {
+    if (biomeOverride) {
         return { biomeId: biomeOverride };
     }
 
@@ -137,18 +140,49 @@ async function generate(): Promise<WorldSpec> {
     return generateWfcWorld(seed, await resolveWorldInputs());
 }
 
+/**
+ * Populate the biome picker and wire it to swap worlds in place. Selecting a
+ * biome forces it via the WFC path (instant, offline); "auto" re-runs the full
+ * track-driven resolution. The choice is mirrored into ?biome= so it survives a
+ * reload and is shareable.
+ */
+function setupBiomePicker(show: (spec: WorldSpec) => void): void {
+    const picker = document.getElementById(
+        'biome-picker'
+    ) as HTMLSelectElement | null;
+    if (!picker) {
+        return;
+    }
+
+    for (const id of listBiomes()) {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = id;
+        picker.append(opt);
+    }
+    if (biomeOverride) {
+        picker.value = biomeOverride;
+    }
+
+    picker.addEventListener('change', () => {
+        void (async () => {
+            const id = picker.value;
+            const url = new URL(window.location.href);
+            if (id) {
+                url.searchParams.set('biome', id);
+            } else {
+                url.searchParams.delete('biome');
+            }
+            window.history.replaceState({}, '', url);
+
+            show(
+                id ? generateWfcWorld(seed, { biomeId: id }) : await generate()
+            );
+        })();
+    });
+}
+
 async function main() {
-    const spec = await generate();
-    const override = postFxOverride();
-    if (override) {
-        spec.postFx = override;
-    }
-    if (seedEl) {
-        seedEl.textContent = `seed: ${seed} · ${spec.paradigm} · ${spec.timeOfDay} · ${spec.weather}`;
-    }
-
-    const scene = buildScene(spec);
-
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     const pixelRatio = Math.min(window.devicePixelRatio, 2);
     renderer.setPixelRatio(pixelRatio);
@@ -172,9 +206,40 @@ async function main() {
     controls.autoRotateSpeed = 0.6;
     controls.update();
 
-    const chain = hasPostFx(spec.postFx)
-        ? createPostFx(renderer, scene, camera, spec, { pixelRatio })
-        : null;
+    const orbitToggle = document.getElementById(
+        'orbit-toggle'
+    ) as HTMLInputElement | null;
+    if (orbitToggle) {
+        controls.autoRotate = orbitToggle.checked;
+        orbitToggle.addEventListener('change', () => {
+            controls.autoRotate = orbitToggle.checked;
+        });
+    }
+
+    let scene: THREE.Scene | null = null;
+    let chain: PostFxChain | null = null;
+
+    // Build (or rebuild) the scene for a spec, disposing the previous world's
+    // GPU resources so flipping through biomes doesn't leak.
+    function showWorld(spec: WorldSpec): void {
+        const override = postFxOverride();
+        if (override) {
+            spec.postFx = override;
+        }
+        if (seedEl) {
+            seedEl.textContent = `seed: ${seed} · ${spec.biome} · ${spec.paradigm} · ${spec.timeOfDay} · ${spec.weather}`;
+        }
+
+        if (scene) {
+            disposeScene(scene);
+        }
+        chain?.dispose();
+
+        scene = buildScene(spec);
+        chain = hasPostFx(spec.postFx)
+            ? createPostFx(renderer, scene, camera, spec, { pixelRatio })
+            : null;
+    }
 
     function onResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -188,12 +253,15 @@ async function main() {
         controls.update();
         if (chain) {
             chain.render();
-        } else {
+        } else if (scene) {
             renderer.render(scene, camera);
         }
         requestAnimationFrame(animate);
     }
     animate();
+
+    setupBiomePicker(showWorld);
+    showWorld(await generate());
 }
 
 void main();
