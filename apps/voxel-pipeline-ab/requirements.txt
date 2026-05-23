@@ -1,0 +1,15 @@
+# Pure-Python pipeline deps (no GPU). Installed into the app-local .venv.
+# Torch / CUDA is installed separately from requirements-cuda.txt.
+trimesh>=4.0
+rtree>=1.0          # trimesh ray/voxel acceleration
+scipy>=1.11
+numpy>=1.26
+Pillow>=10.0
+huggingface_hub>=0.23
+tqdm>=4.66
+
+# Path A LLM client (optional at runtime; lazy-imported)
+anthropic>=0.40
+
+# Dev / test
+pytest>=8.0

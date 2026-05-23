@@ -1,0 +1,20 @@
+# Python virtual environment (self-contained for this app)
+.venv/
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Pipeline working dirs & large artifacts (regenerable / multi-GB)
+staging/
+models/
+repos/
+out/
+*.obj
+*.glb
+*.ply
+
+# Keep committed sample/starter assets and skeletons tracked
+!skeletons/**

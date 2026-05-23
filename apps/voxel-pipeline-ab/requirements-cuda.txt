@@ -1,0 +1,6 @@
+# CUDA build of PyTorch for the RTX 4070 Laptop (Ada, 8 GB, CUDA 12.x).
+# Installed with: uv pip install -r requirements-cuda.txt
+--index-url https://download.pytorch.org/whl/cu121
+torch
+torchvision
+torchaudio

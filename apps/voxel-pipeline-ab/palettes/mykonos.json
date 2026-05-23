@@ -1,0 +1,13 @@
+{
+    "name": "mykonos",
+    "slots": {
+        "primary": "#f4f1ea",
+        "accent": "#2a6fb0",
+        "stone": "#b9b2a5",
+        "terracotta": "#c45a3b",
+        "bark": "#6b4a2b",
+        "foliage": "#6e7d4f",
+        "shadow": "#3a3a44",
+        "highlight": "#ffffff"
+    }
+}

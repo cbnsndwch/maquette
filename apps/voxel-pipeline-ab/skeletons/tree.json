@@ -1,0 +1,4099 @@
+{
+  "version": 1,
+  "id": "tree",
+  "biome": "generic",
+  "dims": {
+    "x": 12,
+    "y": 12,
+    "z": 16
+  },
+  "cells": [
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        {
+          "materialId": "bark",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  ],
+  "pivot": {
+    "x": 6.0,
+    "y": 6.0
+  },
+  "metadata": {
+    "skeleton": "tree",
+    "slots": [
+      "bark",
+      "foliage"
+    ]
+  }
+}

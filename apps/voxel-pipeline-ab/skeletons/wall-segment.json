@@ -1,0 +1,1143 @@
+{
+  "version": 1,
+  "id": "wall-segment",
+  "biome": "generic",
+  "dims": {
+    "x": 12,
+    "y": 12,
+    "z": 5
+  },
+  "cells": [
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        {
+          "materialId": "stone",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "highlight",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  ],
+  "pivot": {
+    "x": 6.0,
+    "y": 6.0
+  },
+  "metadata": {
+    "skeleton": "wall-segment",
+    "slots": [
+      "stone",
+      "highlight"
+    ]
+  }
+}

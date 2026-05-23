@@ -1,0 +1,31 @@
+[project]
+name = "voxel-pipeline-ab"
+version = "0.0.0"
+description = "Local CUDA voxel pipeline (Plan A+B): LLM-native JSON voxels + image->mesh->voxel for the Musicologia biome system."
+requires-python = ">=3.11"
+# Runtime deps are managed via requirements.txt / requirements-cuda.txt so the
+# CUDA torch index does not leak into resolution. Listed here for discovery only.
+dependencies = [
+    "trimesh>=4.0",
+    "rtree>=1.0",
+    "scipy>=1.11",
+    "numpy>=1.26",
+    "Pillow>=10.0",
+    "huggingface_hub>=0.23",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.40"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+voxel-gen = "voxel.gen:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.setuptools]
+packages = ["voxel"]

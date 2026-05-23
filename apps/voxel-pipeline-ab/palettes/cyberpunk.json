@@ -1,0 +1,13 @@
+{
+    "name": "cyberpunk",
+    "slots": {
+        "primary": "#1b1d2e",
+        "accent": "#ff2e88",
+        "stone": "#2a3550",
+        "terracotta": "#ff7a3c",
+        "bark": "#3a2a4a",
+        "foliage": "#00e5ff",
+        "shadow": "#0a0b14",
+        "highlight": "#b388ff"
+    }
+}

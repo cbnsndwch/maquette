@@ -1,0 +1,2878 @@
+{
+  "version": 1,
+  "id": "domed-building",
+  "biome": "generic",
+  "dims": {
+    "x": 12,
+    "y": 12,
+    "z": 11
+  },
+  "cells": [
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        {
+          "materialId": "shadow",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        {
+          "materialId": "primary",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  ],
+  "pivot": {
+    "x": 6.0,
+    "y": 6.0
+  },
+  "metadata": {
+    "skeleton": "domed-building",
+    "slots": [
+      "primary",
+      "accent",
+      "shadow"
+    ]
+  }
+}

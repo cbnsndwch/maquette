@@ -1,0 +1,30 @@
+{
+    "name": "voxel-pipeline-ab",
+    "description": "Local CUDA voxel pipeline (Plan A+B): LLM-native JSON voxels + image->mesh->voxel for the Musicologia biome system.",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "private": true,
+    "scripts": {
+        "setup": "uv venv .venv --python 3.11 && uv pip install -r requirements.txt && uv pip install -r requirements-cuda.txt",
+        "setup:cuda": "uv pip install -r requirements-cuda.txt",
+        "doctor": "uv run --no-sync python -m voxel.doctor",
+        "voxel:gen": "uv run --no-sync python -m voxel.gen",
+        "voxel:bake": "uv run --no-sync python -m voxel.bake",
+        "voxel:skeletons": "uv run --no-sync python -m voxel.skeletons --all",
+        "voxel:llm": "uv run --no-sync python -m voxel.llm_voxels",
+        "voxel:validate": "uv run --no-sync python -m voxel.validate_unit",
+        "voxel:voxelize": "uv run --no-sync python -m voxel.voxelize",
+        "voxel:chunk-merge": "uv run --no-sync python -m voxel.chunk_merge",
+        "voxel:export-vox": "uv run --no-sync python -m voxel.export_vox",
+        "voxel:remap": "uv run --no-sync python -m voxel.remap",
+        "bench": "uv run --no-sync python -m voxel.bench",
+        "voxel:triposr": "uv run --no-sync python -m voxel.triposr_infer",
+        "comfyui:setup": "uv run --no-sync python -m voxel.setup_external comfyui",
+        "triposr:setup": "uv run --no-sync python -m voxel.setup_external triposr",
+        "py:test": "uv run --no-sync python -m pytest"
+    },
+    "engines": {
+        "node": ">=22"
+    }
+}

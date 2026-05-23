@@ -1,0 +1,13 @@
+{
+    "name": "cuban-beach",
+    "slots": {
+        "primary": "#f5e6c8",
+        "accent": "#1ec8c8",
+        "stone": "#d8c4a0",
+        "terracotta": "#d97942",
+        "bark": "#7a5a3a",
+        "foliage": "#3e8e41",
+        "shadow": "#3a4a44",
+        "highlight": "#fff5e8"
+    }
+}

@@ -1,0 +1,65 @@
+{
+    "4": {
+        "class_type": "CheckpointLoaderSimple",
+        "inputs": { "ckpt_name": "sd_xl_base_1.0.safetensors" },
+        "_meta": { "title": "Load SDXL checkpoint" }
+    },
+    "10": {
+        "class_type": "LoraLoader",
+        "inputs": {
+            "lora_name": "voxel-isometric-xl.safetensors",
+            "strength_model": 0.9,
+            "strength_clip": 0.9,
+            "model": ["4", 0],
+            "clip": ["4", 1]
+        },
+        "_meta": { "title": "Apply voxel/isometric LoRA" }
+    },
+    "6": {
+        "class_type": "CLIPTextEncode",
+        "inputs": {
+            "text": "isometric voxel art, single {object}, blocky, flat shading, centered, plain background, low poly, 45 degree top-down view",
+            "clip": ["10", 1]
+        },
+        "_meta": { "title": "Positive prompt" }
+    },
+    "7": {
+        "class_type": "CLIPTextEncode",
+        "inputs": {
+            "text": "photorealistic, blurry, smooth, gradient, noisy, multiple objects, text, watermark, drop shadow, ground plane",
+            "clip": ["10", 1]
+        },
+        "_meta": { "title": "Negative prompt" }
+    },
+    "5": {
+        "class_type": "EmptyLatentImage",
+        "inputs": { "width": 512, "height": 512, "batch_size": 1 },
+        "_meta": { "title": "Empty latent (512, dev)" }
+    },
+    "3": {
+        "class_type": "KSampler",
+        "inputs": {
+            "seed": 0,
+            "steps": 25,
+            "cfg": 7.0,
+            "sampler_name": "euler",
+            "scheduler": "normal",
+            "denoise": 1.0,
+            "model": ["10", 0],
+            "positive": ["6", 0],
+            "negative": ["7", 0],
+            "latent_image": ["5", 0]
+        },
+        "_meta": { "title": "KSampler" }
+    },
+    "8": {
+        "class_type": "VAEDecode",
+        "inputs": { "samples": ["3", 0], "vae": ["4", 2] },
+        "_meta": { "title": "VAE decode" }
+    },
+    "9": {
+        "class_type": "SaveImage",
+        "inputs": { "images": ["8", 0], "filename_prefix": "voxel/concept" },
+        "_meta": { "title": "Save concept image" }
+    }
+}

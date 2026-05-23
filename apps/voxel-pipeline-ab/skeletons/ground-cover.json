@@ -1,0 +1,626 @@
+{
+  "version": 1,
+  "id": "ground-cover",
+  "biome": "generic",
+  "dims": {
+    "x": 12,
+    "y": 12,
+    "z": 3
+  },
+  "cells": [
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        }
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "foliage",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ],
+    [
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        {
+          "materialId": "accent",
+          "size": 1
+        },
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    ]
+  ],
+  "pivot": {
+    "x": 6.0,
+    "y": 6.0
+  },
+  "metadata": {
+    "skeleton": "ground-cover",
+    "slots": [
+      "foliage",
+      "accent"
+    ]
+  }
+}
