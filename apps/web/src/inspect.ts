@@ -31,7 +31,12 @@ container.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color('#e7ebee');
-scene.add(new THREE.GridHelper(48, 48, 0x8a929a, 0xc4c9ce));
+
+// Tile boundary: prominent lines at the 12-voxel edge + center cross.
+scene.add(new THREE.GridHelper(12, 1, 0x6a7278, 0x8a929a));
+
+// Voxel subgrid: one cell per voxel, muted so it reads as secondary reference.
+scene.add(new THREE.GridHelper(12, 12, 0x8a929a, 0xc4c9ce));
 
 const camera = new THREE.PerspectiveCamera(
     45,
