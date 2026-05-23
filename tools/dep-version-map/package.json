@@ -1,0 +1,9 @@
+{
+    "name": "@cbnsndwch/dep-version-map",
+    "type": "module",
+    "private": true,
+    "devDependencies": {
+        "glob": "^13.0.6",
+        "lodash-es": "^4.17.23"
+    }
+}
