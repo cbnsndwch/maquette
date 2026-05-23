@@ -1,0 +1,40 @@
+{
+    "name": "tui",
+    "description": "Musicologia terminal render target — prints a track's island as a colored map",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "private": true,
+    "bin": {
+        "musicologia-tui": "./dist/main.js"
+    },
+    "scripts": {
+        "build": "tsup",
+        "start": "bun dist/main.js",
+        "start:ascii": "node dist/main.js --ascii",
+        "format": "oxfmt --write src",
+        "lint": "oxlint ./src",
+        "lint:fix": "oxlint ./src --fix",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest --run --passWithNoTests",
+        "ci:test": "vitest --run --passWithNoTests --bail 1",
+        "test:watch": "vitest"
+    },
+    "engines": {
+        "node": ">=22",
+        "bun": ">=1.0"
+    },
+    "dependencies": {
+        "@cbnsndwch/contracts": "workspace:*",
+        "@cbnsndwch/world-gen": "workspace:*",
+        "@opentui/core": "^0.2.15",
+        "@opentui/three": "^0.2.15"
+    },
+    "devDependencies": {
+        "@cbnsndwch/tsconfig": "workspace:*",
+        "@types/node": "^22",
+        "tsup": "^8.5.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.0"
+    }
+}
