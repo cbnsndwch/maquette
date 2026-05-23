@@ -1,0 +1,56 @@
+{
+    "name": "@cbnsndwch/world-core",
+    "description": "Renderer-agnostic WorldSpec → THREE.Scene builder for Musicologia",
+    "version": "0.0.0",
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    },
+    "type": "module",
+    "license": "MIT",
+    "author": {
+        "name": "Sergio Leon",
+        "email": "oss@cbnsndwch.io"
+    },
+    "scripts": {
+        "build": "tsup",
+        "format": "oxfmt --write src",
+        "lint": "oxlint ./src",
+        "lint:fix": "oxlint ./src --fix",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest --run --passWithNoTests",
+        "ci:test": "vitest --run --passWithNoTests --bail 1",
+        "test:watch": "vitest"
+    },
+    "engines": {
+        "node": ">=22"
+    },
+    "dependencies": {
+        "@cbnsndwch/contracts": "workspace:*"
+    },
+    "peerDependencies": {
+        "three": ">=0.160.0"
+    },
+    "devDependencies": {
+        "@cbnsndwch/tsconfig": "workspace:*",
+        "@types/node": "^22",
+        "@types/three": "^0.184.0",
+        "three": "^0.184.0",
+        "tsup": "^8.5.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.0"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "main": "./dist/index.js"
+}
