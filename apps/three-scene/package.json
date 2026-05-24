@@ -9,7 +9,7 @@
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
-        "format": "oxfmt --write src",
+        "format": "oxfmt --write -c ../../.oxfmtrc.json src",
         "lint": "oxlint ./src",
         "lint:fix": "oxlint ./src --fix",
         "typecheck": "tsc --noEmit"
