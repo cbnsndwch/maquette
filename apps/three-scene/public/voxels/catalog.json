@@ -1,10 +1,61 @@
 {
     "tiles": [
-        { "id": "grass", "name": "grass", "category": "terrain", "file": "/voxels/terrain/grass.vox", "stackable": false },
-        { "id": "sand", "name": "sand", "category": "terrain", "file": "/voxels/terrain/sand.vox", "stackable": true },
-        { "id": "path", "name": "path", "category": "terrain", "file": "/voxels/terrain/path.vox", "stackable": true },
-        { "id": "stone", "name": "stone", "category": "terrain", "file": "/voxels/terrain/stone.vox", "stackable": true },
-        { "id": "water", "name": "water", "category": "terrain", "file": "/voxels/terrain/water.vox", "stackable": false },
-        { "id": "sea_wall", "name": "sea wall", "category": "terrain", "file": "/voxels/terrain/sea_wall.vox", "stackable": false }
+        {
+            "id": "grass",
+            "name": "grass",
+            "category": "terrain",
+            "file": "/voxels/terrain/grass.vox",
+            "stackable": false
+        },
+        {
+            "id": "sand",
+            "name": "sand",
+            "category": "terrain",
+            "file": "/voxels/terrain/sand.vox",
+            "stackable": true
+        },
+        {
+            "id": "path",
+            "name": "path",
+            "category": "terrain",
+            "file": "/voxels/terrain/path.vox",
+            "stackable": true
+        },
+        {
+            "id": "stone",
+            "name": "stone",
+            "category": "terrain",
+            "file": "/voxels/terrain/stone.vox",
+            "stackable": true
+        },
+        {
+            "id": "water",
+            "name": "water",
+            "category": "terrain",
+            "file": "/voxels/terrain/water.vox",
+            "stackable": false
+        },
+        {
+            "id": "sea_wall",
+            "name": "sea wall",
+            "category": "terrain",
+            "file": "/voxels/terrain/sea_wall.vox",
+            "stackable": false
+        },
+        {
+            "id": "boulder",
+            "name": "boulder",
+            "category": "nature",
+            "file": "/voxels/terrain/boulder.vox",
+            "stackable": false
+        },
+        {
+            "id": "foooo",
+            "name": "foooo",
+            "category": "nature",
+            "file": "/voxels/terrain/foooo.vox",
+            "stackable": false,
+            "deleted": true
+        }
     ]
 }
