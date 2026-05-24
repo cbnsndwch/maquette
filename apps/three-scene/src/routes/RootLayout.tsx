@@ -16,8 +16,8 @@ export function RootLayout(): React.JSX.Element {
 
             <header id="title-card">
                 <div className="title-text">
-                    <h1>Voxel Scene Builder</h1>
-                    <p>Three.js · Mykonos terrain cells</p>
+                    <h1>Maquette • 3D Builder</h1>
+                    <p>Scene · Mykonos Biome</p>
                 </div>
             </header>
 
