@@ -1,9 +1,9 @@
-import * as THREE from "three";
+import * as THREE from 'three';
 
-import { decodeVox, VoxelBatch, type Voxel } from "@cbnsndwch/world-core";
+import { decodeVox, VoxelBatch, type Voxel } from '@cbnsndwch/world-core';
 
-import { CONFIG } from "../config.js";
-import type { SceneView } from "./scene-view.js";
+import { CONFIG } from '../config.js';
+import type { SceneView } from './scene-view.js';
 
 const N = CONFIG.voxel.perTile; // 12 — footprint edge in voxels
 const HALF = N / 2;
@@ -13,9 +13,9 @@ const PALETTE_SIZE = 256;
 /** Discrete shade levels the Shade tool quantizes a color to. */
 const SHADE_STEPS = 7;
 /** Rendered for a voxel whose palette slot was cleared/unassigned (flags the orphan). */
-const FALLBACK_COLOR = "#ff00ff";
+const FALLBACK_COLOR = '#ff00ff';
 
-export type EditTool = "add" | "delete" | "paint" | "eyedropper" | "select";
+export type EditTool = 'add' | 'delete' | 'paint' | 'eyedropper' | 'select';
 
 /**
  * Editor-internal voxel: position plus the palette **slot index** that colors it.
@@ -33,18 +33,18 @@ interface EditVoxel {
 }
 
 const DEFAULT_PALETTE = [
-    "#fafaf5",
-    "#cdc8b8",
-    "#b5b0a2",
-    "#8d8878",
-    "#e8d4a8",
-    "#c4622e",
-    "#7eaa5f",
-    "#5c8a44",
-    "#7a9460",
-    "#a07344",
-    "#1b5ba8",
-    "#3a3833",
+    '#fafaf5',
+    '#cdc8b8',
+    '#b5b0a2',
+    '#8d8878',
+    '#e8d4a8',
+    '#c4622e',
+    '#7eaa5f',
+    '#5c8a44',
+    '#7a9460',
+    '#a07344',
+    '#1b5ba8',
+    '#3a3833'
 ];
 
 /** A 256-slot palette seeded with the defaults; the rest are unassigned (null). */
@@ -78,7 +78,7 @@ export class TileEditor {
     /** Fixed 256-slot palette; null = unassigned (shown as an empty swatch). */
     palette: (string | null)[] = makeDefaultPalette();
     activeColorIdx = 0;
-    tool: EditTool = "add";
+    tool: EditTool = 'add';
     /** Selected voxel position keys ("x,y,z"). */
     readonly selection = new Set<string>();
     /** Id of the tile being edited (set by {@link loadTile}); null for a new tile. */
@@ -105,16 +105,16 @@ export class TileEditor {
         color: 0xffcf3a,
         transparent: true,
         opacity: 0.45,
-        depthWrite: false,
+        depthWrite: false
     });
     /** Unit-cube edge vertices (24, as 12 line segments) replicated per voxel. */
     private readonly edgeTemplate = new THREE.EdgesGeometry(
         this.hitGeo
-    ).getAttribute("position").array as Float32Array;
+    ).getAttribute('position').array as Float32Array;
     private readonly edgeMat = new THREE.LineBasicMaterial({
         color: 0x2a2a2a,
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.35
     });
     private readonly raycaster = new THREE.Raycaster();
     private readonly floorPlane = new THREE.Plane(
@@ -136,7 +136,7 @@ export class TileEditor {
     }
 
     get activeColor(): string {
-        return this.palette[this.activeColorIdx] ?? "#ffffff";
+        return this.palette[this.activeColorIdx] ?? '#ffffff';
     }
 
     setActive(active: boolean): void {
@@ -149,7 +149,7 @@ export class TileEditor {
         this.voxels = [];
         this.palette = makeDefaultPalette();
         this.activeColorIdx = 0;
-        this.tool = "add";
+        this.tool = 'add';
         this.editingId = null;
         this.explode = 0;
         this.focusLayer = null;
@@ -197,7 +197,7 @@ export class TileEditor {
         palette: readonly (string | null)[] | undefined,
         id: string | null
     ): void {
-        const hexes = voxels.map((v) => v.c.toLowerCase());
+        const hexes = voxels.map(v => v.c.toLowerCase());
         this.palette = this.resolvePalette(hexes, palette);
         // Point every voxel at its palette slot. Colors derive from / were saved
         // with this palette, so lookups hit; ensureIndex covers any stragglers.
@@ -211,9 +211,9 @@ export class TileEditor {
             }
             return { x: v.x, y: v.y, z: v.z, ci: i };
         });
-        const first = this.palette.findIndex((c) => c != null);
+        const first = this.palette.findIndex(c => c != null);
         this.activeColorIdx = first >= 0 ? first : 0;
-        this.tool = "add";
+        this.tool = 'add';
         this.editingId = id;
         this.explode = 0;
         this.focusLayer = null;
@@ -227,7 +227,7 @@ export class TileEditor {
         hexes: readonly string[],
         palette?: readonly (string | null)[]
     ): (string | null)[] {
-        if (palette && palette.some((c) => c != null)) return toSlots(palette);
+        if (palette && palette.some(c => c != null)) return toSlots(palette);
         const colors: string[] = [];
         const seen = new Set<string>();
         for (const c of hexes) {
@@ -262,17 +262,17 @@ export class TileEditor {
 
     /** Resolve editor voxels to world-core hex {@link Voxel}s (the render/save seam). */
     materialize(voxels: readonly EditVoxel[] = this.voxels): Voxel[] {
-        return voxels.map((v) => ({
+        return voxels.map(v => ({
             x: v.x,
             y: v.y,
             z: v.z,
-            c: this.palette[v.ci] ?? FALLBACK_COLOR,
+            c: this.palette[v.ci] ?? FALLBACK_COLOR
         }));
     }
 
     /** True if any voxel is colored by palette slot `i`. */
     slotInUse(i: number): boolean {
-        return this.voxels.some((v) => v.ci === i);
+        return this.voxels.some(v => v.ci === i);
     }
 
     setTool(t: EditTool): void {
@@ -313,7 +313,7 @@ export class TileEditor {
         if (this.slotInUse(i)) return;
         this.palette[i] = null;
         if (this.activeColorIdx === i) {
-            const next = this.palette.findIndex((c) => c != null);
+            const next = this.palette.findIndex(c => c != null);
             this.activeColorIdx = next >= 0 ? next : 0;
         }
         this.onChange?.();
@@ -326,7 +326,7 @@ export class TileEditor {
      */
     setPalette(colors: readonly (string | null)[]): void {
         this.palette = toSlots(colors);
-        const first = this.palette.findIndex((c) => c != null);
+        const first = this.palette.findIndex(c => c != null);
         this.activeColorIdx = first >= 0 ? first : 0;
         this.rebuild();
         this.onChange?.();
@@ -353,14 +353,14 @@ export class TileEditor {
     }
 
     /** Sort assigned colors (by hue or lightness) to the front; empties trail. */
-    sortPalette(key: "hue" | "light"): void {
+    sortPalette(key: 'hue' | 'light'): void {
         const assigned: number[] = [];
         const empty: number[] = [];
         for (let i = 0; i < this.palette.length; i++) {
             if (this.palette[i] != null) assigned.push(i);
             else empty.push(i);
         }
-        const metric = key === "hue" ? hexHue : hexLuma;
+        const metric = key === 'hue' ? hexHue : hexLuma;
         assigned.sort(
             (a, b) => metric(this.palette[a]!) - metric(this.palette[b]!)
         );
@@ -397,21 +397,21 @@ export class TileEditor {
      * complement (+180°), analogous (±30°), or triad (±120°). Returns false if
      * there aren't enough free slots.
      */
-    harmony(kind: "complement" | "analogous" | "triad"): boolean {
+    harmony(kind: 'complement' | 'analogous' | 'triad'): boolean {
         const [h, s, l] = hexToHsl(this.activeColor);
         const offsets =
-            kind === "complement"
+            kind === 'complement'
                 ? [180]
-                : kind === "analogous"
+                : kind === 'analogous'
                   ? [30, -30]
                   : [120, -120];
-        return this.addColors(offsets.map((d) => hslToHex(h + d, s, l)));
+        return this.addColors(offsets.map(d => hslToHex(h + d, s, l)));
     }
 
     /** Add the distinct, not-yet-present colors to free slots; false if no room. */
     private addColors(colors: readonly string[]): boolean {
-        const distinct = [...new Set(colors.map((c) => c.toLowerCase()))].filter(
-            (c) => !this.palette.includes(c)
+        const distinct = [...new Set(colors.map(c => c.toLowerCase()))].filter(
+            c => !this.palette.includes(c)
         );
         if (distinct.length > this.freeSlotCount()) return false;
         for (const c of distinct) this.ensurePaletteColor(c);
@@ -439,7 +439,7 @@ export class TileEditor {
     deleteSelection(): void {
         if (this.selection.size === 0) return;
         this.voxels = this.voxels.filter(
-            (v) => !this.selection.has(keyOf(v.x, v.y, v.z))
+            v => !this.selection.has(keyOf(v.x, v.y, v.z))
         );
         this.selection.clear();
         this.rebuild();
@@ -470,7 +470,8 @@ export class TileEditor {
             const k = keyOf(v.x, v.y, v.z);
             if (!this.selection.has(k)) fixed.add(k);
         }
-        const moves: { v: EditVoxel; nx: number; ny: number; nz: number }[] = [];
+        const moves: { v: EditVoxel; nx: number; ny: number; nz: number }[] =
+            [];
         for (const v of this.voxels) {
             if (!this.selection.has(keyOf(v.x, v.y, v.z))) continue;
             const nx = v.x + dx;
@@ -514,14 +515,14 @@ export class TileEditor {
 
     /** Remove the buried base layers (z < GROUND). */
     clearBase(): void {
-        this.voxels = this.voxels.filter((v) => v.z >= GROUND);
+        this.voxels = this.voxels.filter(v => v.z >= GROUND);
         this.rebuild();
         this.onChange?.();
     }
 
     /** Remove everything above ground (z >= GROUND). */
     clearTop(): void {
-        this.voxels = this.voxels.filter((v) => v.z < GROUND);
+        this.voxels = this.voxels.filter(v => v.z < GROUND);
         this.rebuild();
         this.onChange?.();
     }
@@ -538,13 +539,13 @@ export class TileEditor {
     applyShading(spread: number): boolean {
         if (!this.voxels.length) return true;
         const shades = this.shadePalette(spread);
-        const distinct = [...new Set(shades.map((s) => s.toLowerCase()))];
-        const missing = distinct.filter((s) => !this.palette.includes(s));
+        const distinct = [...new Set(shades.map(s => s.toLowerCase()))];
+        const missing = distinct.filter(s => !this.palette.includes(s));
         // Refuse rather than silently overflow the bounded palette.
         if (missing.length > this.freeSlotCount()) return false;
         for (const s of missing) this.ensurePaletteColor(s);
         // Map each shade to its (now-present) slot so voxels point at indices.
-        const shadeIdx = shades.map((s) => this.palette.indexOf(s.toLowerCase()));
+        const shadeIdx = shades.map(s => this.palette.indexOf(s.toLowerCase()));
         const sel = this.selection;
         const pick = (): number => {
             const z = Math.max(-2.5, Math.min(2.5, gaussian()));
@@ -570,7 +571,7 @@ export class TileEditor {
                 rgbToHex([
                     clamp8(base[0] * f),
                     clamp8(base[1] * f),
-                    clamp8(base[2] * f),
+                    clamp8(base[2] * f)
                 ])
             );
         }
@@ -582,7 +583,7 @@ export class TileEditor {
     /** New palette slots a Shade needs (distinct shades not yet in the palette). */
     shadeSlotsNeeded(spread: number): number {
         const distinct = new Set(
-            this.shadePalette(spread).map((s) => s.toLowerCase())
+            this.shadePalette(spread).map(s => s.toLowerCase())
         );
         let n = 0;
         for (const s of distinct) if (!this.palette.includes(s)) n++;
@@ -598,7 +599,7 @@ export class TileEditor {
 
     /** Count of assigned palette slots not referenced by any voxel. */
     unusedColorCount(): number {
-        const used = new Set(this.voxels.map((v) => v.ci));
+        const used = new Set(this.voxels.map(v => v.ci));
         return this.palette.reduce<number>(
             (n, c, i) => (c != null && !used.has(i) ? n + 1 : n),
             0
@@ -607,7 +608,7 @@ export class TileEditor {
 
     /** Unassign palette slots no voxel uses (e.g. imported junk); returns count. */
     removeUnusedColors(): number {
-        const used = new Set(this.voxels.map((v) => v.ci));
+        const used = new Set(this.voxels.map(v => v.ci));
         let removed = 0;
         for (let i = 0; i < this.palette.length; i++) {
             if (this.palette[i] != null && !used.has(i)) {
@@ -616,7 +617,7 @@ export class TileEditor {
             }
         }
         if (this.palette[this.activeColorIdx] == null) {
-            const first = this.palette.findIndex((c) => c != null);
+            const first = this.palette.findIndex(c => c != null);
             this.activeColorIdx = first >= 0 ? first : 0;
         }
         if (removed) this.onChange?.();
@@ -638,7 +639,7 @@ export class TileEditor {
             occ.has(keyOf(v.x, v.y - 1, v.z)) &&
             occ.has(keyOf(v.x, v.y, v.z + 1)) &&
             occ.has(keyOf(v.x, v.y, v.z - 1));
-        this.voxels = this.voxels.filter((v) => !buried(v));
+        this.voxels = this.voxels.filter(v => !buried(v));
         this.rebuild();
         this.onChange?.();
     }
@@ -664,8 +665,8 @@ export class TileEditor {
         if (d === 0) return;
         for (const v of this.voxels) v.z += d;
         if (this.selection.size) {
-            const shifted = [...this.selection].map((k) => {
-                const [x, y, z] = k.split(",").map(Number) as [
+            const shifted = [...this.selection].map(k => {
+                const [x, y, z] = k.split(',').map(Number) as [
                     number,
                     number,
                     number
@@ -771,7 +772,7 @@ export class TileEditor {
     /** Voxels currently shown (focus filter applied). */
     private visibleVoxels(): EditVoxel[] {
         if (this.focusLayer == null) return this.voxels;
-        return this.voxels.filter((v) => v.z === this.focusLayer);
+        return this.voxels.filter(v => v.z === this.focusLayer);
     }
 
     clearAll(): void {
@@ -802,7 +803,7 @@ export class TileEditor {
 
         if (!hit || hit.instanceId == null) {
             // No voxel under the cursor: only "add" works, dropping onto the floor.
-            if (this.tool !== "add") return false;
+            if (this.tool !== 'add') return false;
             const cell = this.floorCell(ndc);
             if (!cell || !this.claimTarget(keyOf(cell.x, cell.y, cell.z))) {
                 return false;
@@ -815,7 +816,7 @@ export class TileEditor {
         const here = keyOf(v.x, v.y, v.z);
 
         switch (this.tool) {
-            case "add": {
+            case 'add': {
                 const n = hit.face!.normal;
                 const tx = v.x + Math.round(n.x);
                 const ty = v.y + Math.round(n.z);
@@ -823,24 +824,24 @@ export class TileEditor {
                 if (!this.claimTarget(keyOf(tx, ty, tz))) return false;
                 return this.addVoxel(tx, ty, tz);
             }
-            case "delete":
+            case 'delete':
                 if (!this.claimTarget(here)) return false;
-                if (this.selection.size > 0) this.applyToSelection("delete");
+                if (this.selection.size > 0) this.applyToSelection('delete');
                 else this.removeAt(here);
                 return true;
-            case "paint":
+            case 'paint':
                 if (!this.claimTarget(here)) return false;
-                if (this.selection.size > 0) this.applyToSelection("paint");
+                if (this.selection.size > 0) this.applyToSelection('paint');
                 else this.paintAt(here);
                 return true;
-            case "select":
+            case 'select':
                 if (!this.claimTarget(here)) return false;
                 if (remove) this.selection.delete(here);
                 else this.selection.add(here);
                 this.rebuildSelection();
                 this.onChange?.();
                 return true;
-            case "eyedropper":
+            case 'eyedropper':
                 this.selectColorIdx(v.ci);
                 return true;
         }
@@ -853,10 +854,10 @@ export class TileEditor {
         return true;
     }
 
-    private applyToSelection(op: "delete" | "paint"): void {
-        if (op === "delete") {
+    private applyToSelection(op: 'delete' | 'paint'): void {
+        if (op === 'delete') {
             this.voxels = this.voxels.filter(
-                (v) => !this.selection.has(keyOf(v.x, v.y, v.z))
+                v => !this.selection.has(keyOf(v.x, v.y, v.z))
             );
         } else {
             for (const v of this.voxels) {
@@ -870,7 +871,7 @@ export class TileEditor {
     }
 
     private removeAt(key: string): void {
-        this.voxels = this.voxels.filter((v) => keyOf(v.x, v.y, v.z) !== key);
+        this.voxels = this.voxels.filter(v => keyOf(v.x, v.y, v.z) !== key);
         this.rebuild();
         this.onChange?.();
     }
@@ -931,7 +932,7 @@ export class TileEditor {
             for (const [z, vs] of byLayer) {
                 const batch = new VoxelBatch(CONFIG.voxel.size);
                 batch.add(this.materialize(vs), {
-                    origin: [-HALF, this.layerY(z), -HALF],
+                    origin: [-HALF, this.layerY(z), -HALF]
                 });
                 this.display.add(batch.build());
             }
@@ -967,7 +968,7 @@ export class TileEditor {
             }
         }
         const geo = new THREE.BufferGeometry();
-        geo.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+        geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
         this.edges = new THREE.LineSegments(geo, this.edgeMat);
         this.root.add(this.edges);
     }
@@ -1013,9 +1014,9 @@ export class TileEditor {
             if (!occ.has(k)) this.selection.delete(k);
         }
         // Only highlight selected voxels that are currently shown (focus filter).
-        const visKeys = [...this.selection].filter((k) => {
+        const visKeys = [...this.selection].filter(k => {
             if (this.focusLayer == null) return true;
-            return Number(k.split(",")[2]) === this.focusLayer;
+            return Number(k.split(',')[2]) === this.focusLayer;
         });
         if (visKeys.length === 0) return;
 
@@ -1027,7 +1028,7 @@ export class TileEditor {
         const m = new THREE.Matrix4();
         let i = 0;
         for (const k of visKeys) {
-            const [x, y, z] = k.split(",").map(Number) as [
+            const [x, y, z] = k.split(',').map(Number) as [
                 number,
                 number,
                 number
@@ -1077,7 +1078,7 @@ export class TileEditor {
             new THREE.Vector3(-HALF, 0, -HALF),
             new THREE.Vector3(HALF, 0, -HALF),
             new THREE.Vector3(HALF, 0, HALF),
-            new THREE.Vector3(-HALF, 0, HALF),
+            new THREE.Vector3(-HALF, 0, HALF)
         ];
         const borderGeo = new THREE.BufferGeometry().setFromPoints(
             borderCorners
@@ -1091,7 +1092,7 @@ export class TileEditor {
                     color: 0x1b5ba8,
                     transparent: true,
                     opacity: 0.12,
-                    depthWrite: false,
+                    depthWrite: false
                 })
             ),
             new THREE.LineLoop(
@@ -1099,7 +1100,7 @@ export class TileEditor {
                 new THREE.LineBasicMaterial({
                     color: 0x1b5ba8,
                     opacity: 0.5,
-                    transparent: true,
+                    transparent: true
                 })
             )
         );
@@ -1108,7 +1109,7 @@ export class TileEditor {
     }
 
     private occupied(): Set<string> {
-        return new Set(this.voxels.map((v) => keyOf(v.x, v.y, v.z)));
+        return new Set(this.voxels.map(v => keyOf(v.x, v.y, v.z)));
     }
 
     private toNdc(clientX: number, clientY: number): THREE.Vector2 {
@@ -1122,11 +1123,11 @@ export class TileEditor {
     private disposeDisplay(): void {
         for (const child of [...this.display.children]) {
             this.display.remove(child);
-            child.traverse((o) => {
+            child.traverse(o => {
                 const mesh = o as Partial<THREE.Mesh>;
                 mesh.geometry?.dispose();
                 const mat = mesh.material;
-                if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
+                if (Array.isArray(mat)) mat.forEach(x => x.dispose());
                 else mat?.dispose();
             });
         }
@@ -1138,12 +1139,12 @@ function keyOf(x: number, y: number, z: number): string {
 }
 
 function hexToRgb(hex: string): [number, number, number] {
-    const n = parseInt(hex.replace("#", ""), 16);
+    const n = parseInt(hex.replace('#', ''), 16);
     return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
 }
 
 function rgbToHex([r, g, b]: [number, number, number]): string {
-    const h = (v: number) => v.toString(16).padStart(2, "0");
+    const h = (v: number) => v.toString(16).padStart(2, '0');
     return `#${h(r)}${h(g)}${h(b)}`;
 }
 
@@ -1159,7 +1160,7 @@ function hexLuma(hex: string): number {
 
 /** Hue angle in degrees (0–360); greys sort first (returns -1). */
 function hexHue(hex: string): number {
-    const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
+    const [r, g, b] = hexToRgb(hex).map(v => v / 255);
     const max = Math.max(r!, g!, b!);
     const min = Math.min(r!, g!, b!);
     const d = max - min;
@@ -1174,7 +1175,7 @@ function hexHue(hex: string): number {
 
 /** Hex → HSL: hue 0–360, saturation/lightness 0–1. */
 export function hexToHsl(hex: string): [number, number, number] {
-    const [r, g, b] = hexToRgb(hex).map((v) => v / 255) as [
+    const [r, g, b] = hexToRgb(hex).map(v => v / 255) as [
         number,
         number,
         number
