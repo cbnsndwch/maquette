@@ -43,6 +43,7 @@ export class SceneView {
     private readonly highlightLine: THREE.LineSegments;
     private ghost: THREE.Group | null = null;
     private grid: THREE.GridHelper;
+    private substrate!: THREE.Group;
 
     private readonly raycaster = new THREE.Raycaster();
     private readonly groundPlane = new THREE.Plane(
@@ -51,6 +52,7 @@ export class SceneView {
     );
 
     private builtVersion = -1;
+    private gridOn = false;
     private readonly animating = new Map<string, Pop>();
 
     constructor(
@@ -82,7 +84,7 @@ export class SceneView {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.08;
         this.controls.target.set(0, 0, 0);
-        this.controls.minDistance = span * 0.25;
+        this.controls.minDistance = P * 0.5; // close enough to edit a single tile
         this.controls.maxDistance = span * 2.5;
         this.controls.maxPolarAngle = Math.PI * 0.495; // stay above the island
         this.controls.autoRotate = true; // gentle showcase orbit by default
@@ -93,9 +95,9 @@ export class SceneView {
         // Floating-island substrate, drawn as a transparent volume with thin
         // edges so a placed cell's full height — including its buried 4 layers —
         // stays visible. Slightly oversized so the rim sits just outside the cells.
-        const slab = this.makeSubstrate(W * P + 3, G, H * P + 3);
-        slab.position.set(0, -G / 2 - 0.05, 0);
-        this.scene.add(slab);
+        this.substrate = this.makeSubstrate(W * P + 3, G, H * P + 3);
+        this.substrate.position.set(0, -G / 2 - 0.05, 0);
+        this.scene.add(this.substrate);
 
         this.grid = new THREE.GridHelper(W * P, W, 0x9c8f6e, 0xbcae8a);
         this.grid.position.y = 0.04;
@@ -135,15 +137,40 @@ export class SceneView {
 
     /* ── World ↔ cell mapping ─────────────────────────────────── */
 
-    /** World-space origin (voxel-local 0,0,0 corner) of a cell. */
-    private cellOrigin(gx: number, gy: number): [number, number, number] {
-        return [(gx - W / 2) * P, -G, (gy - H / 2) * P];
+    /**
+     * World-space origin (voxel-local 0,0,0 corner) of a cell sitting at voxel
+     * altitude `baseZ` in its column (0 = ground level, buried `groundLayers`).
+     */
+    private cellOrigin(
+        gx: number,
+        gy: number,
+        baseZ = 0
+    ): [number, number, number] {
+        return [
+            (gx - W / 2) * P,
+            -G + baseZ * CONFIG.voxel.size,
+            (gy - H / 2) * P
+        ];
     }
 
-    /** World-space center of a cell on the ground plane. */
+    /** World-space center of a cell footprint (y ignored by callers). */
     private cellCenter(gx: number, gy: number): THREE.Vector3 {
         const [ox, , oz] = this.cellOrigin(gx, gy);
         return new THREE.Vector3(ox + P / 2, 0, oz + P / 2);
+    }
+
+    /** Voxel height of a cell asset. */
+    private cellHeight(id: string): number {
+        return this.assets.dims(id)[2];
+    }
+
+    /** Cumulative voxel height of a column = base altitude for the next cell. */
+    private columnBaseZ(gx: number, gy: number): number {
+        let base = 0;
+        for (const c of this.tileMap.getStack(gx, gy)) {
+            base += this.cellHeight(c.id);
+        }
+        return base;
     }
 
     /** Cell under a screen pixel, via a ground-plane raycast. */
@@ -177,15 +204,23 @@ export class SceneView {
     private rebuildNow(): void {
         this.disposeGroup(this.terrainGroup);
         const batch = new VoxelBatch(CONFIG.voxel.size);
-        this.tileMap.forEach((gx, gy, cell) => {
-            if (this.animating.has(`${gx},${gy}`)) return; // popping cells draw in overlay
-            const voxels = this.assets.get(cell.id);
-            if (voxels.length) {
-                batch.add(voxels, {
-                    origin: this.cellOrigin(gx, gy),
-                    rotation: cell.rot,
-                    span: CONFIG.voxel.perTile
-                });
+        this.tileMap.forEachColumn((gx, gy, stack) => {
+            let base = 0;
+            for (let level = 0; level < stack.length; level++) {
+                const cell = stack[level]!;
+                const voxels = this.assets.get(cell.id);
+                // A popping cell is drawn by the overlay, not the static mesh.
+                if (
+                    voxels.length &&
+                    !this.animating.has(`${gx},${gy}:${level}`)
+                ) {
+                    batch.add(voxels, {
+                        origin: this.cellOrigin(gx, gy, base),
+                        rotation: cell.rot,
+                        span: CONFIG.voxel.perTile
+                    });
+                }
+                base += this.cellHeight(cell.id);
             }
         });
         if (batch.count > 0) this.terrainGroup.add(batch.build());
@@ -198,29 +233,32 @@ export class SceneView {
      * baked in when the animation settles.
      */
     onPlaced(gx: number, gy: number): void {
-        const cell = this.tileMap.getTerrain(gx, gy);
+        const cell = this.tileMap.topCell(gx, gy);
         if (!cell) {
             this.syncTerrain();
             return;
         }
-        const key = `${gx},${gy}`;
+        const level = this.tileMap.stackHeight(gx, gy) - 1;
+        const baseBelow = this.columnBaseZ(gx, gy) - this.cellHeight(cell.id);
+        const key = `${gx},${gy}:${level}`;
         const existing = this.animating.get(key);
         if (existing) {
             this.overlayGroup.remove(existing.group);
             this.disposeObject(existing.group);
         }
 
-        // Build the cell relative to its center so we can scale about that pivot.
+        // Build relative to the cell's base center so the pop scales from there.
         const center = this.cellCenter(gx, gy);
-        const [ox, oy, oz] = this.cellOrigin(gx, gy);
+        const [ox, , oz] = this.cellOrigin(gx, gy, baseBelow);
+        const baseWorldY = -G + baseBelow * CONFIG.voxel.size;
         const batch = new VoxelBatch(CONFIG.voxel.size);
         batch.add(this.assets.get(cell.id), {
-            origin: [ox - center.x, oy, oz - center.z],
+            origin: [ox - center.x, 0, oz - center.z],
             rotation: cell.rot,
             span: CONFIG.voxel.perTile
         });
         const group = batch.build();
-        group.position.set(center.x, 0, center.z);
+        group.position.set(center.x, baseWorldY, center.z);
         group.scale.setScalar(0.001);
         this.overlayGroup.add(group);
 
@@ -239,8 +277,12 @@ export class SceneView {
             this.clearGhost();
             return;
         }
+        // The new cell lands on top of the column; float the outline + ghost to
+        // that surface so elevation reads correctly.
+        const base = this.columnBaseZ(cell.gx, cell.gy);
+        const surfaceY = Math.max(0, -G + base * CONFIG.voxel.size);
         const center = this.cellCenter(cell.gx, cell.gy);
-        this.highlight.position.set(center.x, 0.06, center.z);
+        this.highlight.position.set(center.x, surfaceY + 0.06, center.z);
         this.highlight.visible = true;
         const color = HOVER_COLOR[opts.style];
         (this.highlightFill.material as THREE.MeshBasicMaterial).color.setHex(
@@ -253,14 +295,16 @@ export class SceneView {
         this.updateGhost(
             cell,
             opts.style === 'valid' ? opts.assetId : null,
-            opts.rotation
+            opts.rotation,
+            base
         );
     }
 
     private updateGhost(
         cell: { gx: number; gy: number },
         assetId: string | null,
-        rotation: Rotation
+        rotation: Rotation,
+        base: number
     ): void {
         this.clearGhost();
         if (!assetId) return;
@@ -268,7 +312,7 @@ export class SceneView {
         if (!voxels.length) return;
         const batch = new VoxelBatch(CONFIG.voxel.size);
         batch.add(voxels, {
-            origin: this.cellOrigin(cell.gx, cell.gy),
+            origin: this.cellOrigin(cell.gx, cell.gy, base),
             rotation,
             span: CONFIG.voxel.perTile
         });
@@ -296,7 +340,33 @@ export class SceneView {
     /* ── Misc ─────────────────────────────────────────────────── */
 
     setGridVisible(visible: boolean): void {
+        this.gridOn = visible;
         this.grid.visible = visible;
+    }
+
+    /** Show/hide the scene-builder visuals (hidden while editing a tile). */
+    setBuildVisualsVisible(visible: boolean): void {
+        this.terrainGroup.visible = visible;
+        this.overlayGroup.visible = visible;
+        this.substrate.visible = visible;
+        this.grid.visible = visible && this.gridOn;
+        if (!visible) this.highlight.visible = false;
+    }
+
+    /** Frame the whole island (scene-building view). */
+    frameBuild(): void {
+        const span = W * P;
+        this.camera.position.set(span * 0.85, span * 0.7, span * 0.85);
+        this.controls.target.set(0, 0, 0);
+        this.controls.update();
+    }
+
+    /** Frame a single origin-centered tile (editing view); stops auto-rotate. */
+    frameEdit(): void {
+        this.controls.autoRotate = false;
+        this.camera.position.set(P * 1.5, P * 1.4, P * 1.5);
+        this.controls.target.set(0, G, 0);
+        this.controls.update();
     }
 
     setAutoRotate(on: boolean): void {

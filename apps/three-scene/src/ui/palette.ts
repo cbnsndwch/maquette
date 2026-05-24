@@ -88,4 +88,15 @@ export class Palette {
             );
         }
     }
+
+    /** Set/replace a tile's swatch thumbnail. */
+    setThumbnail(id: string, dataUrl: string): void {
+        this.thumbnails.set(id, dataUrl);
+    }
+
+    /** Force a re-render of the swatch grid (e.g. after a tile is added). */
+    refresh(): void {
+        this.renderGrid();
+        this.update();
+    }
 }

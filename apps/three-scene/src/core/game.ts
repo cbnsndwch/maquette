@@ -2,11 +2,14 @@ import { assetsForCategory, ASSET_INDEX, type Category } from '../config.js';
 import { PlacementSystem } from '../grid/placement-system.js';
 import type { Rotation, TerrainState, TileMap } from '../grid/tile-map.js';
 import { SaveSystem } from '../storage/save-system.js';
+import { downloadSceneVox } from './export-vox.js';
 import { History } from './history.js';
 import type { SceneView } from './scene-view.js';
+import type { TileEditor } from './tile-editor.js';
 import type { VoxelAssets } from './voxel-assets.js';
 
 export type Tool = 'place' | 'erase' | 'pan';
+export type Mode = 'build' | 'edit';
 
 export interface GameUI {
     update(): void;
@@ -25,6 +28,7 @@ interface Cell {
  */
 export class Game {
     tool: Tool = 'place';
+    mode: Mode = 'build';
     category: Category = 'terrain';
     selectedAssetId: string;
     /** Brush rotation, preserved globally across placements until changed. */
@@ -37,6 +41,9 @@ export class Game {
     private strokeBefore: TerrainState | null = null;
     private lastHover: Cell | null = null;
     ui: GameUI | null = null;
+    editor: TileEditor | null = null;
+    /** Notified when the build/edit mode changes (UI shows the right panel). */
+    onModeChange: ((mode: Mode) => void) | null = null;
 
     constructor(
         readonly tileMap: TileMap,
@@ -57,6 +64,37 @@ export class Game {
         this.sceneView.setCameraButtons(t);
         this.updateCursor();
         this.ui?.update();
+    }
+
+    /* ── Build ↔ edit mode ────────────────────────────────────── */
+
+    toggleMode(): void {
+        this.setMode(this.mode === 'edit' ? 'build' : 'edit');
+    }
+
+    setMode(mode: Mode): void {
+        if (this.mode === mode) return;
+        this.mode = mode;
+        if (mode === 'edit') {
+            this.editor?.reset();
+            this.editor?.setActive(true);
+            this.sceneView.setBuildVisualsVisible(false);
+            this.sceneView.setCameraButtons('place'); // free the left button to edit
+            this.sceneView.frameEdit();
+        } else {
+            this.editor?.setActive(false);
+            this.sceneView.setBuildVisualsVisible(true);
+            this.sceneView.setCameraButtons(this.tool);
+            this.sceneView.frameBuild();
+        }
+        this.updateCursor();
+        this.onModeChange?.(mode);
+        this.ui?.update();
+    }
+
+    /** Forward an editor edit (per-voxel) at a screen pixel. */
+    editAt(clientX: number, clientY: number): void {
+        this.editor?.editAt(clientX, clientY);
     }
 
     setCategory(cat: Category): void {
@@ -113,6 +151,16 @@ export class Game {
         return ok;
     }
 
+    /** Export the whole scene as a downloadable MagicaVoxel `.vox` file. */
+    exportScene(): void {
+        const count = downloadSceneVox(this.tileMap, this.assets);
+        this.ui?.showToast(
+            count > 0
+                ? `Exported ${count} voxels to scene.vox`
+                : 'Nothing to export'
+        );
+    }
+
     reset(): void {
         this.beginStroke();
         this.tileMap.clearAll();
@@ -130,7 +178,7 @@ export class Game {
         let filled = 0;
         for (let gy = 0; gy < this.tileMap.height; gy++) {
             for (let gx = 0; gx < this.tileMap.width; gx++) {
-                if (this.tileMap.getTerrain(gx, gy)) continue;
+                if (this.tileMap.stackHeight(gx, gy) > 0) continue;
                 if (this.placement.place(id, gx, gy, this.rotation)) filled++;
             }
         }
@@ -198,7 +246,7 @@ export class Game {
             return;
         }
         if (this.tool === 'erase') {
-            const has = !!this.tileMap.getTerrain(cell.gx, cell.gy);
+            const has = this.tileMap.stackHeight(cell.gx, cell.gy) > 0;
             this.sceneView.setHover(cell, {
                 style: has ? 'erase' : 'invalid',
                 assetId: null,
@@ -259,13 +307,18 @@ export class Game {
     }
 }
 
-/** True when two terrain snapshots differ. */
+/** True when two terrain snapshots differ (per-column stacks). */
 function changed(a: TerrainState, b: TerrainState): boolean {
     if (a.length !== b.length) return true;
     for (let i = 0; i < a.length; i++) {
-        const x = a[i];
-        const y = b[i];
-        if (x?.id !== y?.id || x?.rot !== y?.rot) return true;
+        const sa = a[i] ?? [];
+        const sb = b[i] ?? [];
+        if (sa.length !== sb.length) return true;
+        for (let j = 0; j < sa.length; j++) {
+            if (sa[j]!.id !== sb[j]!.id || sa[j]!.rot !== sb[j]!.rot) {
+                return true;
+            }
+        }
     }
     return false;
 }

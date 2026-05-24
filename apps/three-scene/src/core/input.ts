@@ -13,6 +13,7 @@ export class Input {
     private downX = 0;
     private downY = 0;
     private brushing = false;
+    private editing = false;
     private lastBrushKey: string | null = null;
 
     /** Tool to restore when the spacebar (temporary pan) is released. */
@@ -48,9 +49,17 @@ export class Input {
     private onDown(e: PointerEvent): void {
         this.downX = e.clientX;
         this.downY = e.clientY;
+        if (e.button !== 0) return;
 
-        // Left button paints (brush-on-press); the camera owns it in pan mode.
-        if (e.button === 0 && this.isBrushTool()) {
+        // Edit mode: left button edits voxels (camera orbit stays on right-drag).
+        if (this.game.mode === 'edit') {
+            this.editing = true;
+            this.game.editAt(e.clientX, e.clientY);
+            return;
+        }
+
+        // Build mode: left button paints cells (the camera owns it in pan mode).
+        if (this.isBrushTool()) {
             this.brushing = true;
             this.lastBrushKey = null;
             this.game.beginStroke();
@@ -59,12 +68,20 @@ export class Input {
     }
 
     private onMove(e: PointerEvent): void {
+        if (this.game.mode === 'edit') {
+            if (this.editing) this.game.editAt(e.clientX, e.clientY);
+            return;
+        }
         const c = this.cell(e);
         this.game.onHover(c);
         if (this.brushing && c) this.brush(e);
     }
 
     private onUp(e: PointerEvent): void {
+        if (this.game.mode === 'edit') {
+            this.editing = false;
+            return;
+        }
         const moved =
             Math.hypot(e.clientX - this.downX, e.clientY - this.downY) >
             TAP_SLOP;
@@ -95,7 +112,8 @@ export class Input {
     }
 
     private onWheel(e: WheelEvent): void {
-        if (this.game.tool !== 'place') return; // let OrbitControls zoom
+        // Wheel rotates the tile only while placing in build mode; otherwise zoom.
+        if (this.game.mode !== 'build' || this.game.tool !== 'place') return;
         e.preventDefault();
         e.stopPropagation();
         this.game.rotateBrush(e.deltaY > 0 ? 1 : 3);
@@ -108,6 +126,8 @@ export class Input {
         ) {
             return;
         }
+        // Tile-editor mode owns its own UI; ignore the build-mode shortcuts.
+        if (this.game.mode === 'edit') return;
 
         // Undo / redo.
         if (e.ctrlKey || e.metaKey) {

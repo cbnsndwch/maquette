@@ -19,6 +19,11 @@ export class VoxelAssets {
         );
     }
 
+    /** Fetch + decode a single tile (cache-busted, for a just-saved file). */
+    async loadOne(id: string, file: string): Promise<void> {
+        this.assets.set(id, await loadVoxAsset(`${file}?t=${Date.now()}`));
+    }
+
     has(id: string): boolean {
         return this.assets.has(id);
     }

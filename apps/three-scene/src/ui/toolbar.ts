@@ -8,6 +8,7 @@ interface ToolButton {
 
 // Simple cobalt-ink SVG glyphs (24×24 viewBox), one visual language for the rail.
 const ICONS: Record<string, string> = {
+    tile: '<path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/>',
     place: '<path d="M12 2C8.7 2 6 4.7 6 8c0 4.5 6 12 6 12s6-7.5 6-12c0-3.3-2.7-6-6-6z"/><circle cx="12" cy="8" r="2.2" fill="#fff"/>',
     erase: '<path d="M4 15.5 12 7.5l5 5-5 5H7z"/><path d="M9 20h11"/>',
     pan: '<path d="M12 3v18M3 12h18"/><path d="M12 3 9.5 5.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/>',
@@ -18,10 +19,12 @@ const ICONS: Record<string, string> = {
     orbit: '<circle cx="12" cy="12" r="3"/><path d="M12 3a9 9 0 0 1 8 5M21 9l-1 -1l-2 1M12 21a9 9 0 0 1-8-5M3 15l1 1l2-1"/>',
     grid: '<path d="M4 4h16v16H4z"/><path d="M9 4v16M15 4v16M4 9h16M4 15h16"/>',
     save: '<path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/>',
+    export: '<path d="M12 3v12M8 11l4 4 4-4"/><path d="M5 17v2a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2"/>',
     reset: '<path d="M19 12a7 7 0 1 1-2.3-5.2"/><path d="M19 4v4h-4"/>'
 };
 
 const BUTTONS: ToolButton[] = [
+    { id: 'tile', label: 'Tile', icon: ICONS.tile! },
     { id: 'place', label: 'Place', icon: ICONS.place! },
     { id: 'erase', label: 'Erase', icon: ICONS.erase! },
     { id: 'pan', label: 'Pan', icon: ICONS.pan! },
@@ -32,6 +35,7 @@ const BUTTONS: ToolButton[] = [
     { id: 'orbit', label: 'Orbit', icon: ICONS.orbit! },
     { id: 'grid', label: 'Grid', icon: ICONS.grid! },
     { id: 'save', label: 'Save', icon: ICONS.save! },
+    { id: 'export', label: 'Export', icon: ICONS.export! },
     { id: 'reset', label: 'Reset', icon: ICONS.reset! }
 ];
 
@@ -67,6 +71,9 @@ export class Toolbar {
 
     private onClick(id: string): void {
         switch (id) {
+            case 'tile':
+                this.game.toggleMode();
+                break;
             case 'place':
             case 'erase':
             case 'pan':
@@ -92,6 +99,9 @@ export class Toolbar {
                 break;
             case 'save':
                 this.game.save();
+                break;
+            case 'export':
+                this.game.exportScene();
                 break;
             case 'reset':
                 this.game.reset();
