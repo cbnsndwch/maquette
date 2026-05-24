@@ -1,48 +1,86 @@
 import { assetsForCategory, CATEGORIES, type Category } from '../config.js';
 import type { Game } from '../core/game.js';
 
+interface Section {
+    root: HTMLElement;
+    head: HTMLButtonElement;
+    body: HTMLElement;
+    grid: HTMLElement;
+    count: HTMLElement;
+}
+
 /**
- * Bottom palette: category tabs + a swatch row for the active category. Terrain
- * is populated from the baked cells; the top-layer categories (nature / props /
- * buildings) are intentionally empty for now and show a placeholder.
+ * Right-dock palette: one collapsible **accordion per category** (replacing the
+ * old tabs). Terrain is populated from the baked cells; the other categories are
+ * filled by tiles authored in the editor. The active category's accordion is
+ * kept open so keyboard category-switching stays visible.
  */
 export class Palette {
-    private readonly tabButtons = new Map<Category, HTMLButtonElement>();
+    private readonly sections = new Map<Category, Section>();
+    private readonly open = new Set<Category>();
     private renderedCategory: Category | null = null;
 
     constructor(
-        private readonly tabsEl: HTMLElement,
-        private readonly gridEl: HTMLElement,
+        private readonly root: HTMLElement,
         private readonly game: Game,
         private readonly thumbnails: Map<string, string>
     ) {
-        this.buildTabs();
-        this.renderGrid();
+        this.build();
+        this.open.add(this.game.category);
+        for (const c of CATEGORIES) this.renderGrid(c);
+        this.update();
     }
 
-    private buildTabs(): void {
-        this.tabsEl.innerHTML = '';
+    private build(): void {
+        this.root.innerHTML = '';
         for (const c of CATEGORIES) {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'tab';
-            btn.textContent = c[0]!.toUpperCase() + c.slice(1);
-            btn.addEventListener('click', () => this.game.setCategory(c));
-            this.tabsEl.appendChild(btn);
-            this.tabButtons.set(c, btn);
+            const root = document.createElement('section');
+            root.className = 'cat';
+
+            const head = document.createElement('button');
+            head.type = 'button';
+            head.className = 'cat-head';
+            const title = document.createElement('span');
+            title.className = 'cat-title';
+            title.textContent = c[0]!.toUpperCase() + c.slice(1);
+            const count = document.createElement('span');
+            count.className = 'cat-count';
+            const chev = document.createElement('span');
+            chev.className = 'cat-chev';
+            chev.textContent = '▸';
+            head.append(title, count, chev);
+            head.addEventListener('click', () => this.toggle(c));
+
+            const body = document.createElement('div');
+            body.className = 'cat-body';
+            const grid = document.createElement('div');
+            grid.className = 'cat-grid';
+            body.appendChild(grid);
+
+            root.append(head, body);
+            this.root.appendChild(root);
+            this.sections.set(c, { root, head, body, grid, count });
         }
     }
 
-    private renderGrid(): void {
-        this.gridEl.innerHTML = '';
-        const items = assetsForCategory(this.game.category);
+    private toggle(c: Category): void {
+        if (this.open.has(c)) this.open.delete(c);
+        else this.open.add(c);
+        this.applyOpenState();
+    }
+
+    private renderGrid(c: Category): void {
+        const section = this.sections.get(c);
+        if (!section) return;
+        const items = assetsForCategory(c);
+        section.grid.innerHTML = '';
+        section.count.textContent = String(items.length);
 
         if (items.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'palette-empty';
-            empty.textContent = 'Top-layer assets coming soon';
-            this.gridEl.appendChild(empty);
-            this.renderedCategory = this.game.category;
+            empty.textContent = 'No tiles yet';
+            section.grid.appendChild(empty);
             return;
         }
 
@@ -69,19 +107,27 @@ export class Palette {
             swatch.addEventListener('click', () =>
                 this.game.selectAsset(def.id)
             );
-            this.gridEl.appendChild(swatch);
+            section.grid.appendChild(swatch);
         }
-        this.renderedCategory = this.game.category;
+    }
+
+    private applyOpenState(): void {
+        for (const [c, section] of this.sections) {
+            section.root.classList.toggle('open', this.open.has(c));
+        }
     }
 
     update(): void {
-        for (const [c, btn] of this.tabButtons) {
-            btn.classList.toggle('active', c === this.game.category);
-        }
+        // Keep the active category revealed (e.g. after a 1–4 key switch).
         if (this.renderedCategory !== this.game.category) {
-            this.renderGrid();
+            this.open.add(this.game.category);
+            this.renderedCategory = this.game.category;
         }
-        for (const sw of this.gridEl.querySelectorAll<HTMLElement>('.swatch')) {
+        for (const [c, section] of this.sections) {
+            section.head.classList.toggle('active', c === this.game.category);
+        }
+        this.applyOpenState();
+        for (const sw of this.root.querySelectorAll<HTMLElement>('.swatch')) {
             sw.classList.toggle(
                 'selected',
                 sw.dataset.assetId === this.game.selectedAssetId
@@ -94,9 +140,9 @@ export class Palette {
         this.thumbnails.set(id, dataUrl);
     }
 
-    /** Force a re-render of the swatch grid (e.g. after a tile is added). */
+    /** Force a re-render of every category grid (e.g. after a tile is added). */
     refresh(): void {
-        this.renderGrid();
+        for (const c of CATEGORIES) this.renderGrid(c);
         this.update();
     }
 }

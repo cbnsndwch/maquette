@@ -24,7 +24,6 @@ const ICONS: Record<string, string> = {
 };
 
 const BUTTONS: ToolButton[] = [
-    { id: 'tile', label: 'Tile', icon: ICONS.tile! },
     { id: 'place', label: 'Place', icon: ICONS.place! },
     { id: 'erase', label: 'Erase', icon: ICONS.erase! },
     { id: 'pan', label: 'Pan', icon: ICONS.pan! },
@@ -71,9 +70,6 @@ export class Toolbar {
 
     private onClick(id: string): void {
         switch (id) {
-            case 'tile':
-                this.game.toggleMode();
-                break;
             case 'place':
             case 'erase':
             case 'pan':

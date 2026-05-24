@@ -22,16 +22,62 @@
             <aside id="toolbar"></aside>
 
             <section id="palette">
-                <button id="palette-toggle" type="button" aria-expanded="true">
-                    <span class="palette-title">Palette</span>
-                    <span class="chev" aria-hidden="true">▸</span>
-                </button>
+                <header id="palette-header">
+                    <button
+                        id="palette-toggle"
+                        type="button"
+                        aria-expanded="true"
+                    >
+                        <span class="chev" aria-hidden="true">▸</span>
+                        <span class="palette-title">Palette</span>
+                    </button>
+                    <div class="palette-actions">
+                        <button
+                            id="palette-inspect"
+                            class="palette-icon"
+                            type="button"
+                            title="Inspect tiles"
+                            aria-label="Inspect tiles"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#1b5ba8"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <circle cx="11" cy="11" r="7" />
+                                <path d="M21 21l-4.3-4.3" />
+                            </svg>
+                        </button>
+                        <button
+                            id="palette-tile"
+                            class="palette-icon"
+                            type="button"
+                            title="New tile editor"
+                            aria-label="New tile editor"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#1b5ba8"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M12 2 3 7v10l9 5 9-5V7z" />
+                                <path d="M3 7l9 5 9-5M12 12v10" />
+                            </svg>
+                        </button>
+                    </div>
+                </header>
                 <div id="palette-body">
-                    <nav id="palette-tabs"></nav>
-                    <div id="palette-grid"></div>
+                    <div id="palette-accordions"></div>
                 </div>
             </section>
 
+            <section id="editor-colors" style="display: none"></section>
             <section id="editor" style="display: none"></section>
 
             <details id="instructions" aria-label="Controls help">

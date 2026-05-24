@@ -1,4 +1,4 @@
-import { CATEGORIES, type Category } from '../config.js';
+import { CATEGORIES, type Category, type TerrainDef } from '../config.js';
 import type { EditTool, TileEditor } from '../core/tile-editor.js';
 import type { TileMeta } from '../core/tile-save.js';
 
@@ -6,7 +6,8 @@ const TOOLS: { id: EditTool; label: string }[] = [
     { id: 'add', label: 'Add' },
     { id: 'delete', label: 'Delete' },
     { id: 'paint', label: 'Paint' },
-    { id: 'eyedropper', label: 'Pick' }
+    { id: 'eyedropper', label: 'Pick' },
+    { id: 'select', label: 'Select' }
 ];
 
 export interface EditorPanelHooks {
@@ -15,17 +16,21 @@ export interface EditorPanelHooks {
 }
 
 /**
- * Right-side panel shown while editing a tile: tool buttons, a color palette +
- * picker, a "fill base" shortcut, and the save form (name / category / stackable).
+ * Right-side editor panel: tools (incl. multi-voxel Select), bulk clear actions,
+ * and the save form. The color palette lives in its own left panel
+ * ({@link EditorColors}).
  */
 export class EditorPanel {
     private readonly toolBtns = new Map<EditTool, HTMLButtonElement>();
-    private readonly swatchesEl: HTMLElement;
-    private readonly colorInput: HTMLInputElement;
+    private readonly headEl: HTMLElement;
     private readonly nameInput: HTMLInputElement;
     private readonly catSelect: HTMLSelectElement;
     private readonly stackInput: HTMLInputElement;
+    private readonly clearSelBtn: HTMLButtonElement;
     private readonly infoEl: HTMLElement;
+    private readonly floorValEl: HTMLElement;
+    private readonly gridBtn: HTMLButtonElement;
+    private readonly edgesBtn: HTMLButtonElement;
 
     constructor(
         private readonly root: HTMLElement,
@@ -33,12 +38,26 @@ export class EditorPanel {
         hooks: EditorPanelHooks
     ) {
         root.innerHTML = `
-            <div class="ed-head">Edit Tile</div>
+            <div class="ed-head" id="ed-head">New Tile</div>
             <div class="ed-tools" id="ed-tools"></div>
-            <button type="button" class="ed-btn" id="ed-base">Fill base (4 layers)</button>
-            <div class="ed-label">Color</div>
-            <div class="ed-swatches" id="ed-swatches"></div>
-            <input type="color" id="ed-color" value="#fafaf5" />
+            <button type="button" class="ed-btn" id="ed-base">Fill base</button>
+            <div class="ed-label">Clear</div>
+            <div class="ed-clear">
+                <button type="button" class="ed-btn" id="ed-clear-base">Base</button>
+                <button type="button" class="ed-btn" id="ed-clear-top">Top</button>
+                <button type="button" class="ed-btn" id="ed-clear-all">All</button>
+            </div>
+            <button type="button" class="ed-btn" id="ed-clear-sel">Clear selection</button>
+            <div class="ed-label">View</div>
+            <div class="ed-floor">
+                <button type="button" class="ed-btn" id="ed-floor-down">−</button>
+                <span class="ed-floor-val" id="ed-floor-val">Floor 4</span>
+                <button type="button" class="ed-btn" id="ed-floor-up">+</button>
+            </div>
+            <div class="ed-tools">
+                <button type="button" class="ed-tool" id="ed-grid">Grid</button>
+                <button type="button" class="ed-tool" id="ed-edges">Edges</button>
+            </div>
             <div class="ed-label">Save as tile</div>
             <input type="text" id="ed-name" placeholder="tile name" />
             <select id="ed-cat"></select>
@@ -61,12 +80,15 @@ export class EditorPanel {
             this.toolBtns.set(def.id, btn);
         }
 
-        this.swatchesEl = root.querySelector('#ed-swatches')!;
-        this.colorInput = root.querySelector('#ed-color')!;
+        this.headEl = root.querySelector('#ed-head')!;
         this.nameInput = root.querySelector('#ed-name')!;
         this.catSelect = root.querySelector('#ed-cat')!;
         this.stackInput = root.querySelector('#ed-stack')!;
+        this.clearSelBtn = root.querySelector('#ed-clear-sel')!;
         this.infoEl = root.querySelector('#ed-info')!;
+        this.floorValEl = root.querySelector('#ed-floor-val')!;
+        this.gridBtn = root.querySelector('#ed-grid')!;
+        this.edgesBtn = root.querySelector('#ed-edges')!;
 
         for (const c of CATEGORIES) {
             const opt = document.createElement('option');
@@ -75,18 +97,20 @@ export class EditorPanel {
             this.catSelect.appendChild(opt);
         }
 
-        this.colorInput.addEventListener('input', () =>
-            this.editor.setColor(this.colorInput.value)
-        );
-        root.querySelector('#ed-base')!.addEventListener('click', () =>
-            this.editor.fillBase()
-        );
-        root.querySelector('#ed-save')!.addEventListener('click', () =>
-            hooks.onSave(this.meta())
-        );
+        const on = (id: string, fn: () => void) =>
+            root.querySelector(`#${id}`)!.addEventListener('click', fn);
+        on('ed-base', () => this.editor.fillBase());
+        on('ed-clear-base', () => this.editor.clearBase());
+        on('ed-clear-top', () => this.editor.clearTop());
+        on('ed-clear-all', () => this.editor.clearAll());
+        on('ed-clear-sel', () => this.editor.clearSelection());
+        on('ed-floor-down', () => this.editor.lowerGround());
+        on('ed-floor-up', () => this.editor.raiseGround());
+        on('ed-grid', () => this.editor.setGridVisible(!this.editor.gridOn));
+        on('ed-edges', () => this.editor.setEdgesVisible(!this.editor.edgesOn));
+        on('ed-save', () => hooks.onSave(this.meta()));
         root.querySelector('#ed-done')!.addEventListener('click', hooks.onDone);
 
-        this.editor.onChange = () => this.refresh();
         this.refresh();
     }
 
@@ -99,13 +123,35 @@ export class EditorPanel {
         this.root.style.display = 'none';
     }
 
+    /** Prefill the save form from an existing tile (entering edit-an-existing). */
+    loadMeta(def: TerrainDef): void {
+        this.headEl.textContent = 'Edit Tile';
+        this.nameInput.value = def.name;
+        this.catSelect.value = def.category;
+        this.stackInput.checked = def.stackable;
+        this.refresh();
+    }
+
+    /** Clear the save form for authoring a brand-new tile. */
+    resetMeta(): void {
+        this.headEl.textContent = 'New Tile';
+        this.nameInput.value = '';
+        this.catSelect.value = CATEGORIES[0]!;
+        this.stackInput.checked = false;
+        this.refresh();
+    }
+
     private meta(): TileMeta {
         const name = this.nameInput.value.trim() || 'untitled';
+        // When editing an existing tile, keep its id so the save overwrites it
+        // (a renamed tile updates in place rather than spawning a duplicate).
         const id =
-            name
+            this.editor.editingId ??
+            (name
                 .toLowerCase()
                 .replace(/[^a-z0-9_-]+/g, '_')
-                .replace(/^_+|_+$/g, '') || `tile_${Date.now()}`;
+                .replace(/^_+|_+$/g, '') ||
+                `tile_${Date.now()}`);
         return {
             id,
             name,
@@ -114,25 +160,17 @@ export class EditorPanel {
         };
     }
 
-    private refresh(): void {
+    refresh(): void {
         for (const [id, btn] of this.toolBtns) {
             btn.classList.toggle('active', this.editor.tool === id);
         }
-        this.colorInput.value = this.editor.activeColor;
-
-        this.swatchesEl.innerHTML = '';
-        this.editor.palette.forEach((c, i) => {
-            const sw = document.createElement('button');
-            sw.type = 'button';
-            sw.className =
-                'ed-swatch' +
-                (i === this.editor.activeColorIdx ? ' active' : '');
-            sw.style.background = c;
-            sw.title = c;
-            sw.addEventListener('click', () => this.editor.selectColorIdx(i));
-            this.swatchesEl.appendChild(sw);
-        });
-
-        this.infoEl.textContent = `${this.editor.voxels.length} voxels`;
+        const sel = this.editor.selection.size;
+        this.clearSelBtn.disabled = sel === 0;
+        this.floorValEl.textContent = `Floor ${this.editor.groundLevel}`;
+        this.gridBtn.classList.toggle('active', this.editor.gridOn);
+        this.edgesBtn.classList.toggle('active', this.editor.edgesOn);
+        this.infoEl.textContent =
+            `${this.editor.voxels.length} voxels` +
+            (sel > 0 ? ` · ${sel} selected` : '');
     }
 }
