@@ -22,10 +22,11 @@ export function createAppRouter(): ReturnType<typeof createBrowserRouter> {
     return createBrowserRouter([
         {
             path: '/',
-            element: <RootLayout />,
+            Component: RootLayout,
             children: [
                 {
                     index: true,
+                    Component: BuildChrome,
                     loader: () => {
                         const { game, sceneView } = getEngine();
                         game.setMode('build');
@@ -33,21 +34,21 @@ export function createAppRouter(): ReturnType<typeof createBrowserRouter> {
                         sceneView.invalidateTerrain();
                         sceneView.syncTerrain();
                         return null;
-                    },
-                    element: <BuildChrome />
+                    }
                 },
                 {
                     path: 'tile',
+                    Component: EditorChrome,
                     loader: (): EditorLoaderData => {
                         const { game, editor } = getEngine();
                         game.setMode('edit');
                         editor.reset();
                         return { def: null };
-                    },
-                    element: <EditorChrome />
+                    }
                 },
                 {
                     path: 'tile/:id',
+                    Component: EditorChrome,
                     loader: ({ params }): EditorLoaderData => {
                         const { game, editor, assets } = getEngine();
                         const def = ASSET_INDEX[params.id!];
@@ -59,16 +60,15 @@ export function createAppRouter(): ReturnType<typeof createBrowserRouter> {
                             assets.palette(def.id)
                         );
                         return { def };
-                    },
-                    element: <EditorChrome />
+                    }
                 },
                 {
                     path: 'inspect',
+                    Component: InspectOverlay,
                     loader: () => {
                         getEngine().game.setMode('build');
                         return null;
-                    },
-                    element: <InspectOverlay />
+                    }
                 }
             ]
         }
