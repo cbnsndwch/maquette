@@ -8,7 +8,8 @@
     "domed-building": "/assets/voxels/domed-building.vox",
     "wall-segment": "/assets/voxels/wall-segment.vox",
     "ground-cover": "/assets/voxels/ground-cover.vox",
-    "well": "/assets/voxels/well.vox"
+    "well": "/assets/voxels/well.vox",
+    "olive-tree": "/assets/voxels/olive-tree.vox"
   },
   "details": [
     {
@@ -90,6 +91,17 @@
       ],
       "voxels": 40,
       "colors": 2
+    },
+    {
+      "id": "olive-tree",
+      "size": [
+        12,
+        12,
+        12
+      ],
+      "voxels": 276,
+      "colors": 4,
+      "source": "hero"
     }
   ]
 }
