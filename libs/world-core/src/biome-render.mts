@@ -365,18 +365,19 @@ function oliveProp(): Voxel[] {
     // Stepped stone plinth (matches reference: wide bottom, raised center)
     const base = mergeVoxels(
         box(1, 1, 0, 10, 10, 1, MP.stoneLight),
-        box(2, 2, 1,  8,  8, 1, MP.stone),
+        box(2, 2, 1, 8, 8, 1, MP.stone)
     );
 
     // Trunk: wide dark base tapering to a narrow shaft
     const trunk = mergeVoxels(
         box(MID - 2, MID - 2, 2, 4, 4, 1, MP.trunkDark),
-        box(MID - 1, MID - 1, 3, 2, 2, 2, MP.trunk),
+        box(MID - 1, MID - 1, 3, 2, 2, 2, MP.trunk)
     );
 
     // Oblate ellipsoid canopy: wide (rx=5) and flat (rz=3) like the reference
     const canopyVoxels: Voxel[] = [];
-    const rx = 5, rz = 3;
+    const rx = 5,
+        rz = 3;
     for (let iz = 0; iz <= rz; iz++) {
         const lr = rx * Math.sqrt(Math.max(0, 1 - (iz / rz) ** 2));
         const lrCeil = Math.round(lr);
@@ -384,8 +385,18 @@ function oliveProp(): Voxel[] {
             for (let iy = -lrCeil; iy <= lrCeil; iy++) {
                 if (Math.sqrt(ix * ix + iy * iy) <= lr + 0.5) {
                     const k = (ix * 3 + iy * 5 + iz * 7) % 4;
-                    const c = k === 0 ? MP.oliveDark : k === 1 ? MP.oliveLight : MP.olive;
-                    canopyVoxels.push({ x: MID + ix, y: MID + iy, z: 5 + iz, c });
+                    const c =
+                        k === 0
+                            ? MP.oliveDark
+                            : k === 1
+                              ? MP.oliveLight
+                              : MP.olive;
+                    canopyVoxels.push({
+                        x: MID + ix,
+                        y: MID + iy,
+                        z: 5 + iz,
+                        c
+                    });
                 }
             }
         }

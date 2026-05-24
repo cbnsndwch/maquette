@@ -154,8 +154,7 @@ export function encodeVox(
     const sizeContent = 12;
     const xyziContent = 4 + n * 4;
     const rgbaContent = 256 * 4;
-    const children =
-        12 + sizeContent + (12 + xyziContent) + (12 + rgbaContent);
+    const children = 12 + sizeContent + (12 + xyziContent) + (12 + rgbaContent);
     const total = 8 + 12 + children; // file header + MAIN header + children
 
     const view = new DataView(new ArrayBuffer(total));
@@ -328,7 +327,8 @@ export function withVoxAssets(
         voxels: {
             perTile: baseVox?.perTile ?? 12,
             surface: baseVox?.surface ?? (() => []),
-            prop: (id: string) => cache.get(id) ?? (baseProp ? baseProp(id) : []),
+            prop: (id: string) =>
+                cache.get(id) ?? (baseProp ? baseProp(id) : []),
             structure: baseStructure
                 ? (type: string) => cache.get(type) ?? baseStructure(type)
                 : id => cache.get(id) ?? [],

@@ -109,7 +109,12 @@ describe('encodeVox', () => {
     it('throws past 255 unique colors', () => {
         const voxels: Voxel[] = [];
         for (let i = 0; i < 256; i++) {
-            voxels.push({ x: i % 16, y: Math.floor(i / 16), z: 0, c: `#0000${i.toString(16).padStart(2, '0')}` });
+            voxels.push({
+                x: i % 16,
+                y: Math.floor(i / 16),
+                z: 0,
+                c: `#0000${i.toString(16).padStart(2, '0')}`
+            });
         }
         expect(() => encodeVox(voxels)).toThrow(/255 unique colors/);
     });
@@ -119,7 +124,10 @@ describe('voxelUnitToVoxels', () => {
     it('maps material slots to colors and expands merged cubes', () => {
         const unit = {
             cells: [
-                [[{ materialId: 'bark', size: 2 }, null], [null, null]]
+                [
+                    [{ materialId: 'bark', size: 2 }, null],
+                    [null, null]
+                ]
             ]
         };
         const voxels = voxelUnitToVoxels(unit, { bark: '#6b4a2b' });

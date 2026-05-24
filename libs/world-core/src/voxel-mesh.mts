@@ -94,7 +94,11 @@ function surfaceNets(
     let bufNo = 1;
     let n = 0;
 
-    for (x[2] = 0; x[2]! < dims[2]! - 1; x[2]!++, n += nx, bufNo ^= 1, R[2] = -R[2]!) {
+    for (
+        x[2] = 0;
+        x[2]! < dims[2]! - 1;
+        x[2]!++, n += nx, bufNo ^= 1, R[2] = -R[2]!
+    ) {
         let m = 1 + (nx + 1) * (1 + bufNo * (ny + 1));
         for (x[1] = 0; x[1]! < dims[1]! - 1; x[1]!++, n++, m += 2) {
             for (x[0] = 0; x[0]! < dims[0]! - 1; x[0]!++, n++, m++) {
@@ -149,9 +153,19 @@ function surfaceNets(
                     const du = R[iu]!;
                     const dv = R[iv]!;
                     if (mask & 1) {
-                        quads.push(buffer[m]!, buffer[m - du]!, buffer[m - du - dv]!, buffer[m - dv]!);
+                        quads.push(
+                            buffer[m]!,
+                            buffer[m - du]!,
+                            buffer[m - du - dv]!,
+                            buffer[m - dv]!
+                        );
                     } else {
-                        quads.push(buffer[m]!, buffer[m - dv]!, buffer[m - du - dv]!, buffer[m - du]!);
+                        quads.push(
+                            buffer[m]!,
+                            buffer[m - dv]!,
+                            buffer[m - du - dv]!,
+                            buffer[m - du]!
+                        );
                     }
                 }
             }
@@ -167,8 +181,12 @@ function surfaceNets(
 
 /** Inclusive integer bounds of a voxel list. */
 function bounds(voxels: readonly Voxel[]) {
-    let minX = Infinity, minY = Infinity, minZ = Infinity;
-    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    let minX = Infinity,
+        minY = Infinity,
+        minZ = Infinity;
+    let maxX = -Infinity,
+        maxY = -Infinity,
+        maxZ = -Infinity;
     for (const v of voxels) {
         if (v.x < minX) minX = v.x;
         if (v.y < minY) minY = v.y;
@@ -202,7 +220,8 @@ function blurField(
                     const yr = y < ny - 1 ? src[at(x, y + 1, z)]! : c;
                     const zl = z > 0 ? src[at(x, y, z - 1)]! : c;
                     const zr = z < nz - 1 ? src[at(x, y, z + 1)]! : c;
-                    dst[at(x, y, z)] = (6 * c + xl + xr + yl + yr + zl + zr) / 12;
+                    dst[at(x, y, z)] =
+                        (6 * c + xl + xr + yl + yr + zl + zr) / 12;
                 }
         src = dst;
     }
@@ -226,7 +245,12 @@ export function voxelsToSmoothMesh(
         flatShading = false
     } = opts;
 
-    const geometry = voxelsToSmoothGeometry(voxels, { size, smooth, smoothFactor, blur });
+    const geometry = voxelsToSmoothGeometry(voxels, {
+        size,
+        smooth,
+        smoothFactor,
+        blur
+    });
     const material = new THREE.MeshStandardMaterial({
         vertexColors: true,
         roughness,
@@ -246,7 +270,10 @@ export function voxelsToSmoothMesh(
  */
 export function voxelsToSmoothGeometry(
     voxels: readonly Voxel[],
-    opts: Pick<VoxelMeshOptions, 'size' | 'smooth' | 'smoothFactor' | 'blur'> = {}
+    opts: Pick<
+        VoxelMeshOptions,
+        'size' | 'smooth' | 'smoothFactor' | 'blur'
+    > = {}
 ): THREE.BufferGeometry {
     const { size = 1, smooth = 4, smoothFactor = 0.5, blur = 0 } = opts;
     const geometry = new THREE.BufferGeometry();
@@ -305,7 +332,8 @@ export function voxelsToSmoothGeometry(
         world[i * 3 + 2] = (ay + 0.5) * size;
     }
 
-    if (smooth > 0) laplacianSmooth(world, quads, quadCount, smooth, smoothFactor);
+    if (smooth > 0)
+        laplacianSmooth(world, quads, quadCount, smooth, smoothFactor);
 
     // Triangulate quads (a,b,c,d) → (a,b,c) + (a,c,d).
     const indices = new Uint32Array(quadCount * 6);
@@ -315,8 +343,12 @@ export function voxelsToSmoothGeometry(
         const c = quads[q * 4 + 2]!;
         const d = quads[q * 4 + 3]!;
         const o = q * 6;
-        indices[o] = a; indices[o + 1] = bb; indices[o + 2] = c;
-        indices[o + 3] = a; indices[o + 4] = c; indices[o + 5] = d;
+        indices[o] = a;
+        indices[o + 1] = bb;
+        indices[o + 2] = c;
+        indices[o + 3] = a;
+        indices[o + 4] = c;
+        indices[o + 5] = d;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(world, 3));
@@ -348,7 +380,8 @@ function nearestColor(
                 const x = cx + dx;
                 const y = cy + dy;
                 const z = cz + dz;
-                if (x < 0 || y < 0 || z < 0 || x >= nx || y >= ny || z >= nz) continue;
+                if (x < 0 || y < 0 || z < 0 || x >= nx || y >= ny || z >= nz)
+                    continue;
                 const hex = colorAt.get(at(x, y, z));
                 if (hex === undefined) continue;
                 const d = (x - gx) ** 2 + (y - gy) ** 2 + (z - gz) ** 2;
@@ -369,7 +402,10 @@ function laplacianSmooth(
     factor: number
 ): void {
     const vertCount = pos.length / 3;
-    const neighbors: Set<number>[] = Array.from({ length: vertCount }, () => new Set());
+    const neighbors: Set<number>[] = Array.from(
+        { length: vertCount },
+        () => new Set()
+    );
     const edge = (a: number, c: number) => {
         neighbors[a]!.add(c);
         neighbors[c]!.add(a);
@@ -379,7 +415,10 @@ function laplacianSmooth(
         const b = quads[q * 4 + 1]!;
         const c = quads[q * 4 + 2]!;
         const d = quads[q * 4 + 3]!;
-        edge(a, b); edge(b, c); edge(c, d); edge(d, a);
+        edge(a, b);
+        edge(b, c);
+        edge(c, d);
+        edge(d, a);
     }
 
     for (let it = 0; it < iterations; it++) {
@@ -392,7 +431,9 @@ function laplacianSmooth(
                 next[i * 3 + 2] = pos[i * 3 + 2]!;
                 continue;
             }
-            let sx = 0, sy = 0, sz = 0;
+            let sx = 0,
+                sy = 0,
+                sz = 0;
             for (const j of ns) {
                 sx += pos[j * 3]!;
                 sy += pos[j * 3 + 1]!;
@@ -400,8 +441,10 @@ function laplacianSmooth(
             }
             const inv = 1 / ns.size;
             next[i * 3] = pos[i * 3]! + factor * (sx * inv - pos[i * 3]!);
-            next[i * 3 + 1] = pos[i * 3 + 1]! + factor * (sy * inv - pos[i * 3 + 1]!);
-            next[i * 3 + 2] = pos[i * 3 + 2]! + factor * (sz * inv - pos[i * 3 + 2]!);
+            next[i * 3 + 1] =
+                pos[i * 3 + 1]! + factor * (sy * inv - pos[i * 3 + 1]!);
+            next[i * 3 + 2] =
+                pos[i * 3 + 2]! + factor * (sz * inv - pos[i * 3 + 2]!);
         }
         pos.set(next);
     }

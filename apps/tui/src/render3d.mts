@@ -22,7 +22,7 @@ export async function render3d(spec: WorldSpec, header: string): Promise<void> {
     const renderer = await createCliRenderer({
         exitOnCtrlC: true,
         targetFps: 30,
-        clearOnShutdown: true,
+        clearOnShutdown: true
     });
 
     const WIDTH = renderer.terminalWidth;
@@ -32,7 +32,7 @@ export async function render3d(spec: WorldSpec, header: string): Promise<void> {
         id: 'three-main',
         width: WIDTH,
         height: HEIGHT,
-        zIndex: 10,
+        zIndex: 10
     });
     renderer.root.add(framebufferRenderable);
     const { frameBuffer: framebuffer } = framebufferRenderable;
@@ -42,7 +42,7 @@ export async function render3d(spec: WorldSpec, header: string): Promise<void> {
         height: HEIGHT,
         focalLength: 8,
         backgroundColor: RGBA.fromValues(0, 0, 0, 1),
-        superSample: SuperSampleType.NONE,
+        superSample: SuperSampleType.NONE
     });
     await engine.init();
 
@@ -62,7 +62,7 @@ export async function render3d(spec: WorldSpec, header: string): Promise<void> {
         content: header,
         position: 'absolute',
         fg: '#FFFFFF',
-        zIndex: 20,
+        zIndex: 20
     });
     renderer.root.add(titleText);
 
@@ -72,7 +72,7 @@ export async function render3d(spec: WorldSpec, header: string): Promise<void> {
         position: 'absolute',
         top: HEIGHT - 1,
         fg: '#888888',
-        zIndex: 20,
+        zIndex: 20
     });
     renderer.root.add(controlsText);
 

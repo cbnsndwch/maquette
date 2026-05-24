@@ -35,9 +35,9 @@ describe('voxelCellSchema', () => {
     });
 
     it('rejects out-of-range sizes', () => {
-        expect(voxelCellSchema.safeParse({ materialId: 'stone', size: 4 }).success).toBe(
-            false
-        );
+        expect(
+            voxelCellSchema.safeParse({ materialId: 'stone', size: 4 }).success
+        ).toBe(false);
     });
 });
 
