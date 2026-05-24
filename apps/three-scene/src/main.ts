@@ -119,7 +119,7 @@ async function main(): Promise<void> {
             showToast('Add some voxels first');
             return;
         }
-        const def = await saveTile(meta, editor.voxels, editor.palette);
+        const def = await saveTile(meta, editor.materialize(), editor.palette);
         if (!def) {
             showToast('Save failed');
             return;

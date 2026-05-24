@@ -20,6 +20,7 @@ export class EditorColors {
     private readonly popover: HTMLElement;
     private readonly cpColor: HTMLInputElement;
     private readonly cpHex: HTMLInputElement;
+    private readonly cpClear: HTMLButtonElement;
     private activeSlot = 0;
     private popoverOpen = false;
 
@@ -68,6 +69,7 @@ export class EditorColors {
         document.body.appendChild(this.popover);
         this.cpColor = this.popover.querySelector('#cp-color')!;
         this.cpHex = this.popover.querySelector('#cp-hex')!;
+        this.cpClear = this.popover.querySelector('#cp-clear')!;
 
         this.cpColor.addEventListener('input', () =>
             this.apply(this.cpColor.value)
@@ -77,12 +79,11 @@ export class EditorColors {
                 this.apply('#' + this.cpHex.value.replace('#', ''));
             }
         });
-        this.popover
-            .querySelector('#cp-clear')!
-            .addEventListener('click', () => {
-                this.editor.clearSlot(this.activeSlot);
-                this.closePopover();
-            });
+        this.cpClear.addEventListener('click', () => {
+            if (this.cpClear.disabled) return;
+            this.editor.clearSlot(this.activeSlot);
+            this.closePopover();
+        });
         this.popover
             .querySelector('#cp-close')!
             .addEventListener('click', () => this.closePopover());
@@ -145,6 +146,12 @@ export class EditorColors {
         const c = this.editor.palette[i] ?? '#ffffff';
         this.cpColor.value = c;
         this.cpHex.value = c;
+        // Clearing an in-use slot would orphan its voxels; block it here.
+        const inUse = this.editor.slotInUse(i);
+        this.cpClear.disabled = inUse;
+        this.cpClear.title = inUse
+            ? 'In use — recolor or delete those voxels first'
+            : 'Unassign this slot';
         this.popover.style.display = '';
         this.popoverOpen = true;
         const r = this.swatchEls[i]!.getBoundingClientRect();
