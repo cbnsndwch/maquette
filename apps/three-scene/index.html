@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+        />
+        <meta name="theme-color" content="#1b5ba8" />
+        <title>Mykonos Voxel Scene Builder</title>
+        <link rel="stylesheet" href="/src/styles.css" />
+    </head>
+    <body>
+        <div id="app">
+            <header id="title-card">
+                <div class="title-text">
+                    <h1>Voxel Scene Builder</h1>
+                    <p>Three.js · Mykonos terrain cells</p>
+                </div>
+            </header>
+
+            <aside id="toolbar"></aside>
+
+            <section id="palette">
+                <button id="palette-toggle" type="button" aria-expanded="true">
+                    <span class="palette-title">Palette</span>
+                    <span class="chev" aria-hidden="true">▸</span>
+                </button>
+                <div id="palette-body">
+                    <nav id="palette-tabs"></nav>
+                    <div id="palette-grid"></div>
+                </div>
+            </section>
+
+            <details id="instructions" aria-label="Controls help">
+                <summary class="ins-summary">
+                    <span class="ins-badge" aria-hidden="true">?</span>
+                    <span class="ins-summary-label">Controls</span>
+                </summary>
+                <div class="ins-grid">
+                    <span class="key">Click</span><span>Place selected terrain</span>
+                    <span class="key">Drag</span><span>Brush place across cells</span>
+                    <span class="key">Wheel</span><span>Rotate tile (Place mode)</span>
+                    <span class="key">Right click</span><span>Erase cell</span>
+                    <span class="key">Right drag</span><span>Orbit camera</span>
+                    <span class="key">Space</span><span>Hold to pan</span>
+                    <span class="key">Ctrl+Z</span><span>Undo</span>
+                    <span class="key">Ctrl+Shift+Z</span><span>Redo</span>
+                    <span class="key">R</span><span>Rotate tile</span>
+                    <span class="key">P / E / H</span><span>Place / Erase / Pan</span>
+                    <span class="key">O / G</span><span>Auto-rotate / Grid</span>
+                    <span class="key">1-4</span><span>Switch categories</span>
+                </div>
+            </details>
+
+            <div id="toast"></div>
+        </div>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>
