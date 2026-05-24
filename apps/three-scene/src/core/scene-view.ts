@@ -356,6 +356,7 @@ export class SceneView {
     /** Frame the whole island (scene-building view). */
     frameBuild(): void {
         const span = W * P;
+        this.controls.maxPolarAngle = Math.PI * 0.495; // stay above the island
         this.camera.position.set(span * 0.85, span * 0.7, span * 0.85);
         this.controls.target.set(0, 0, 0);
         this.controls.update();
@@ -364,6 +365,8 @@ export class SceneView {
     /** Frame a single origin-centered tile (editing view); stops auto-rotate. */
     frameEdit(): void {
         this.controls.autoRotate = false;
+        // Let the camera dip below the horizon so the tile's underside is visible.
+        this.controls.maxPolarAngle = Math.PI;
         this.camera.position.set(P * 1.5, P * 1.4, P * 1.5);
         this.controls.target.set(0, G, 0);
         this.controls.update();

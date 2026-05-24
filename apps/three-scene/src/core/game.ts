@@ -76,7 +76,8 @@ export class Game {
         if (this.mode === mode) return;
         this.mode = mode;
         if (mode === 'edit') {
-            this.editor?.reset();
+            // The active route decides whether to reset (new tile) or load an
+            // existing tile's voxels; setMode only flips scene/camera state.
             this.editor?.setActive(true);
             this.sceneView.setBuildVisualsVisible(false);
             this.sceneView.setCameraButtons('place'); // free the left button to edit
@@ -92,9 +93,14 @@ export class Game {
         this.ui?.update();
     }
 
+    /** Begin a per-voxel edit stroke (resets drag-dedup state). */
+    beginEditStroke(): void {
+        this.editor?.beginStroke();
+    }
+
     /** Forward an editor edit (per-voxel) at a screen pixel. */
-    editAt(clientX: number, clientY: number): void {
-        this.editor?.editAt(clientX, clientY);
+    editAt(clientX: number, clientY: number, remove = false): void {
+        this.editor?.editAt(clientX, clientY, remove);
     }
 
     setCategory(cat: Category): void {

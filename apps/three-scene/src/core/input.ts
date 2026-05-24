@@ -2,6 +2,7 @@ import { CATEGORIES } from '../config.js';
 import type { Game, Tool } from './game.js';
 
 const TAP_SLOP = 5; // px of drift still treated as a click on release
+const EDIT_MOVE_THRESHOLD = 6; // px the cursor must travel before the next edit
 
 /**
  * Translates pointer + keyboard input into game intents. Camera orbit/pan/zoom
@@ -14,6 +15,8 @@ export class Input {
     private downY = 0;
     private brushing = false;
     private editing = false;
+    private lastEditX = 0;
+    private lastEditY = 0;
     private lastBrushKey: string | null = null;
 
     /** Tool to restore when the spacebar (temporary pan) is released. */
@@ -54,7 +57,10 @@ export class Input {
         // Edit mode: left button edits voxels (camera orbit stays on right-drag).
         if (this.game.mode === 'edit') {
             this.editing = true;
-            this.game.editAt(e.clientX, e.clientY);
+            this.lastEditX = e.clientX;
+            this.lastEditY = e.clientY;
+            this.game.beginEditStroke();
+            this.game.editAt(e.clientX, e.clientY, e.shiftKey || e.altKey);
             return;
         }
 
@@ -69,7 +75,19 @@ export class Input {
 
     private onMove(e: PointerEvent): void {
         if (this.game.mode === 'edit') {
-            if (this.editing) this.game.editAt(e.clientX, e.clientY);
+            // Debounce: only edit once the cursor has travelled past the
+            // threshold, so a press doesn't cascade through voxels.
+            if (
+                this.editing &&
+                Math.hypot(
+                    e.clientX - this.lastEditX,
+                    e.clientY - this.lastEditY
+                ) > EDIT_MOVE_THRESHOLD
+            ) {
+                this.lastEditX = e.clientX;
+                this.lastEditY = e.clientY;
+                this.game.editAt(e.clientX, e.clientY, e.shiftKey || e.altKey);
+            }
             return;
         }
         const c = this.cell(e);
