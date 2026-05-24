@@ -18,6 +18,11 @@ export interface TerrainDef {
      * are ground-level only for now.
      */
     stackable: boolean;
+    /**
+     * Soft-deleted: hidden from the palette/inspector but its `.vox` file and
+     * catalog entry are retained on disk (deletes are reversible by hand).
+     */
+    deleted?: boolean;
 }
 
 export type Category = 'terrain' | 'nature' | 'props' | 'buildings';
@@ -70,12 +75,24 @@ export const TERRAIN_MANIFEST: TerrainDef[] = [];
 /** All tile defs, indexed by id. */
 export const ASSET_INDEX: Record<string, TerrainDef> = {};
 
-/** Replace the whole catalog (in place, so importers see the update). */
+/**
+ * Replace the whole catalog (in place, so importers see the update).
+ * Soft-deleted tiles are dropped — the server keeps their files + entries, but
+ * the running app treats them as gone.
+ */
 export function setCatalog(tiles: TerrainDef[]): void {
+    const live = tiles.filter(t => !t.deleted);
     TERRAIN_MANIFEST.length = 0;
-    TERRAIN_MANIFEST.push(...tiles);
+    TERRAIN_MANIFEST.push(...live);
     for (const k of Object.keys(ASSET_INDEX)) delete ASSET_INDEX[k];
-    for (const t of tiles) ASSET_INDEX[t.id] = t;
+    for (const t of live) ASSET_INDEX[t.id] = t;
+}
+
+/** Drop a tile from the in-memory catalog (after a soft delete on the server). */
+export function removeTile(id: string): void {
+    const i = TERRAIN_MANIFEST.findIndex(t => t.id === id);
+    if (i >= 0) TERRAIN_MANIFEST.splice(i, 1);
+    delete ASSET_INDEX[id];
 }
 
 /** Add or replace a single tile (e.g. one just saved from the editor). */

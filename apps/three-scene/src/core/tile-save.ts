@@ -43,3 +43,18 @@ export async function saveTile(
         return null;
     }
 }
+
+/**
+ * Soft-delete a tile on the server (flags the catalog entry; the `.vox` file is
+ * kept). Returns true on success.
+ */
+export async function deleteTile(id: string): Promise<boolean> {
+    try {
+        const res = await fetch(`/api/tiles/${encodeURIComponent(id)}`, {
+            method: 'DELETE'
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+}

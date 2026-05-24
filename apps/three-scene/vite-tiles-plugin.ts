@@ -7,10 +7,12 @@ import type { Connect, Plugin } from 'vite';
 /**
  * Dev-server controller for the tile catalog.
  *
- *   GET  /api/tiles        → the on-disk catalog (public/voxels/catalog.json)
- *   POST /api/tiles        → save a new/updated tile: writes its `.vox` to
+ *   GET    /api/tiles       → the on-disk catalog (public/voxels/catalog.json)
+ *   POST   /api/tiles       → save a new/updated tile: writes its `.vox` to
  *                            public/voxels/terrain/<id>.vox and upserts its
  *                            entry into the catalog manifest.
+ *   DELETE /api/tiles/<id>  → soft-delete: flag the catalog entry `deleted`,
+ *                            leaving the `.vox` file in place (reversible).
  *
  * NOTE: these endpoints live in the Vite dev server for now. As more server-side
  * pieces accrue (tile delete, scene persistence, asset processing, auth, …) we'll
@@ -25,6 +27,7 @@ interface TileDef {
     category: string;
     file: string;
     stackable: boolean;
+    deleted?: boolean;
 }
 
 interface Catalog {
@@ -46,10 +49,14 @@ export function tilesController(): Plugin {
             server.middlewares.use(
                 '/api/tiles',
                 (req: Connect.IncomingMessage, res: ServerResponse) => {
+                    // Mount path is stripped: `/api/tiles/<id>` → req.url `/<id>`.
+                    const id = (req.url ?? '').split('?')[0]!.replace(/^\/+/, '');
                     if (req.method === 'GET') {
                         void handleGet(catalogPath, res);
                     } else if (req.method === 'POST') {
                         void handlePost(req, res, terrainDir, catalogPath);
+                    } else if (req.method === 'DELETE') {
+                        void handleDelete(id, res, catalogPath);
                     } else {
                         sendJson(res, 405, { error: 'method not allowed' });
                     }
@@ -122,6 +129,27 @@ async function handlePost(
         sendJson(res, 200, { ok: true, tile });
     } catch (err) {
         sendJson(res, 500, { error: `write failed: ${String(err)}` });
+    }
+}
+
+async function handleDelete(
+    id: string,
+    res: ServerResponse,
+    catalogPath: string
+): Promise<void> {
+    if (!ID_RE.test(id)) {
+        return sendJson(res, 400, { error: 'bad or missing tile id' });
+    }
+    try {
+        const catalog = await readCatalog(catalogPath);
+        const tile = catalog.tiles.find(t => t.id === id);
+        if (!tile) return sendJson(res, 404, { error: 'tile not found' });
+        // Soft delete: flag the entry, keep the `.vox` file on disk.
+        tile.deleted = true;
+        await fs.writeFile(catalogPath, JSON.stringify(catalog, null, 4) + '\n');
+        sendJson(res, 200, { ok: true, id });
+    } catch (err) {
+        sendJson(res, 500, { error: `delete failed: ${String(err)}` });
     }
 }
 
