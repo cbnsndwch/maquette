@@ -5,7 +5,7 @@
             "name": "grass",
             "category": "terrain",
             "file": "/voxels/terrain/grass.vox",
-            "stackable": false
+            "stackable": true
         },
         {
             "id": "sand",
@@ -33,7 +33,7 @@
             "name": "water",
             "category": "terrain",
             "file": "/voxels/terrain/water.vox",
-            "stackable": false
+            "stackable": true
         },
         {
             "id": "sea_wall",
@@ -56,13 +56,6 @@
             "file": "/voxels/terrain/foooo.vox",
             "stackable": false,
             "deleted": true
-        },
-        {
-            "id": "zz_b",
-            "name": "zz_b",
-            "category": "terrain",
-            "file": "/voxels/terrain/zz_b.vox",
-            "stackable": false
         }
     ]
 }

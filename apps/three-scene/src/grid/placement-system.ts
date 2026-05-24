@@ -19,8 +19,10 @@ export class PlacementSystem {
 
     /**
      * A cell can always start a column at ground level. Stacking onto an existing
-     * column is only allowed when both the supporting top cell and the cell being
-     * placed are stackable (sand / stone / path).
+     * column depends only on the *supporting* top cell being stackable: terrain
+     * (grass, sand, stone, path, water) accepts more terrain or a prop/structure
+     * on top, while mixed terrain+structure cells (e.g. sea wall) and props are
+     * not stackable, so nothing lands on them.
      */
     canPlace(assetId: string, gx: number, gy: number): boolean {
         if (!ASSET_INDEX[assetId] || !this.tileMap.inBounds(gx, gy)) {
@@ -28,7 +30,7 @@ export class PlacementSystem {
         }
         const top = this.tileMap.topCell(gx, gy);
         if (!top) return true;
-        return isStackable(assetId) && isStackable(top.id);
+        return isStackable(top.id);
     }
 
     place(assetId: string, gx: number, gy: number, rot: Rotation): PlaceResult {
