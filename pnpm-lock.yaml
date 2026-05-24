@@ -36,6 +36,28 @@ importers:
         specifier: ^8.0.0
         version: 8.0.14(@types/node@22.19.19)(esbuild@0.27.7)
 
+  apps/three-scene:
+    dependencies:
+      '@cbnsndwch/world-core':
+        specifier: workspace:*
+        version: link:../../libs/world-core
+      three:
+        specifier: ^0.184.0
+        version: 0.184.0
+    devDependencies:
+      '@cbnsndwch/tsconfig':
+        specifier: workspace:*
+        version: link:../../tools/tsconfig
+      '@types/three':
+        specifier: ^0.184.0
+        version: 0.184.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vite:
+        specifier: ^8.0.0
+        version: 8.0.14(@types/node@22.19.19)(esbuild@0.27.7)
+
   apps/tui:
     dependencies:
       '@cbnsndwch/contracts':
@@ -66,6 +88,8 @@ importers:
       vitest:
         specifier: ^4.1.0
         version: 4.1.7(@types/node@22.19.19)(@vitest/coverage-v8@4.1.7)(vite@8.0.14(@types/node@22.19.19)(esbuild@0.27.7))
+
+  apps/voxel-pipeline-ab: {}
 
   apps/web:
     dependencies:
