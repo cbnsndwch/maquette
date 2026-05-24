@@ -367,6 +367,58 @@ export class TileEditor {
         this.reorderPalette([...assigned, ...empty]);
     }
 
+    /* ── Color generators (populate free slots) ───────────────────── */
+
+    /**
+     * Add a `steps`-stop RGB ramp from the active color to `targetHex` into free
+     * slots (endpoints included; already-present colors are skipped). Returns
+     * false without changing anything if there aren't enough free slots.
+     */
+    rampTo(targetHex: string, steps: number): boolean {
+        const from = hexToRgb(this.activeColor);
+        const to = hexToRgb(targetHex);
+        const n = Math.max(2, Math.min(16, Math.round(steps)));
+        const out: string[] = [];
+        for (let i = 0; i < n; i++) {
+            const t = i / (n - 1);
+            out.push(
+                rgbToHex([
+                    clamp8(from[0] + (to[0] - from[0]) * t),
+                    clamp8(from[1] + (to[1] - from[1]) * t),
+                    clamp8(from[2] + (to[2] - from[2]) * t)
+                ])
+            );
+        }
+        return this.addColors(out);
+    }
+
+    /**
+     * Add harmony colors derived from the active color (same S/L, rotated hue):
+     * complement (+180°), analogous (±30°), or triad (±120°). Returns false if
+     * there aren't enough free slots.
+     */
+    harmony(kind: "complement" | "analogous" | "triad"): boolean {
+        const [h, s, l] = hexToHsl(this.activeColor);
+        const offsets =
+            kind === "complement"
+                ? [180]
+                : kind === "analogous"
+                  ? [30, -30]
+                  : [120, -120];
+        return this.addColors(offsets.map((d) => hslToHex(h + d, s, l)));
+    }
+
+    /** Add the distinct, not-yet-present colors to free slots; false if no room. */
+    private addColors(colors: readonly string[]): boolean {
+        const distinct = [...new Set(colors.map((c) => c.toLowerCase()))].filter(
+            (c) => !this.palette.includes(c)
+        );
+        if (distinct.length > this.freeSlotCount()) return false;
+        for (const c of distinct) this.ensurePaletteColor(c);
+        if (distinct.length) this.onChange?.();
+        return true;
+    }
+
     selectColorIdx(i: number): void {
         if (i >= 0 && i < PALETTE_SIZE && this.palette[i] != null) {
             this.activeColorIdx = i;
@@ -1118,6 +1170,49 @@ function hexHue(hex: string): number {
     else h = (r! - g!) / d + 4;
     h *= 60;
     return h < 0 ? h + 360 : h;
+}
+
+/** Hex → HSL: hue 0–360, saturation/lightness 0–1. */
+export function hexToHsl(hex: string): [number, number, number] {
+    const [r, g, b] = hexToRgb(hex).map((v) => v / 255) as [
+        number,
+        number,
+        number
+    ];
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const d = max - min;
+    const l = (max + min) / 2;
+    if (d === 0) return [0, 0, l];
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h: number;
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    return [h < 0 ? h + 360 : h, s, l];
+}
+
+/** HSL (hue any degrees, s/l 0–1) → hex. */
+export function hslToHex(h: number, s: number, l: number): string {
+    const hue = ((h % 360) + 360) % 360;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+    const m = l - c / 2;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    if (hue < 60) [r, g] = [c, x];
+    else if (hue < 120) [r, g] = [x, c];
+    else if (hue < 180) [g, b] = [c, x];
+    else if (hue < 240) [g, b] = [x, c];
+    else if (hue < 300) [r, b] = [x, c];
+    else [r, b] = [c, x];
+    return rgbToHex([
+        clamp8((r + m) * 255),
+        clamp8((g + m) * 255),
+        clamp8((b + m) * 255)
+    ]);
 }
 
 /** Standard-normal sample (Box–Muller). */
