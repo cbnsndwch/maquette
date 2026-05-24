@@ -1,8 +1,18 @@
 import { CATEGORIES } from '../config.js';
 import type { Game, Tool } from './game.js';
+import type { EditTool } from './tile-editor.js';
 
 const TAP_SLOP = 5; // px of drift still treated as a click on release
 const EDIT_MOVE_THRESHOLD = 6; // px the cursor must travel before the next edit
+
+/** Tile-editor tool keyboard shortcuts (must match EditorPanel's tooltips). */
+const EDIT_KEYS: Record<string, EditTool> = {
+    a: 'add',
+    d: 'delete',
+    p: 'paint',
+    i: 'eyedropper',
+    s: 'select'
+};
 
 /**
  * Translates pointer + keyboard input into game intents. Camera orbit/pan/zoom
@@ -130,8 +140,10 @@ export class Input {
     }
 
     private onWheel(e: WheelEvent): void {
-        // Wheel rotates the tile only while placing in build mode; otherwise zoom.
+        // Free wheel zooms (handled by OrbitControls). Ctrl/Cmd + wheel rotates
+        // the tile brush while placing; we intercept only that case.
         if (this.game.mode !== 'build' || this.game.tool !== 'place') return;
+        if (!e.ctrlKey && !e.metaKey) return;
         e.preventDefault();
         e.stopPropagation();
         this.game.rotateBrush(e.deltaY > 0 ? 1 : 3);
@@ -144,8 +156,17 @@ export class Input {
         ) {
             return;
         }
-        // Tile-editor mode owns its own UI; ignore the build-mode shortcuts.
-        if (this.game.mode === 'edit') return;
+        // Tile-editor mode: only the per-voxel tool shortcuts apply.
+        if (this.game.mode === 'edit') {
+            const ed = this.game.editor;
+            if (!ed || e.ctrlKey || e.metaKey) return;
+            const tool = EDIT_KEYS[e.key.toLowerCase()];
+            if (tool) {
+                ed.setTool(tool);
+                e.preventDefault();
+            }
+            return;
+        }
 
         // Undo / redo.
         if (e.ctrlKey || e.metaKey) {
@@ -203,6 +224,9 @@ export class Input {
                 break;
             case 's':
                 this.game.save();
+                break;
+            case 'x':
+                this.game.exportScene();
                 break;
             default:
                 return;

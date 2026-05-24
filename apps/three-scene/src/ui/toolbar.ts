@@ -4,6 +4,8 @@ interface ToolButton {
     id: string;
     label: string;
     icon: string;
+    /** Tooltip: the action plus its keyboard shortcut. */
+    title: string;
 }
 
 // Simple cobalt-ink SVG glyphs (24×24 viewBox), one visual language for the rail.
@@ -24,18 +26,58 @@ const ICONS: Record<string, string> = {
 };
 
 const BUTTONS: ToolButton[] = [
-    { id: 'place', label: 'Place', icon: ICONS.place! },
-    { id: 'erase', label: 'Erase', icon: ICONS.erase! },
-    { id: 'pan', label: 'Pan', icon: ICONS.pan! },
-    { id: 'rotate', label: '0°', icon: ICONS.rotate! },
-    { id: 'fill', label: 'Fill', icon: ICONS.fill! },
-    { id: 'undo', label: 'Undo', icon: ICONS.undo! },
-    { id: 'redo', label: 'Redo', icon: ICONS.redo! },
-    { id: 'orbit', label: 'Orbit', icon: ICONS.orbit! },
-    { id: 'grid', label: 'Grid', icon: ICONS.grid! },
-    { id: 'save', label: 'Save', icon: ICONS.save! },
-    { id: 'export', label: 'Export', icon: ICONS.export! },
-    { id: 'reset', label: 'Reset', icon: ICONS.reset! }
+    {
+        id: 'place',
+        label: 'Place',
+        icon: ICONS.place!,
+        title: 'Place terrain (P)'
+    },
+    {
+        id: 'erase',
+        label: 'Erase',
+        icon: ICONS.erase!,
+        title: 'Erase cell (E)'
+    },
+    {
+        id: 'pan',
+        label: 'Pan',
+        icon: ICONS.pan!,
+        title: 'Pan camera (H, or hold Space)'
+    },
+    {
+        id: 'rotate',
+        label: '0°',
+        icon: ICONS.rotate!,
+        title: 'Rotate tile (R, or Ctrl+Wheel)'
+    },
+    {
+        id: 'fill',
+        label: 'Fill',
+        icon: ICONS.fill!,
+        title: 'Fill empty cells (F)'
+    },
+    { id: 'undo', label: 'Undo', icon: ICONS.undo!, title: 'Undo (Ctrl+Z)' },
+    {
+        id: 'redo',
+        label: 'Redo',
+        icon: ICONS.redo!,
+        title: 'Redo (Ctrl+Shift+Z)'
+    },
+    {
+        id: 'orbit',
+        label: 'Orbit',
+        icon: ICONS.orbit!,
+        title: 'Auto-rotate camera (O)'
+    },
+    { id: 'grid', label: 'Grid', icon: ICONS.grid!, title: 'Toggle grid (G)' },
+    { id: 'save', label: 'Save', icon: ICONS.save!, title: 'Save scene (S)' },
+    {
+        id: 'export',
+        label: 'Export',
+        icon: ICONS.export!,
+        title: 'Export scene .vox (X)'
+    },
+    { id: 'reset', label: 'Reset', icon: ICONS.reset!, title: 'Reset scene' }
 ];
 
 const TOOL_IDS = new Set<Tool>(['place', 'erase', 'pan']);
@@ -57,6 +99,7 @@ export class Toolbar {
             btn.type = 'button';
             btn.className = 'tool';
             btn.dataset.toolId = def.id;
+            btn.title = def.title;
             btn.innerHTML =
                 `<svg class="ti" viewBox="0 0 24 24" fill="none" stroke="#1b5ba8" ` +
                 `stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${def.icon}</svg>` +
