@@ -70,10 +70,12 @@
     --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* App-specific palette tokens (literal values, independent of the legacy
-   styles.css :root) so panels migrated to Tailwind survive its removal.
-   Generates bg-panel / bg-paper / text-ink / text-ink-deep / border-ink /
-   shadow-panel utilities. */
+/**
+ * App-specific palette tokens (literal values, independent of the legacy
+ * styles.css :root) so panels migrated to Tailwind survive its removal.
+ * Generates bg-panel / bg-paper / text-ink / text-ink-deep / border-ink /
+ * shadow-panel utilities. 
+ */
 @theme {
     --color-ink: #1b5ba8;
     --color-ink-deep: #134680;
@@ -82,9 +84,11 @@
     --shadow-panel: 0 6px 22px rgba(40, 28, 10, 0.18);
 }
 
-/* 256-slot color grid: the sanctioned raw-CSS exception (parent-state-driven
-   compact hide + the empty-slot diagonal can't be expressed as utilities).
-   Unlayered so they reliably win over Tailwind utility layers. */
+/**
+ * 256-slot color grid: the sanctioned raw-CSS exception (parent-state-driven
+ * compact hide + the empty-slot diagonal can't be expressed as utilities).
+ * Unlayered so they reliably win over Tailwind utility layers.
+ */
 .edc-grid.is-compact .edc-cell-empty {
     display: none;
 }
