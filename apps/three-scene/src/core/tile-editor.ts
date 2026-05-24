@@ -7,10 +7,11 @@ import type { SceneView } from './scene-view.js';
 
 const N = CONFIG.voxel.perTile; // 12 — footprint edge in voxels
 const HALF = N / 2;
-const DEFAULT_GROUND = CONFIG.groundLayers; // default # of buried layers
-const MAX_GROUND = 32; // clamp for the movable floor
+const GROUND = CONFIG.groundLayers; // scene ground line; lower layers are buried
 /** Fixed palette size — an 8×32 grid, matching the importable palette image. */
 const PALETTE_SIZE = 256;
+/** Discrete shade levels the Shade tool quantizes a color to. */
+const SHADE_STEPS = 7;
 
 export type EditTool = 'add' | 'delete' | 'paint' | 'eyedropper' | 'select';
 
@@ -65,8 +66,6 @@ export class TileEditor {
     readonly selection = new Set<string>();
     /** Id of the tile being edited (set by {@link loadTile}); null for a new tile. */
     editingId: string | null = null;
-    /** Voxel layer that meets scene ground — movable so the floor can be re-placed. */
-    groundLevel: number = DEFAULT_GROUND;
     gridOn = true;
     edgesOn = false;
     /** Exploded view: extra vertical gap (in voxels) inserted between layers. */
@@ -82,7 +81,6 @@ export class TileEditor {
     private selectionMesh: THREE.InstancedMesh | null = null;
     private edges: THREE.LineSegments | null = null;
     private grid!: THREE.GridHelper;
-    private datum!: THREE.Object3D;
     private readonly hitGeo = new THREE.BoxGeometry(1, 1, 1);
     private readonly hitMat = new THREE.MeshBasicMaterial();
     private readonly selGeo = new THREE.BoxGeometry(1.12, 1.12, 1.12);
@@ -336,10 +334,10 @@ export class TileEditor {
 
     /* ── Bulk clear actions ───────────────────────────────────── */
 
-    /** Fill the buried base layers (z 0..groundLevel-1) with the active color. */
+    /** Fill the buried base layers (z 0..GROUND-1) with the active color. */
     fillBase(): void {
         const occ = this.occupied();
-        for (let z = 0; z < this.groundLevel; z++) {
+        for (let z = 0; z < GROUND; z++) {
             for (let y = 0; y < N; y++) {
                 for (let x = 0; x < N; x++) {
                     if (!occ.has(keyOf(x, y, z))) {
@@ -352,38 +350,196 @@ export class TileEditor {
         this.onChange?.();
     }
 
-    /** Remove the buried base layers (z < groundLevel). */
+    /** Remove the buried base layers (z < GROUND). */
     clearBase(): void {
-        this.voxels = this.voxels.filter(v => v.z >= this.groundLevel);
+        this.voxels = this.voxels.filter(v => v.z >= GROUND);
         this.rebuild();
         this.onChange?.();
     }
 
-    /** Remove everything above ground (z >= groundLevel). */
+    /** Remove everything above ground (z >= GROUND). */
     clearTop(): void {
-        this.voxels = this.voxels.filter(v => v.z < this.groundLevel);
+        this.voxels = this.voxels.filter(v => v.z < GROUND);
         this.rebuild();
         this.onChange?.();
     }
 
-    /* ── Floor / view toggles ─────────────────────────────────── */
+    /* ── Shading + hull ───────────────────────────────────────── */
 
-    /** Move the ground datum up/down (clamped); the buried-layer line follows. */
-    setGroundLevel(z: number): void {
-        const next = Math.max(0, Math.min(MAX_GROUND, Math.round(z)));
-        if (next === this.groundLevel) return;
-        this.groundLevel = next;
-        this.datum.position.y = next * CONFIG.voxel.size;
+    /**
+     * Give the tile a hand-shaded look: recolor each voxel (the selection if any,
+     * else all) to a brightness-jittered variant of the active color, sampled
+     * from a normal distribution. Jitter is quantized to a few discrete shades
+     * (added to the palette) so the bounded-palette aesthetic — and the 255-color
+     * `.vox` limit — is respected. `spread` (0–100) scales the variance.
+     */
+    applyShading(spread: number): boolean {
+        if (!this.voxels.length) return true;
+        const shades = this.shadePalette(spread);
+        const distinct = [...new Set(shades.map(s => s.toLowerCase()))];
+        const missing = distinct.filter(s => !this.palette.includes(s));
+        // Refuse rather than silently overflow the bounded palette.
+        if (missing.length > this.freeSlotCount()) return false;
+        for (const s of missing) this.ensurePaletteColor(s);
+        const sel = this.selection;
+        const pick = (): string => {
+            const z = Math.max(-2.5, Math.min(2.5, gaussian()));
+            const idx = Math.round(((z + 2.5) / 5) * (SHADE_STEPS - 1));
+            return shades[Math.max(0, Math.min(SHADE_STEPS - 1, idx))]!;
+        };
+        for (const v of this.voxels) {
+            if (sel.size === 0 || sel.has(keyOf(v.x, v.y, v.z))) v.c = pick();
+        }
+        this.rebuild();
+        this.onChange?.();
+        return true;
+    }
+
+    /** The SHADE_STEPS discrete shade colors the current settings would produce. */
+    private shadePalette(spread: number): string[] {
+        const base = hexToRgb(this.activeColor);
+        const maxDev = (Math.max(0, Math.min(100, spread)) / 100) * 0.5;
+        const out: string[] = [];
+        for (let i = 0; i < SHADE_STEPS; i++) {
+            const f = 1 + ((i / (SHADE_STEPS - 1)) * 2 - 1) * maxDev; // 1±maxDev
+            out.push(
+                rgbToHex([
+                    clamp8(base[0] * f),
+                    clamp8(base[1] * f),
+                    clamp8(base[2] * f)
+                ])
+            );
+        }
+        return out;
+    }
+
+    /* ── Palette space management ─────────────────────────────── */
+
+    /** New palette slots a Shade needs (distinct shades not yet in the palette). */
+    shadeSlotsNeeded(spread: number): number {
+        const distinct = new Set(
+            this.shadePalette(spread).map(s => s.toLowerCase())
+        );
+        let n = 0;
+        for (const s of distinct) if (!this.palette.includes(s)) n++;
+        return n;
+    }
+
+    freeSlotCount(): number {
+        return this.palette.reduce<number>(
+            (n, c) => (c == null ? n + 1 : n),
+            0
+        );
+    }
+
+    /** Count of assigned palette slots not referenced by any voxel. */
+    unusedColorCount(): number {
+        const used = new Set(this.voxels.map(v => v.c.toLowerCase()));
+        return this.palette.reduce<number>(
+            (n, c) => (c != null && !used.has(c) ? n + 1 : n),
+            0
+        );
+    }
+
+    /** Unassign palette slots no voxel uses (e.g. imported junk); returns count. */
+    removeUnusedColors(): number {
+        const used = new Set(this.voxels.map(v => v.c.toLowerCase()));
+        let removed = 0;
+        for (let i = 0; i < this.palette.length; i++) {
+            const c = this.palette[i];
+            if (c != null && !used.has(c)) {
+                this.palette[i] = null;
+                removed++;
+            }
+        }
+        if (this.palette[this.activeColorIdx] == null) {
+            const first = this.palette.findIndex(c => c != null);
+            this.activeColorIdx = first >= 0 ? first : 0;
+        }
+        if (removed) this.onChange?.();
+        return removed;
+    }
+
+    /**
+     * Drop voxels that are fully enclosed (all six face-neighbors occupied) and
+     * thus never visible — the equivalent of MagicaVoxel's Hull, trimming file
+     * size and draw work without changing the silhouette.
+     */
+    hull(): void {
+        if (!this.voxels.length) return;
+        const occ = this.occupied();
+        const buried = (v: Voxel): boolean =>
+            occ.has(keyOf(v.x + 1, v.y, v.z)) &&
+            occ.has(keyOf(v.x - 1, v.y, v.z)) &&
+            occ.has(keyOf(v.x, v.y + 1, v.z)) &&
+            occ.has(keyOf(v.x, v.y - 1, v.z)) &&
+            occ.has(keyOf(v.x, v.y, v.z + 1)) &&
+            occ.has(keyOf(v.x, v.y, v.z - 1));
+        this.voxels = this.voxels.filter(v => !buried(v));
+        this.rebuild();
         this.onChange?.();
     }
 
-    raiseGround(): void {
-        this.setGroundLevel(this.groundLevel + 1);
+    /* ── Floor (geometry z-shift) ─────────────────────────────── */
+
+    /**
+     * Shift the whole model in z, clamped to stay within [0, 63]. This bakes into
+     * the saved geometry, so the chosen burial depth determines where the tile
+     * lands when placed (the datum at z = GROUND marks the scene ground line).
+     */
+    shiftZ(dz: number): void {
+        if (!this.voxels.length || dz === 0) return;
+        let minZ = Infinity;
+        let maxZ = -Infinity;
+        for (const v of this.voxels) {
+            if (v.z < minZ) minZ = v.z;
+            if (v.z > maxZ) maxZ = v.z;
+        }
+        let d = dz;
+        if (minZ + d < 0) d = -minZ;
+        if (maxZ + d > 63) d = 63 - maxZ;
+        if (d === 0) return;
+        for (const v of this.voxels) v.z += d;
+        if (this.selection.size) {
+            const shifted = [...this.selection].map(k => {
+                const [x, y, z] = k.split(',').map(Number) as [
+                    number,
+                    number,
+                    number
+                ];
+                return keyOf(x, y, z + d);
+            });
+            this.selection.clear();
+            for (const k of shifted) this.selection.add(k);
+        }
+        this.rebuild();
+        this.onChange?.();
     }
 
-    lowerGround(): void {
-        this.setGroundLevel(this.groundLevel - 1);
+    raiseFloor(): void {
+        this.shiftZ(1);
     }
+
+    lowerFloor(): void {
+        this.shiftZ(-1);
+    }
+
+    /** Base layer relative to the ground line (negative = buried); null if empty. */
+    get floorOffset(): number | null {
+        if (!this.voxels.length) return null;
+        let minZ = Infinity;
+        for (const v of this.voxels) if (v.z < minZ) minZ = v.z;
+        return minZ - GROUND;
+    }
+
+    private ensurePaletteColor(hex: string): void {
+        const c = hex.toLowerCase();
+        if (this.palette.includes(c)) return;
+        const free = this.palette.indexOf(null);
+        if (free >= 0) this.palette[free] = c;
+    }
+
+    /* ── View toggles ─────────────────────────────────────────── */
 
     setGridVisible(on: boolean): void {
         this.gridOn = on;
@@ -730,8 +886,9 @@ export class TileEditor {
         this.grid.visible = this.gridOn;
         this.root.add(this.grid);
 
-        // Datum: the (movable) plane that meets scene ground — voxels below it get
-        // buried. Plane + edge loop are grouped so they move together.
+        // Datum: the fixed plane that meets scene ground (z = GROUND). Voxels
+        // below it are buried when placed; the Floor tool shifts the model
+        // relative to this line. Plane + edge loop grouped together.
         const planeGeo = new THREE.PlaneGeometry(N, N).rotateX(-Math.PI / 2);
         const datum = new THREE.Group();
         datum.add(
@@ -753,8 +910,7 @@ export class TileEditor {
                 })
             )
         );
-        datum.position.y = this.groundLevel * CONFIG.voxel.size;
-        this.datum = datum;
+        datum.position.y = GROUND * CONFIG.voxel.size;
         this.root.add(datum);
     }
 
@@ -786,4 +942,27 @@ export class TileEditor {
 
 function keyOf(x: number, y: number, z: number): string {
     return `${x},${y},${z}`;
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+    const n = parseInt(hex.replace('#', ''), 16);
+    return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
+}
+
+function rgbToHex([r, g, b]: [number, number, number]): string {
+    const h = (v: number) => v.toString(16).padStart(2, '0');
+    return `#${h(r)}${h(g)}${h(b)}`;
+}
+
+function clamp8(v: number): number {
+    return Math.max(0, Math.min(255, Math.round(v)));
+}
+
+/** Standard-normal sample (Box–Muller). */
+function gaussian(): number {
+    let u = 0;
+    let v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 }

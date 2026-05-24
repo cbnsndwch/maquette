@@ -16,6 +16,7 @@ export class EditorColors {
     private readonly swatchesEl: HTMLElement;
     private readonly swatchEls: HTMLButtonElement[] = [];
     private readonly fileInput: HTMLInputElement;
+    private readonly trimBtn: HTMLButtonElement;
     private readonly popover: HTMLElement;
     private readonly cpColor: HTMLInputElement;
     private readonly cpHex: HTMLInputElement;
@@ -29,13 +30,20 @@ export class EditorColors {
         root.innerHTML = `
             <div class="ed-head">Colors</div>
             <div class="ed-swatches" id="edc-swatches"></div>
-            <button type="button" class="ed-btn" id="edc-import">Import 8×32 image</button>
+            <button type="button" class="ed-btn" id="edc-trim" hidden
+                title="Remove palette colors no voxel uses"></button>
+            <button type="button" class="ed-btn" id="edc-import"
+                title="Load a 256-color palette from an 8×32 image">Import 8×32 image</button>
             <input type="file" id="edc-file" accept="image/png,image/jpeg,image/bmp,image/webp" hidden />
         `;
         this.swatchesEl = root.querySelector('#edc-swatches')!;
         this.fileInput = root.querySelector('#edc-file')!;
+        this.trimBtn = root.querySelector('#edc-trim')!;
         this.buildSwatches();
 
+        this.trimBtn.addEventListener('click', () =>
+            this.editor.removeUnusedColors()
+        );
         root.querySelector('#edc-import')!.addEventListener('click', () =>
             this.fileInput.click()
         );
@@ -111,6 +119,9 @@ export class EditorColors {
             sw.style.background = c ?? '';
             sw.title = c ?? `slot ${i} — empty`;
         }
+        const unused = this.editor.unusedColorCount();
+        this.trimBtn.hidden = unused === 0;
+        this.trimBtn.textContent = `Trim ${unused} unused`;
     }
 
     private buildSwatches(): void {
