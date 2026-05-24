@@ -332,6 +332,41 @@ export class TileEditor {
         this.onChange?.();
     }
 
+    /**
+     * Permute the palette so the new slot `i` holds old slot `order[i]`, remapping
+     * every voxel's index so colors stay attached (the model is visually
+     * unchanged). `order` must be a permutation of 0…{@link PALETTE_SIZE}-1.
+     */
+    reorderPalette(order: readonly number[]): void {
+        const next: (string | null)[] = new Array(PALETTE_SIZE).fill(null);
+        const oldToNew: number[] = new Array(PALETTE_SIZE).fill(0);
+        for (let i = 0; i < PALETTE_SIZE; i++) {
+            const old = order[i]!;
+            next[i] = this.palette[old] ?? null;
+            oldToNew[old] = i;
+        }
+        for (const v of this.voxels) v.ci = oldToNew[v.ci]!;
+        this.palette = next;
+        this.activeColorIdx = oldToNew[this.activeColorIdx]!;
+        this.rebuild();
+        this.onChange?.();
+    }
+
+    /** Sort assigned colors (by hue or lightness) to the front; empties trail. */
+    sortPalette(key: "hue" | "light"): void {
+        const assigned: number[] = [];
+        const empty: number[] = [];
+        for (let i = 0; i < this.palette.length; i++) {
+            if (this.palette[i] != null) assigned.push(i);
+            else empty.push(i);
+        }
+        const metric = key === "hue" ? hexHue : hexLuma;
+        assigned.sort(
+            (a, b) => metric(this.palette[a]!) - metric(this.palette[b]!)
+        );
+        this.reorderPalette([...assigned, ...empty]);
+    }
+
     selectColorIdx(i: number): void {
         if (i >= 0 && i < PALETTE_SIZE && this.palette[i] != null) {
             this.activeColorIdx = i;
@@ -1062,6 +1097,27 @@ function rgbToHex([r, g, b]: [number, number, number]): string {
 
 function clamp8(v: number): number {
     return Math.max(0, Math.min(255, Math.round(v)));
+}
+
+/** Perceived lightness (Rec. 601 luma), 0–255. */
+function hexLuma(hex: string): number {
+    const [r, g, b] = hexToRgb(hex);
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
+/** Hue angle in degrees (0–360); greys sort first (returns -1). */
+function hexHue(hex: string): number {
+    const [r, g, b] = hexToRgb(hex).map((v) => v / 255);
+    const max = Math.max(r!, g!, b!);
+    const min = Math.min(r!, g!, b!);
+    const d = max - min;
+    if (d === 0) return -1;
+    let h: number;
+    if (max === r) h = ((g! - b!) / d) % 6;
+    else if (max === g) h = (b! - r!) / d + 2;
+    else h = (r! - g!) / d + 4;
+    h *= 60;
+    return h < 0 ? h + 360 : h;
 }
 
 /** Standard-normal sample (Box–Muller). */
