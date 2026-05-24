@@ -28,12 +28,14 @@ The 3D engine (`Game`, `SceneView`, `TileEditor`, `Input`, `TileMap`,
 - **Routing:** React Router 7 in **library/data mode** (`createBrowserRouter` +
   `<RouterProvider>`). **Not** framework mode — no SSR, no `@react-router/dev` Vite plugin.
 - **UI primitives + styling:** **shadcn/ui on Base UI primitives** + **Tailwind CSS v4**.
-  Decompose the current CSS into Tailwind utilities applied to Base UI components to
-  match today's look; use Tailwind `@apply` semantic classes **only as the exception**
-  (likely just the 256-swatch grid).
+  Base UI is the confirmed primitives layer — **not Radix** (Radix has unaddressed issues;
+  its maintainers have moved to Base UI). Decompose the current CSS into Tailwind utilities
+  applied to Base UI components to match today's look; use Tailwind `@apply` semantic classes
+  **only as the exception** (likely just the 256-swatch grid).
 - **State bridge:** DIY `useSyncExternalStore` over the engine (a version counter).
   **Not Zustand** — see rationale below.
-- **Toasts:** shadcn toast + global `<Toaster/>` (replaces the hand-rolled `showToast`).
+- **Toasts:** **Sonner** + global `<Toaster/>` (replaces the hand-rolled `showToast`);
+  Sonner's imperative `toast()` is callable from outside React, so the engine can fire toasts.
 - **Tooltips:** shadcn Tooltip (Base UI) + a single global `<TooltipProvider>`.
 
 ## Architecture
@@ -73,7 +75,7 @@ export const engineStore = {
   single-callback contract, **zero `core/` changes**):
   ```
   editor.onChange = emit;
-  game.ui = { update: emit, showToast: (m) => toast(m) };  // toast = shadcn/Sonner imperative API
+  game.ui = { update: emit, showToast: (m) => toast(m) };  // toast() from sonner — callable outside React
   ```
   This deletes the old `main.ts` `*.refresh()` fan-out entirely.
 - A ~10-line `useEngineSelector(selector, isEqual?)` helper wraps
@@ -143,7 +145,7 @@ createBrowserRouter([{
 | `editor-colors.ts` | `<ColorPalette/>` + memoized `<ColorSwatch/>` + `<ColorPopover/>` (shadcn Popover) |
 | `edit-context-menu.ts` | `<EditContextMenu/>` — Base UI Menu/ContextMenu (cursor-anchored) |
 | `inspector.ts` | `<Inspector/>` + `<TileDetailModal/>` — shadcn Dialog (Base UI) |
-| toast div | shadcn `<Toaster/>` global + imperative `toast()` |
+| toast div | Sonner `<Toaster/>` global + imperative `toast()` |
 | (tooltips) | shadcn Tooltip + global `<TooltipProvider>` |
 
 `thumbnails.ts` stays imperative; thumbnail data-URLs live in a bootstrap-owned
@@ -195,9 +197,9 @@ createBrowserRouter([{
 
 - **Dependencies:** `react`, `react-dom`, `@types/react`, `@types/react-dom`;
   `react-router` (v7); `tailwindcss` v4 + `@tailwindcss/vite`; shadcn/ui (CLI-generated
-  components into `src/components/ui/`) configured against **Base UI** primitives; a
-  toast lib with an imperative `toast()` callable from non-React (Sonner-style) so the
-  engine can fire toasts without a React dep.
+  components into `src/components/ui/`) configured against **Base UI** primitives (not
+  Radix); `sonner` for toasts (its imperative `toast()` lets the engine fire toasts
+  without a React dep).
 - `tsconfig.json`: add **only** `"jsx": "react-jsx"` (+ the `@/*` path alias shadcn
   expects, if used). **Do NOT** adopt `@cbnsndwch/tsconfig/react-library` — it flips
   `moduleResolution` to `NodeNext` and breaks this app's `"Bundler"` +
