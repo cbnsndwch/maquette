@@ -45,7 +45,7 @@
         {
             "id": "boulder",
             "name": "boulder",
-            "category": "nature",
+            "category": "terrain",
             "file": "/voxels/terrain/boulder.vox",
             "stackable": false
         },
