@@ -325,14 +325,14 @@ canvas {
 #editor {
     position: fixed;
     right: 14px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 1rem;
+    bottom: 1rem;
+    transform: translateY(0%);
     width: 220px;
-    max-height: calc(100vh - 28px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 0;
     padding: 12px 14px;
     border-radius: 16px;
     background: var(--panel);
@@ -345,14 +345,49 @@ canvas {
     font-size: 14px;
     font-weight: 700;
     color: var(--ink-deep);
+    margin-bottom: 4px;
 }
-.ed-label {
-    margin-top: 4px;
+.ed-accordion {
+    border-bottom: 1px solid rgba(27, 91, 168, 0.12);
+}
+.ed-accordion:last-child {
+    border-bottom: none;
+}
+.ed-acc-hdr {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    background: none;
+    border: none;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    opacity: 0.6;
+    color: var(--ink-deep);
+    opacity: 0.65;
+    cursor: pointer;
+}
+.ed-acc-hdr::after {
+    content: '▸';
+    font-size: 10px;
+    transition: transform 0.15s;
+}
+.ed-accordion.open .ed-acc-hdr {
+    opacity: 1;
+}
+.ed-accordion.open .ed-acc-hdr::after {
+    transform: rotate(90deg);
+}
+.ed-acc-body {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 10px;
+}
+.ed-accordion.open .ed-acc-body {
+    display: flex;
 }
 .ed-tools {
     display: grid;
