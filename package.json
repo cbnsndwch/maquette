@@ -1,6 +1,6 @@
 {
     "name": "@cbnsndwch/maquette",
-    "description": "Maquette: song-to-tiny-world generator. Turns a track into a deterministic or LLM-composed 3D world rendered with Three.js.",
+    "description": "Audio-to-tiny-world generator. Turns a track into a deterministic or LLM-composed 3D world rendered with Three.js.",
     "version": "0.0.0",
     "type": "module",
     "license": "MIT",
