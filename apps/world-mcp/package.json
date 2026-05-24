@@ -1,0 +1,41 @@
+{
+    "name": "@cbnsndwch/maquette-world-mcp",
+    "description": "Headless MCP server exposing the three-scene voxel authoring primitives so agents can compose scenes over the real tile catalog",
+    "version": "0.0.0",
+    "type": "module",
+    "license": "MIT",
+    "private": true,
+    "bin": {
+        "world-mcp": "./dist/index.js"
+    },
+    "main": "./dist/index.js",
+    "scripts": {
+        "dev": "tsx src/index.mts",
+        "start": "node dist/index.js",
+        "build": "tsup",
+        "format": "oxfmt --write -c ../../.oxfmtrc.json src",
+        "lint": "oxlint ./src",
+        "lint:fix": "oxlint ./src --fix",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest --run --passWithNoTests",
+        "ci:test": "vitest --run --passWithNoTests --bail 1",
+        "test:watch": "vitest"
+    },
+    "engines": {
+        "node": ">=22"
+    },
+    "dependencies": {
+        "@cbnsndwch/scene-author": "workspace:*",
+        "@cbnsndwch/world-core": "workspace:*",
+        "@modelcontextprotocol/sdk": "^1.29.0",
+        "zod": "^3.25.0"
+    },
+    "devDependencies": {
+        "@cbnsndwch/tsconfig": "workspace:*",
+        "@types/node": "^22",
+        "tsup": "^8.5.1",
+        "tsx": "^4.22.3",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.0"
+    }
+}
