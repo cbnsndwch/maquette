@@ -4,10 +4,12 @@ import type { BiomeRenderer } from './biome-render.mjs';
 import {
     VoxAssetCache,
     decodeVox,
+    encodeVox,
     voxelUnitToVoxels,
     withVoxAssets,
     type VoxAsset
 } from './voxel-prop.mjs';
+import type { Voxel } from './voxel.mjs';
 
 /** Build a minimal MagicaVoxel .vox buffer (mirrors the pipeline's encoder). */
 function makeVox(
@@ -79,6 +81,37 @@ describe('decodeVox', () => {
 
     it('throws on a bad magic number', () => {
         expect(() => decodeVox(new Uint8Array(32).buffer)).toThrow(/magic/);
+    });
+});
+
+describe('encodeVox', () => {
+    it('round-trips through decodeVox', () => {
+        const voxels: Voxel[] = [
+            { x: 0, y: 0, z: 0, c: '#2a6fb0' },
+            { x: 11, y: 4, z: 6, c: '#6e7d4f' },
+            { x: 3, y: 9, z: 2, c: '#2a6fb0' } // reuses the first color
+        ];
+        const decoded = decodeVox(encodeVox(voxels));
+        expect(decoded.dims).toEqual([12, 10, 7]); // max coord + 1 per axis
+        expect(decoded.voxels).toEqual(voxels);
+    });
+
+    it('honors explicit dims and reuses palette entries for repeated colors', () => {
+        const voxels: Voxel[] = [
+            { x: 1, y: 1, z: 0, c: '#ffffff' },
+            { x: 2, y: 1, z: 0, c: '#ffffff' }
+        ];
+        const decoded = decodeVox(encodeVox(voxels, [12, 12, 1]));
+        expect(decoded.dims).toEqual([12, 12, 1]);
+        expect(decoded.voxels).toEqual(voxels);
+    });
+
+    it('throws past 255 unique colors', () => {
+        const voxels: Voxel[] = [];
+        for (let i = 0; i < 256; i++) {
+            voxels.push({ x: i % 16, y: Math.floor(i / 16), z: 0, c: `#0000${i.toString(16).padStart(2, '0')}` });
+        }
+        expect(() => encodeVox(voxels)).toThrow(/255 unique colors/);
     });
 });
 

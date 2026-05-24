@@ -93,6 +93,125 @@ export function decodeVox(buffer: ArrayBuffer): VoxAsset {
     return { dims, voxels };
 }
 
+function hexToRgb(hex: string): [number, number, number] {
+    let h = hex.replace('#', '');
+    if (h.length === 3) {
+        h = h[0]! + h[0]! + h[1]! + h[1]! + h[2]! + h[2]!;
+    }
+    const n = parseInt(h, 16);
+    return [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff];
+}
+
+/**
+ * Encode renderer voxels into a MagicaVoxel `.vox` buffer — the inverse of
+ * {@link decodeVox}, so `decodeVox(encodeVox(v))` round-trips. Unique colors are
+ * collected into the 256-entry palette with 1-based indices (matching
+ * {@link decodeVox}); the bounded palette is intentional — a limited palette is
+ * part of the voxel-art aesthetic.
+ *
+ * Coordinates must be non-negative and fit one byte (0–255) per axis, the
+ * format's grid limit. `dims` defaults to the voxels' bounding extent.
+ */
+export function encodeVox(
+    voxels: readonly Voxel[],
+    dims?: [number, number, number]
+): ArrayBuffer {
+    // Palette: first-seen order, 1-based color indices (index 0 is reserved).
+    const indexByColor = new Map<string, number>();
+    const palette: number[] = []; // flat r,g,b triples
+    for (const v of voxels) {
+        const key = v.c.toLowerCase();
+        if (indexByColor.has(key)) continue;
+        if (palette.length / 3 >= 255) {
+            throw new Error('encodeVox: more than 255 unique colors');
+        }
+        const [r, g, b] = hexToRgb(v.c);
+        palette.push(r, g, b);
+        indexByColor.set(key, palette.length / 3); // 1-based
+    }
+
+    // Bounds (validate + derive dims).
+    let mx = 0;
+    let my = 0;
+    let mz = 0;
+    for (const v of voxels) {
+        if (v.x < 0 || v.y < 0 || v.z < 0) {
+            throw new Error('encodeVox: negative voxel coordinate');
+        }
+        if (v.x > mx) mx = v.x;
+        if (v.y > my) my = v.y;
+        if (v.z > mz) mz = v.z;
+    }
+    const [sx, sy, sz] = dims ?? [mx + 1, my + 1, mz + 1];
+    if (sx > 256 || sy > 256 || sz > 256) {
+        throw new Error('encodeVox: grid dimension exceeds 256');
+    }
+    if (mx > 255 || my > 255 || mz > 255) {
+        throw new Error('encodeVox: voxel coordinate exceeds 255');
+    }
+
+    const n = voxels.length;
+    const sizeContent = 12;
+    const xyziContent = 4 + n * 4;
+    const rgbaContent = 256 * 4;
+    const children =
+        12 + sizeContent + (12 + xyziContent) + (12 + rgbaContent);
+    const total = 8 + 12 + children; // file header + MAIN header + children
+
+    const view = new DataView(new ArrayBuffer(total));
+    let pos = 0;
+    const writeId = (id: string) => {
+        for (let i = 0; i < 4; i++) view.setUint8(pos++, id.charCodeAt(i));
+    };
+    const writeU32 = (val: number) => {
+        view.setUint32(pos, val, true);
+        pos += 4;
+    };
+
+    writeId('VOX ');
+    writeU32(150);
+
+    writeId('MAIN');
+    writeU32(0);
+    writeU32(children);
+
+    writeId('SIZE');
+    writeU32(sizeContent);
+    writeU32(0);
+    writeU32(sx);
+    writeU32(sy);
+    writeU32(sz);
+
+    writeId('XYZI');
+    writeU32(xyziContent);
+    writeU32(0);
+    writeU32(n);
+    for (const v of voxels) {
+        view.setUint8(pos++, v.x);
+        view.setUint8(pos++, v.y);
+        view.setUint8(pos++, v.z);
+        view.setUint8(pos++, indexByColor.get(v.c.toLowerCase()) ?? 1);
+    }
+
+    writeId('RGBA');
+    writeU32(rgbaContent);
+    writeU32(0);
+    // Entry j (0-based) holds color j; voxel index j+1 reads it back, matching
+    // decodeVox's `palette[colorIndex - 1]`.
+    for (let j = 0; j < 256; j++) {
+        if (j * 3 + 2 < palette.length) {
+            view.setUint8(pos++, palette[j * 3]!);
+            view.setUint8(pos++, palette[j * 3 + 1]!);
+            view.setUint8(pos++, palette[j * 3 + 2]!);
+            view.setUint8(pos++, 255);
+        } else {
+            writeU32(0);
+        }
+    }
+
+    return view.buffer;
+}
+
 /** A minimal subset of the pipeline's `VoxelUnit` JSON shape. */
 export interface VoxelUnitJson {
     cells: ({ materialId: string; size?: number } | null)[][][];
