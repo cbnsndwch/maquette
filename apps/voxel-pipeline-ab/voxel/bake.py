@@ -73,6 +73,24 @@ def bake(
             }
         )
 
+    # Include any committed "hero" .vox (e.g. real Path-B outputs dropped into the
+    # asset dir) so they ship in the manifest without being skeletons.
+    for vox_path in sorted(out_dir.glob("*.vox")):
+        hero_id = vox_path.stem
+        if hero_id in manifest:
+            continue
+        info = summarize_vox(vox_path.read_bytes())
+        manifest[hero_id] = f"{url_base}/{hero_id}.vox"
+        details.append(
+            {
+                "id": hero_id,
+                "size": list(info["size"]),
+                "voxels": info["num_voxels"],
+                "colors": info["palette_used"],
+                "source": "hero",
+            }
+        )
+
     manifest_path = out_dir / "manifest.json"
     manifest_path.write_text(
         json.dumps(
