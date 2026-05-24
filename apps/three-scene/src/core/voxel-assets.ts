@@ -37,4 +37,9 @@ export class VoxelAssets {
     dims(id: string): [number, number, number] {
         return this.assets.get(id)?.dims ?? [0, 0, 0];
     }
+
+    /** Authored 256-slot palette for a tile (empty if the file had none). */
+    palette(id: string): (string | null)[] {
+        return this.assets.get(id)?.palette ?? [];
+    }
 }

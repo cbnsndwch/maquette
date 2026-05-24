@@ -31,6 +31,9 @@ export class EditorPanel {
     private readonly floorValEl: HTMLElement;
     private readonly gridBtn: HTMLButtonElement;
     private readonly edgesBtn: HTMLButtonElement;
+    private readonly explodeValEl: HTMLElement;
+    private readonly focusValEl: HTMLElement;
+    private readonly voxFile: HTMLInputElement;
 
     constructor(
         private readonly root: HTMLElement,
@@ -58,6 +61,20 @@ export class EditorPanel {
                 <button type="button" class="ed-tool" id="ed-grid">Grid</button>
                 <button type="button" class="ed-tool" id="ed-edges">Edges</button>
             </div>
+            <div class="ed-floor">
+                <button type="button" class="ed-btn" id="ed-explode-down">−</button>
+                <span class="ed-floor-val" id="ed-explode-val">Explode 0</span>
+                <button type="button" class="ed-btn" id="ed-explode-up">+</button>
+            </div>
+            <div class="ed-floor">
+                <button type="button" class="ed-btn" id="ed-focus-down">−</button>
+                <span class="ed-floor-val" id="ed-focus-val">Layer all</span>
+                <button type="button" class="ed-btn" id="ed-focus-up">+</button>
+            </div>
+            <div class="ed-label">Import</div>
+            <button type="button" class="ed-btn" id="ed-import-vox">Import .vox file</button>
+            <input type="file" id="ed-vox-file"
+                accept=".vox,application/octet-stream" hidden />
             <div class="ed-label">Save as tile</div>
             <input type="text" id="ed-name" placeholder="tile name" />
             <select id="ed-cat"></select>
@@ -89,6 +106,9 @@ export class EditorPanel {
         this.floorValEl = root.querySelector('#ed-floor-val')!;
         this.gridBtn = root.querySelector('#ed-grid')!;
         this.edgesBtn = root.querySelector('#ed-edges')!;
+        this.explodeValEl = root.querySelector('#ed-explode-val')!;
+        this.focusValEl = root.querySelector('#ed-focus-val')!;
+        this.voxFile = root.querySelector('#ed-vox-file')!;
 
         for (const c of CATEGORIES) {
             const opt = document.createElement('option');
@@ -108,6 +128,16 @@ export class EditorPanel {
         on('ed-floor-up', () => this.editor.raiseGround());
         on('ed-grid', () => this.editor.setGridVisible(!this.editor.gridOn));
         on('ed-edges', () => this.editor.setEdgesVisible(!this.editor.edgesOn));
+        on('ed-explode-down', () => this.editor.lowerExplode());
+        on('ed-explode-up', () => this.editor.raiseExplode());
+        on('ed-focus-down', () => this.editor.focusDown());
+        on('ed-focus-up', () => this.editor.focusUp());
+        on('ed-import-vox', () => this.voxFile.click());
+        this.voxFile.addEventListener('change', () => {
+            const file = this.voxFile.files?.[0];
+            this.voxFile.value = '';
+            if (file) void this.importVox(file);
+        });
         on('ed-save', () => hooks.onSave(this.meta()));
         root.querySelector('#ed-done')!.addEventListener('click', hooks.onDone);
 
@@ -130,6 +160,14 @@ export class EditorPanel {
         this.catSelect.value = def.category;
         this.stackInput.checked = def.stackable;
         this.refresh();
+    }
+
+    /** Decode an imported `.vox` into the editor as a new tile (prefill name). */
+    private async importVox(file: File): Promise<void> {
+        const ok = this.editor.importVoxBuffer(await file.arrayBuffer());
+        if (!ok) return;
+        this.resetMeta();
+        this.nameInput.value = file.name.replace(/\.vox$/i, '');
     }
 
     /** Clear the save form for authoring a brand-new tile. */
@@ -169,6 +207,11 @@ export class EditorPanel {
         this.floorValEl.textContent = `Floor ${this.editor.groundLevel}`;
         this.gridBtn.classList.toggle('active', this.editor.gridOn);
         this.edgesBtn.classList.toggle('active', this.editor.edgesOn);
+        this.explodeValEl.textContent = `Explode ${this.editor.explode}`;
+        this.focusValEl.textContent =
+            this.editor.focusLayer == null
+                ? 'Layer all'
+                : `Layer ${this.editor.focusLayer}`;
         this.infoEl.textContent =
             `${this.editor.voxels.length} voxels` +
             (sel > 0 ? ` · ${sel} selected` : '');

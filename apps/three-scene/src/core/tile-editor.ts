@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { VoxelBatch, type Voxel } from '@cbnsndwch/world-core';
+import { decodeVox, VoxelBatch, type Voxel } from '@cbnsndwch/world-core';
 
 import { CONFIG } from '../config.js';
 import type { SceneView } from './scene-view.js';
@@ -69,10 +69,16 @@ export class TileEditor {
     groundLevel: number = DEFAULT_GROUND;
     gridOn = true;
     edgesOn = false;
+    /** Exploded view: extra vertical gap (in voxels) inserted between layers. */
+    explode = 0;
+    /** When set, only this z layer is shown (isolate a layer); null = all. */
+    focusLayer: number | null = null;
 
     private readonly root = new THREE.Group();
     private readonly display = new THREE.Group();
     private hitMesh: THREE.InstancedMesh | null = null;
+    /** Voxels backing the hit mesh, in instance order (the visible subset). */
+    private hitVoxels: Voxel[] = [];
     private selectionMesh: THREE.InstancedMesh | null = null;
     private edges: THREE.LineSegments | null = null;
     private grid!: THREE.GridHelper;
@@ -130,18 +136,70 @@ export class TileEditor {
         this.activeColorIdx = 0;
         this.tool = 'add';
         this.editingId = null;
+        this.explode = 0;
+        this.focusLayer = null;
         this.selection.clear();
         this.rebuild();
         this.onChange?.();
     }
 
     /**
-     * Load an existing tile's voxels for editing. The palette is seeded from the
-     * tile's own colors (first-seen order) so its limited palette is preserved;
+     * Load an existing tile's voxels + saved palette for editing.
      * {@link editingId} is set so a save overwrites the same tile.
      */
-    loadTile(voxels: readonly Voxel[], id: string): void {
+    loadTile(
+        voxels: readonly Voxel[],
+        id: string,
+        palette?: readonly (string | null)[]
+    ): void {
+        this.load(voxels, palette, id);
+    }
+
+    /**
+     * Load voxels + palette from an imported `.vox` as a *new* tile (no
+     * {@link editingId}), so saving creates a fresh catalog entry.
+     */
+    loadExternal(
+        voxels: readonly Voxel[],
+        palette?: readonly (string | null)[]
+    ): void {
+        this.load(voxels, palette, null);
+    }
+
+    /** Decode a `.vox` buffer and load it as a new tile. Returns success. */
+    importVoxBuffer(buffer: ArrayBuffer): boolean {
+        try {
+            const asset = decodeVox(buffer);
+            this.loadExternal(asset.voxels, asset.palette);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    private load(
+        voxels: readonly Voxel[],
+        palette: readonly (string | null)[] | undefined,
+        id: string | null
+    ): void {
         this.voxels = voxels.map(v => ({ x: v.x, y: v.y, z: v.z, c: v.c }));
+        this.palette = this.resolvePalette(palette);
+        const first = this.palette.findIndex(c => c != null);
+        this.activeColorIdx = first >= 0 ? first : 0;
+        this.tool = 'add';
+        this.editingId = id;
+        this.explode = 0;
+        this.focusLayer = null;
+        this.selection.clear();
+        this.rebuild();
+        this.onChange?.();
+    }
+
+    /** Use the saved palette when present; otherwise derive from voxel colors. */
+    private resolvePalette(
+        palette?: readonly (string | null)[]
+    ): (string | null)[] {
+        if (palette && palette.some(c => c != null)) return toSlots(palette);
         const colors: string[] = [];
         const seen = new Set<string>();
         for (const v of this.voxels) {
@@ -151,13 +209,7 @@ export class TileEditor {
                 colors.push(c);
             }
         }
-        this.palette = colors.length ? toSlots(colors) : makeDefaultPalette();
-        this.activeColorIdx = 0;
-        this.tool = 'add';
-        this.editingId = id;
-        this.selection.clear();
-        this.rebuild();
-        this.onChange?.();
+        return colors.length ? toSlots(colors) : makeDefaultPalette();
     }
 
     setTool(t: EditTool): void {
@@ -345,6 +397,64 @@ export class TileEditor {
         this.onChange?.();
     }
 
+    /** Spread the layers apart vertically (0 = stacked normally). */
+    setExplode(amount: number): void {
+        const next = Math.max(0, Math.min(8, Math.round(amount)));
+        if (next === this.explode) return;
+        this.explode = next;
+        this.rebuild();
+        this.onChange?.();
+    }
+
+    raiseExplode(): void {
+        this.setExplode(this.explode + 1);
+    }
+
+    lowerExplode(): void {
+        this.setExplode(this.explode - 1);
+    }
+
+    /** Isolate a single z layer (null shows all layers). */
+    setFocusLayer(z: number | null): void {
+        this.focusLayer = z;
+        this.selection.clear();
+        this.rebuild();
+        this.onChange?.();
+    }
+
+    /** Step the isolated layer up; from "all" it starts at layer 0. */
+    focusUp(): void {
+        const z = this.focusLayer == null ? 0 : this.focusLayer + 1;
+        this.setFocusLayer(Math.min(z, this.maxZ()));
+    }
+
+    /** Step the isolated layer down; stepping below 0 returns to "all". */
+    focusDown(): void {
+        if (this.focusLayer == null) return;
+        this.setFocusLayer(this.focusLayer <= 0 ? null : this.focusLayer - 1);
+    }
+
+    clearFocus(): void {
+        this.setFocusLayer(null);
+    }
+
+    private maxZ(): number {
+        let mz = 0;
+        for (const v of this.voxels) if (v.z > mz) mz = v.z;
+        return mz;
+    }
+
+    /** Extra world-Y offset applied to a layer in the exploded view. */
+    private layerY(z: number): number {
+        return z * this.explode * CONFIG.voxel.size;
+    }
+
+    /** Voxels currently shown (focus filter applied). */
+    private visibleVoxels(): Voxel[] {
+        if (this.focusLayer == null) return this.voxels;
+        return this.voxels.filter(v => v.z === this.focusLayer);
+    }
+
     clearAll(): void {
         this.voxels = [];
         this.selection.clear();
@@ -381,7 +491,7 @@ export class TileEditor {
             return this.addVoxel(cell.x, cell.y, cell.z);
         }
 
-        const v = this.voxels[hit.instanceId];
+        const v = this.hitVoxels[hit.instanceId];
         if (!v) return false;
         const here = keyOf(v.x, v.y, v.z);
 
@@ -483,10 +593,27 @@ export class TileEditor {
 
     private rebuild(): void {
         this.disposeDisplay();
-        if (this.voxels.length) {
+        const visible = this.visibleVoxels();
+        if (visible.length && this.explode === 0) {
             const batch = new VoxelBatch(CONFIG.voxel.size);
-            batch.add(this.voxels, { origin: [-HALF, 0, -HALF] });
+            batch.add(visible, { origin: [-HALF, 0, -HALF] });
             this.display.add(batch.build());
+        } else if (visible.length) {
+            // Exploded: one batch per layer, lifted by the per-layer gap.
+            const byLayer = new Map<number, Voxel[]>();
+            for (const v of visible) {
+                let arr = byLayer.get(v.z);
+                if (!arr) {
+                    arr = [];
+                    byLayer.set(v.z, arr);
+                }
+                arr.push(v);
+            }
+            for (const [z, vs] of byLayer) {
+                const batch = new VoxelBatch(CONFIG.voxel.size);
+                batch.add(vs, { origin: [-HALF, this.layerY(z), -HALF] });
+                this.display.add(batch.build());
+            }
         }
         this.rebuildHitMesh();
         this.rebuildSelection();
@@ -501,14 +628,15 @@ export class TileEditor {
             this.edges.geometry.dispose();
             this.edges = null;
         }
-        if (!this.edgesOn || !this.voxels.length) return;
+        const visible = this.visibleVoxels();
+        if (!this.edgesOn || !visible.length) return;
         const tpl = this.edgeTemplate;
         const stride = tpl.length; // 72 = 24 verts × 3
-        const arr = new Float32Array(this.voxels.length * stride);
-        for (let i = 0; i < this.voxels.length; i++) {
-            const v = this.voxels[i]!;
+        const arr = new Float32Array(visible.length * stride);
+        for (let i = 0; i < visible.length; i++) {
+            const v = visible[i]!;
             const ox = v.x + 0.5 - HALF;
-            const oy = v.z + 0.5;
+            const oy = v.z + 0.5 + this.layerY(v.z);
             const oz = v.y + 0.5 - HALF;
             const o = i * stride;
             for (let j = 0; j < stride; j += 3) {
@@ -528,17 +656,24 @@ export class TileEditor {
             this.root.remove(this.hitMesh);
             this.hitMesh = null;
         }
-        if (!this.voxels.length) return;
+        // Only the visible voxels are pickable; keep them in instance order so
+        // editAt can map a hit's instanceId back to a voxel.
+        this.hitVoxels = this.visibleVoxels();
+        if (!this.hitVoxels.length) return;
         const mesh = new THREE.InstancedMesh(
             this.hitGeo,
             this.hitMat,
-            this.voxels.length
+            this.hitVoxels.length
         );
         mesh.layers.set(1); // raycast-only; camera renders layer 0
         const m = new THREE.Matrix4();
-        for (let i = 0; i < this.voxels.length; i++) {
-            const v = this.voxels[i]!;
-            m.setPosition(v.x + 0.5 - HALF, v.z + 0.5, v.y + 0.5 - HALF);
+        for (let i = 0; i < this.hitVoxels.length; i++) {
+            const v = this.hitVoxels[i]!;
+            m.setPosition(
+                v.x + 0.5 - HALF,
+                v.z + 0.5 + this.layerY(v.z),
+                v.y + 0.5 - HALF
+            );
             mesh.setMatrixAt(i, m);
         }
         mesh.instanceMatrix.needsUpdate = true;
@@ -556,22 +691,31 @@ export class TileEditor {
         for (const k of [...this.selection]) {
             if (!occ.has(k)) this.selection.delete(k);
         }
-        if (this.selection.size === 0) return;
+        // Only highlight selected voxels that are currently shown (focus filter).
+        const visKeys = [...this.selection].filter(k => {
+            if (this.focusLayer == null) return true;
+            return Number(k.split(',')[2]) === this.focusLayer;
+        });
+        if (visKeys.length === 0) return;
 
         const mesh = new THREE.InstancedMesh(
             this.selGeo,
             this.selMat,
-            this.selection.size
+            visKeys.length
         );
         const m = new THREE.Matrix4();
         let i = 0;
-        for (const k of this.selection) {
+        for (const k of visKeys) {
             const [x, y, z] = k.split(',').map(Number) as [
                 number,
                 number,
                 number
             ];
-            m.setPosition(x + 0.5 - HALF, z + 0.5, y + 0.5 - HALF);
+            m.setPosition(
+                x + 0.5 - HALF,
+                z + 0.5 + this.layerY(z),
+                y + 0.5 - HALF
+            );
             mesh.setMatrixAt(i++, m);
         }
         mesh.instanceMatrix.needsUpdate = true;

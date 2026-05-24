@@ -119,7 +119,7 @@ async function main(): Promise<void> {
             showToast('Add some voxels first');
             return;
         }
-        const def = await saveTile(meta, editor.voxels);
+        const def = await saveTile(meta, editor.voxels, editor.palette);
         if (!def) {
             showToast('Save failed');
             return;
@@ -171,7 +171,7 @@ async function main(): Promise<void> {
                 return;
             }
             game.setMode('edit');
-            editor.loadTile(assets.get(def.id), def.id);
+            editor.loadTile(assets.get(def.id), def.id, assets.palette(def.id));
             editorPanel.loadMeta(def);
             showChrome('editor');
         })

@@ -27,10 +27,11 @@ function toBase64(buffer: ArrayBuffer): string {
  */
 export async function saveTile(
     meta: TileMeta,
-    voxels: Voxel[]
+    voxels: Voxel[],
+    palette?: readonly (string | null)[]
 ): Promise<TerrainDef | null> {
     try {
-        const voxBase64 = toBase64(encodeVox(voxels));
+        const voxBase64 = toBase64(encodeVox(voxels, undefined, palette));
         const res = await fetch('/api/tiles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
