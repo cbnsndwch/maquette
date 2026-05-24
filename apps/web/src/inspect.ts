@@ -3,20 +3,24 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import {
     VoxelBatch,
+    decodeVox,
     getBiomeRenderer,
     mergeVoxels,
+    voxelsToSmoothMesh,
     type Voxel
 } from '@cbnsndwch/world-core';
 import { listBiomes } from '@cbnsndwch/world-gen';
 
 type Category = 'surfaces' | 'props' | 'structures';
 type Tool = 'add' | 'delete' | 'repaint' | 'eyedropper' | 'fill';
+type RenderMode = 'cubes' | 'smooth';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
 
 const biomeSel   = document.getElementById('biome')    as HTMLSelectElement;
 const catSel     = document.getElementById('category') as HTMLSelectElement;
 const objSel     = document.getElementById('object')   as HTMLSelectElement;
+const renderSel  = document.getElementById('render')   as HTMLSelectElement;
 const info       = document.getElementById('info')!;
 const toolBtns   = [...document.querySelectorAll<HTMLButtonElement>('[data-tool]')];
 const paletteEl  = document.getElementById('palette')!;
@@ -42,6 +46,7 @@ let editorVoxels: Voxel[] = [];
 let palette: string[]      = [];
 let activePaletteIdx       = 0;
 let activeTool: Tool       = 'add';
+let renderMode: RenderMode = 'cubes';
 
 /** Centering locked at asset-load time so edits don't cause the model to jump. */
 interface Layout { snapX: number; snapZ: number; offsetY: number; }
@@ -59,6 +64,14 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color('#e7ebee');
 scene.add(new THREE.GridHelper(12, 1,  0x6a7278, 0x8a929a));
 scene.add(new THREE.GridHelper(12, 12, 0x8a929a, 0xc4c9ce));
+
+// Lights for the smooth-mesh render mode (the cube path uses an unlit
+// MeshBasicMaterial and ignores these).
+const hemi = new THREE.HemisphereLight(0xffffff, 0x60708a, 1.6);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 2.0);
+sun.position.set(6, 12, 8);
+scene.add(sun);
 
 const camera   = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -158,6 +171,11 @@ function rebuildDisplay(): void {
 
     if (editorVoxels.length === 0) return;
 
+    if (renderMode === 'smooth') {
+        displayGroup.add(voxelsToSmoothMesh(editorVoxels, { size: 1 }));
+        return;
+    }
+
     const batch = new VoxelBatch(1);
     batch.add(editorVoxels, { origin: [0, 0, 0] });
     displayGroup.add(batch.build());
@@ -234,6 +252,34 @@ function loadAsset(): void {
 
     rebuildScene();
     syncUrl();
+}
+
+/** Load a baked `.vox` (e.g. pipeline output) by URL instead of a biome recipe. */
+async function loadVoxUrl(url: string): Promise<void> {
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`${res.status}`);
+        editorVoxels = decodeVox(await res.arrayBuffer()).voxels;
+    } catch (e) {
+        info.textContent = `failed to load ${url}: ${String(e)}`;
+        return;
+    }
+    lockedLayout = computeLayout(editorVoxels);
+    palette = extractPalette(editorVoxels);
+    activePaletteIdx = 0;
+    renderPalette();
+    syncColorPicker();
+
+    const span = Math.max(
+        (lockedLayout.snapX * 2) || 12,
+        editorVoxels.reduce((m, v) => Math.max(m, v.z), 0) + 1,
+        12
+    );
+    const dist = span * 2.0;
+    camera.position.set(dist, dist * 0.85, dist);
+    controls.target.set(0, span * 0.3, 0);
+    controls.update();
+    rebuildScene();
 }
 
 // ── Palette helpers ───────────────────────────────────────────────────────
@@ -473,12 +519,18 @@ function syncUrl(): void {
     p.set('biome', biomeSel.value);
     p.set('cat',   catSel.value);
     p.set('obj',   objSel.value);
+    p.set('render', renderMode);
     history.replaceState({}, '', `?${p.toString()}`);
 }
 
 biomeSel.addEventListener('change', () => { populateObjects(); loadAsset(); });
 catSel.addEventListener('change',   () => { populateObjects(); loadAsset(); });
 objSel.addEventListener('change',   () => { loadAsset(); });
+renderSel.addEventListener('change', () => {
+    renderMode = renderSel.value === 'smooth' ? 'smooth' : 'cubes';
+    rebuildScene();
+    syncUrl();
+});
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -497,8 +549,14 @@ function animate(): void {
 populateBiomes();
 if (params.get('biome')) biomeSel.value = params.get('biome')!;
 if (params.get('cat'))   catSel.value   = params.get('cat')!;
+if (params.get('render') === 'smooth') renderMode = 'smooth';
+renderSel.value = renderMode;
 populateObjects();
 if (params.get('obj'))   objSel.value   = params.get('obj')!;
-loadAsset();
-syncUrl();
+if (params.get('voxurl')) {
+    void loadVoxUrl(params.get('voxurl')!);
+} else {
+    loadAsset();
+    syncUrl();
+}
 animate();
