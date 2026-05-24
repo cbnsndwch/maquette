@@ -12,6 +12,12 @@ export interface TerrainDef {
     category: Category;
     /** Path under public/ of the baked MagicaVoxel cell. */
     file: string;
+    /**
+     * Whether this cell can be raised / stacked (and built upon). Solid risers
+     * (sand, stone, path) are stackable; surface cells (grass, water, sea wall)
+     * are ground-level only for now.
+     */
+    stackable: boolean;
 }
 
 export type Category = 'terrain' | 'nature' | 'props' | 'buildings';
@@ -50,58 +56,57 @@ export const CONFIG = {
         far: 4000
     },
 
-    storageKey: 'mykonos-three-scene.save.v1'
+    storageKey: 'mykonos-three-scene.save.v2'
 } as const;
 
 /**
- * Terrain cells recreated in MagicaVoxel as 12×12×H voxels (stairs excluded —
- * those belong with buildings). Served from public/voxels/terrain.
+ * The tile catalog, loaded at boot from the dev-server controller
+ * (`GET /api/tiles`, see vite-tiles-plugin.ts) rather than hardcoded, so tiles
+ * authored in the editor and saved to disk show up here too. Both are mutated in
+ * place by {@link setCatalog}/{@link addTile} so existing imports stay live.
  */
-export const TERRAIN_MANIFEST: TerrainDef[] = [
-    {
-        id: 'grass',
-        name: 'grass',
-        category: 'terrain',
-        file: '/voxels/terrain/grass.vox'
-    },
-    {
-        id: 'sand',
-        name: 'sand',
-        category: 'terrain',
-        file: '/voxels/terrain/sand.vox'
-    },
-    {
-        id: 'path',
-        name: 'path',
-        category: 'terrain',
-        file: '/voxels/terrain/path.vox'
-    },
-    {
-        id: 'stone',
-        name: 'stone',
-        category: 'terrain',
-        file: '/voxels/terrain/stone.vox'
-    },
-    {
-        id: 'water',
-        name: 'water',
-        category: 'terrain',
-        file: '/voxels/terrain/water.vox'
-    },
-    {
-        id: 'sea_wall',
-        name: 'sea wall',
-        category: 'terrain',
-        file: '/voxels/terrain/sea_wall.vox'
+export const TERRAIN_MANIFEST: TerrainDef[] = [];
+
+/** All tile defs, indexed by id. */
+export const ASSET_INDEX: Record<string, TerrainDef> = {};
+
+/** Replace the whole catalog (in place, so importers see the update). */
+export function setCatalog(tiles: TerrainDef[]): void {
+    TERRAIN_MANIFEST.length = 0;
+    TERRAIN_MANIFEST.push(...tiles);
+    for (const k of Object.keys(ASSET_INDEX)) delete ASSET_INDEX[k];
+    for (const t of tiles) ASSET_INDEX[t.id] = t;
+}
+
+/** Add or replace a single tile (e.g. one just saved from the editor). */
+export function addTile(def: TerrainDef): void {
+    const i = TERRAIN_MANIFEST.findIndex(t => t.id === def.id);
+    if (i >= 0) TERRAIN_MANIFEST[i] = def;
+    else TERRAIN_MANIFEST.push(def);
+    ASSET_INDEX[def.id] = def;
+}
+
+/** Fetch the catalog from the server, falling back to the static manifest. */
+export async function loadCatalog(): Promise<void> {
+    for (const url of ['/api/tiles', '/voxels/catalog.json']) {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) continue;
+            const data = (await res.json()) as { tiles?: TerrainDef[] };
+            setCatalog(data.tiles ?? []);
+            return;
+        } catch {
+            // try the next source
+        }
     }
-];
+}
 
-/** All asset defs, indexed by id. */
-export const ASSET_INDEX: Record<string, TerrainDef> = Object.fromEntries(
-    TERRAIN_MANIFEST.map(d => [d.id, d])
-);
-
-/** Asset defs for one category (empty for the not-yet-built top-layer tabs). */
+/** Tile defs for one category (empty for the not-yet-built top-layer tabs). */
 export function assetsForCategory(cat: Category): TerrainDef[] {
     return TERRAIN_MANIFEST.filter(d => d.category === cat);
+}
+
+/** Whether a tile id can be raised / stacked (and built upon). */
+export function isStackable(id: string): boolean {
+    return ASSET_INDEX[id]?.stackable ?? false;
 }
