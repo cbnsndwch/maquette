@@ -1,0 +1,52 @@
+{
+    "name": "@cbnsndwch/scene-author",
+    "description": "Framework-agnostic voxel scene authoring core: catalog, tile map, placement rules, scene-document schema and .vox composition, shared by the three-scene editor and the world-mcp server",
+    "version": "0.0.0",
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    },
+    "type": "module",
+    "license": "MIT",
+    "author": {
+        "name": "Sergio Leon",
+        "email": "oss@cbnsndwch.io"
+    },
+    "scripts": {
+        "build": "tsup",
+        "format": "oxfmt --write src",
+        "lint": "oxlint ./src",
+        "lint:fix": "oxlint ./src --fix",
+        "typecheck": "tsc --noEmit",
+        "test": "vitest --run --passWithNoTests",
+        "ci:test": "vitest --run --passWithNoTests --bail 1",
+        "test:watch": "vitest"
+    },
+    "engines": {
+        "node": ">=22"
+    },
+    "dependencies": {
+        "@cbnsndwch/world-core": "workspace:*",
+        "zod": "^3.25.0"
+    },
+    "devDependencies": {
+        "@cbnsndwch/tsconfig": "workspace:*",
+        "@types/node": "^22",
+        "tsup": "^8.5.1",
+        "typescript": "^5.9.3",
+        "vitest": "^4.1.0"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./package.json": "./package.json"
+    },
+    "main": "./dist/index.js"
+}
