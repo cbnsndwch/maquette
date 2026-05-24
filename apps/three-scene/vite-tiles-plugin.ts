@@ -153,6 +153,142 @@ async function handleDelete(
     }
 }
 
+/* ── Palette library ──────────────────────────────────────────────────────
+ *
+ *   GET    /api/palettes       → the saved-palette library (public/voxels/palettes.json)
+ *   POST   /api/palettes       → save/upsert a named palette {id,name,colors[]}
+ *   DELETE /api/palettes/<id>  → remove a palette from the library
+ *
+ * Palettes are committed alongside tiles so a whole tileset can share a
+ * consistent set of colors across machines.
+ */
+
+interface PaletteDef {
+    id: string;
+    name: string;
+    /** Up to 256 slots; null = unassigned. */
+    colors: (string | null)[];
+}
+
+interface PaletteLib {
+    palettes: PaletteDef[];
+}
+
+const HEXCOLOR_RE = /^#[0-9a-f]{6}$/i;
+
+export function palettesController(): Plugin {
+    return {
+        name: 'three-scene-palettes-controller',
+        configureServer(server) {
+            const palettesPath = path.join(
+                server.config.root,
+                'public',
+                'voxels',
+                'palettes.json'
+            );
+            server.middlewares.use(
+                '/api/palettes',
+                (req: Connect.IncomingMessage, res: ServerResponse) => {
+                    const id = (req.url ?? '').split('?')[0]!.replace(/^\/+/, '');
+                    if (req.method === 'GET') {
+                        void handleGetPalettes(palettesPath, res);
+                    } else if (req.method === 'POST') {
+                        void handlePostPalette(req, res, palettesPath);
+                    } else if (req.method === 'DELETE') {
+                        void handleDeletePalette(id, res, palettesPath);
+                    } else {
+                        sendJson(res, 405, { error: 'method not allowed' });
+                    }
+                }
+            );
+        }
+    };
+}
+
+async function readPalettes(palettesPath: string): Promise<PaletteLib> {
+    try {
+        const raw = await fs.readFile(palettesPath, 'utf8');
+        const parsed = JSON.parse(raw) as Partial<PaletteLib>;
+        return { palettes: parsed.palettes ?? [] };
+    } catch {
+        return { palettes: [] };
+    }
+}
+
+async function handleGetPalettes(
+    palettesPath: string,
+    res: ServerResponse
+): Promise<void> {
+    sendJson(res, 200, await readPalettes(palettesPath));
+}
+
+async function handlePostPalette(
+    req: IncomingMessage,
+    res: ServerResponse,
+    palettesPath: string
+): Promise<void> {
+    let body: unknown;
+    try {
+        body = JSON.parse(await readBody(req));
+    } catch {
+        return sendJson(res, 400, { error: 'invalid JSON body' });
+    }
+
+    const { id, name, colors } = (body ?? {}) as Record<string, unknown>;
+    if (typeof id !== 'string' || !ID_RE.test(id)) {
+        return sendJson(res, 400, { error: 'bad or missing palette id' });
+    }
+    if (!Array.isArray(colors)) {
+        return sendJson(res, 400, { error: 'missing colors[]' });
+    }
+    // Normalize to a clean (hex | null) list, capped at 256 slots.
+    const clean: (string | null)[] = colors
+        .slice(0, 256)
+        .map(c => (typeof c === 'string' && HEXCOLOR_RE.test(c) ? c.toLowerCase() : null));
+
+    const palette: PaletteDef = {
+        id,
+        name: typeof name === 'string' && name ? name : id,
+        colors: clean
+    };
+
+    try {
+        await fs.mkdir(path.dirname(palettesPath), { recursive: true });
+        const lib = await readPalettes(palettesPath);
+        const idx = lib.palettes.findIndex(p => p.id === id);
+        if (idx >= 0) lib.palettes[idx] = palette;
+        else lib.palettes.push(palette);
+        await fs.writeFile(palettesPath, JSON.stringify(lib, null, 4) + '\n');
+        sendJson(res, 200, { ok: true, palette });
+    } catch (err) {
+        sendJson(res, 500, { error: `write failed: ${String(err)}` });
+    }
+}
+
+async function handleDeletePalette(
+    id: string,
+    res: ServerResponse,
+    palettesPath: string
+): Promise<void> {
+    if (!ID_RE.test(id)) {
+        return sendJson(res, 400, { error: 'bad or missing palette id' });
+    }
+    try {
+        const lib = await readPalettes(palettesPath);
+        const next = lib.palettes.filter(p => p.id !== id);
+        if (next.length === lib.palettes.length) {
+            return sendJson(res, 404, { error: 'palette not found' });
+        }
+        await fs.writeFile(
+            palettesPath,
+            JSON.stringify({ palettes: next }, null, 4) + '\n'
+        );
+        sendJson(res, 200, { ok: true, id });
+    } catch (err) {
+        sendJson(res, 500, { error: `delete failed: ${String(err)}` });
+    }
+}
+
 function readBody(req: IncomingMessage): Promise<string> {
     return new Promise((resolve, reject) => {
         let data = '';
