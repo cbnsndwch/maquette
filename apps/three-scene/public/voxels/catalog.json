@@ -56,6 +56,13 @@
             "file": "/voxels/terrain/foooo.vox",
             "stackable": false,
             "deleted": true
+        },
+        {
+            "id": "fine_path",
+            "name": "Fine Path",
+            "category": "terrain",
+            "file": "/voxels/terrain/fine_path.vox",
+            "stackable": false
         }
     ]
 }
