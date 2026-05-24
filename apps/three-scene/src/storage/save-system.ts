@@ -1,8 +1,9 @@
-import { CONFIG } from '../config.js';
-import type { TileMap } from '../grid/tile-map.js';
+import type { TileMap } from '@cbnsndwch/scene-author';
 
-/** 
- * Persists the terrain grid to localStorage. 
+import { CONFIG } from '../config.js';
+
+/**
+ * Persists the terrain grid to localStorage.
  */
 export const SaveSystem = {
     save(tileMap: TileMap): boolean {

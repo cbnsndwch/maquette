@@ -1,4 +1,4 @@
-import { useRef, useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from 'react';
 
 /**
  * The engine bridge. The Three.js engine owns all mutable state imperatively;
@@ -43,7 +43,7 @@ export function useEngineSelector<T>(
 ): T {
     const last = useRef<{ has: boolean; value: T }>({
         has: false,
-        value: undefined as T,
+        value: undefined as T
     });
     const getSnapshot = (): T => {
         const next = selector();

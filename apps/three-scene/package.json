@@ -1,6 +1,6 @@
 {
-    "name": "three-scene",
-    "description": "Three.js voxel scene builder (Mykonos terrain cells)",
+    "name": "@cbnsndwch/maquette-three-scene",
+    "description": "ThreeJS voxel scene builder for Maquette",
     "version": "0.0.0",
     "type": "module",
     "license": "MIT",
@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@base-ui-components/react": "1.0.0-rc.0",
+        "@cbnsndwch/scene-author": "workspace:*",
         "@cbnsndwch/world-core": "workspace:*",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",

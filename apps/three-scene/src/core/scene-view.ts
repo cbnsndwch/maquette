@@ -2,9 +2,9 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import { VoxelBatch } from '@cbnsndwch/world-core';
+import type { Rotation, TileMap } from '@cbnsndwch/scene-author';
 
 import { CONFIG } from '../config.js';
-import type { Rotation, TileMap } from '../grid/tile-map.js';
 import type { Tool } from './game.js';
 import type { VoxelAssets } from './voxel-assets.js';
 

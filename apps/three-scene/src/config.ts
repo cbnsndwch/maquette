@@ -1,59 +1,30 @@
 /**
  * Builder configuration.
  *
- * Mirrors the mykonos-voxels reference's `config.js`, but every dimension is
- * expressed in *voxels / world units* instead of isometric screen pixels —
- * this builder renders an actual Three.js scene rather than stacked rasters.
+ * The scene-shape constants (grid + voxel footprint) and the tile catalog model
+ * now live in `@cbnsndwch/scene-author`, shared with the headless authoring
+ * server. This module keeps only the editor-specific bits — camera, the
+ * localStorage key, and the browser catalog loader — and composes `CONFIG` from
+ * the shared constants so both sides agree on dimensions.
  */
 
-export interface TerrainDef {
-    id: string;
-    name: string;
-    category: Category;
-
-    /**
-     * Path under public/ of the baked MagicaVoxel cell.
-     */
-    file: string;
-
-    /**
-     * Whether this cell can be raised / stacked (and built upon). Solid risers
-     * (sand, stone, path) are stackable; surface cells (grass, water, sea wall)
-     * are ground-level only for now.
-     */
-    stackable: boolean;
-
-    /**
-     * Soft-deleted: hidden from the palette/inspector but its `.vox` file and
-     * catalog entry are retained on disk (deletes are reversible by hand).
-     */
-    deleted?: boolean;
-}
-
-export type Category = 'terrain' | 'nature' | 'props' | 'buildings';
-
-export const CATEGORIES: Category[] = [
-    'terrain',
-    'nature',
-    'props',
-    'buildings'
-];
+import {
+    DEFAULT_GRID,
+    GROUND_LAYERS,
+    setCatalog,
+    VOXEL_PER_TILE,
+    VOXEL_SIZE,
+    type TerrainDef
+} from '@cbnsndwch/scene-author';
 
 export const CONFIG = {
-    grid: {
-        width: 14,
-        height: 14
-    },
+    grid: DEFAULT_GRID,
 
     voxel: {
-        /**
-         * Voxels per cell edge — the terrain cells are a fixed 12×12 footprint.
-         */
-        perTile: 12,
-        /**
-         * World units per voxel cube.
-         */
-        size: 1
+        /** Voxels per cell edge — the terrain cells are a fixed 12×12 footprint. */
+        perTile: VOXEL_PER_TILE,
+        /** World units per voxel cube. */
+        size: VOXEL_SIZE
     },
 
     /**
@@ -62,7 +33,7 @@ export const CONFIG = {
      * above layer 4 (grass tufts, sea walls) rises above ground. This makes a
      * single shared datum across cells of different heights.
      */
-    groundLayers: 4,
+    groundLayers: GROUND_LAYERS,
 
     camera: {
         fov: 45,
@@ -74,52 +45,9 @@ export const CONFIG = {
 } as const;
 
 /**
- * The tile catalog, loaded at boot from the dev-server controller
- * (`GET /api/tiles`, see vite-tiles-plugin.ts) rather than hardcoded, so tiles
- * authored in the editor and saved to disk show up here too. Both are mutated in
- * place by {@link setCatalog}/{@link addTile} so existing imports stay live.
- */
-export const TERRAIN_MANIFEST: TerrainDef[] = [];
-
-/**
- * All tile defs, indexed by id.
- */
-export const ASSET_INDEX: Record<string, TerrainDef> = {};
-
-/**
- * Replace the whole catalog (in place, so importers see the update).
- * Soft-deleted tiles are dropped — the server keeps their files + entries, but
- * the running app treats them as gone.
- */
-export function setCatalog(tiles: TerrainDef[]): void {
-    const live = tiles.filter(t => !t.deleted);
-    TERRAIN_MANIFEST.length = 0;
-    TERRAIN_MANIFEST.push(...live);
-    for (const k of Object.keys(ASSET_INDEX)) delete ASSET_INDEX[k];
-    for (const t of live) ASSET_INDEX[t.id] = t;
-}
-
-/**
- * Drop a tile from the in-memory catalog (after a soft delete on the server).
- */
-export function removeTile(id: string): void {
-    const i = TERRAIN_MANIFEST.findIndex(t => t.id === id);
-    if (i >= 0) TERRAIN_MANIFEST.splice(i, 1);
-    delete ASSET_INDEX[id];
-}
-
-/**
- * Add or replace a single tile (e.g. one just saved from the editor).
- */
-export function addTile(def: TerrainDef): void {
-    const i = TERRAIN_MANIFEST.findIndex(t => t.id === def.id);
-    if (i >= 0) TERRAIN_MANIFEST[i] = def;
-    else TERRAIN_MANIFEST.push(def);
-    ASSET_INDEX[def.id] = def;
-}
-
-/**
- * Fetch the catalog from the server, falling back to the static manifest.
+ * Fetch the catalog from the dev server (`GET /api/tiles`), falling back to the
+ * static `catalog.json`, then publish it into the shared catalog via
+ * {@link setCatalog} so tiles authored in the editor show up too.
  */
 export async function loadCatalog(): Promise<void> {
     for (const url of ['/api/tiles', '/voxels/catalog.json']) {
@@ -133,18 +61,4 @@ export async function loadCatalog(): Promise<void> {
             // try the next source
         }
     }
-}
-
-/**
- * Tile defs for one category (empty for the not-yet-built top-layer tabs).
- */
-export function assetsForCategory(cat: Category): TerrainDef[] {
-    return TERRAIN_MANIFEST.filter(d => d.category === cat);
-}
-
-/**
- * Whether a tile id can be raised / stacked (and built upon).
- */
-export function isStackable(id: string): boolean {
-    return ASSET_INDEX[id]?.stackable ?? false;
 }

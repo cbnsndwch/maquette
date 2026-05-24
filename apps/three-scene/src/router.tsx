@@ -1,11 +1,11 @@
-import { createBrowserRouter, redirect } from "react-router";
+import { createBrowserRouter, redirect } from 'react-router';
 
-import { getEngine } from "./bootstrap.js";
-import { ASSET_INDEX, type TerrainDef } from "./config.js";
-import { BuildChrome } from "./routes/BuildChrome.js";
-import { EditorChrome } from "./routes/EditorChrome.js";
-import { InspectOverlay } from "./routes/InspectOverlay.js";
-import { RootLayout } from "./routes/RootLayout.js";
+import { getEngine } from './bootstrap.js';
+import { ASSET_INDEX, type TerrainDef } from '@cbnsndwch/scene-author';
+import { BuildChrome } from './routes/BuildChrome.js';
+import { EditorChrome } from './routes/EditorChrome.js';
+import { InspectOverlay } from './routes/InspectOverlay.js';
+import { RootLayout } from './routes/RootLayout.js';
 
 /** Data returned by the tile-editor loaders (the tile being edited, or null). */
 export interface EditorLoaderData {
@@ -21,7 +21,7 @@ export interface EditorLoaderData {
 export function createAppRouter(): ReturnType<typeof createBrowserRouter> {
     return createBrowserRouter([
         {
-            path: "/",
+            path: '/',
             Component: RootLayout,
             children: [
                 {
@@ -29,53 +29,53 @@ export function createAppRouter(): ReturnType<typeof createBrowserRouter> {
                     Component: BuildChrome,
                     loader: () => {
                         const { game, sceneView } = getEngine();
-                        game.setMode("build");
+                        game.setMode('build');
                         // Edited tiles reload their assets; rebuild placed instances.
                         sceneView.invalidateTerrain();
                         sceneView.syncTerrain();
                         return null;
-                    },
+                    }
                 },
                 {
-                    path: "tile",
+                    path: 'tile',
                     children: [
                         {
                             index: true,
                             Component: EditorChrome,
                             loader: (): EditorLoaderData => {
                                 const { game, editor } = getEngine();
-                                game.setMode("edit");
+                                game.setMode('edit');
                                 editor.reset();
                                 return { def: null };
-                            },
+                            }
                         },
                         {
-                            path: ":id",
+                            path: ':id',
                             Component: EditorChrome,
                             loader: ({ params }): EditorLoaderData => {
                                 const { game, editor, assets } = getEngine();
                                 const def = ASSET_INDEX[params.id!];
-                                if (!def) throw redirect("/tile");
-                                game.setMode("edit");
+                                if (!def) throw redirect('/tile');
+                                game.setMode('edit');
                                 editor.loadTile(
                                     assets.get(def.id),
                                     def.id,
                                     assets.palette(def.id)
                                 );
                                 return { def };
-                            },
-                        },
-                    ],
+                            }
+                        }
+                    ]
                 },
                 {
-                    path: "inspect",
+                    path: 'inspect',
                     Component: InspectOverlay,
                     loader: () => {
-                        getEngine().game.setMode("build");
+                        getEngine().game.setMode('build');
                         return null;
-                    },
-                },
-            ],
-        },
+                    }
+                }
+            ]
+        }
     ]);
 }

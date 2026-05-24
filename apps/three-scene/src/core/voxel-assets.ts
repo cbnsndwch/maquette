@@ -1,6 +1,6 @@
 import { loadVoxAsset, type VoxAsset, type Voxel } from '@cbnsndwch/world-core';
 
-import { TERRAIN_MANIFEST } from '../config.js';
+import { TERRAIN_MANIFEST } from '@cbnsndwch/scene-author';
 
 /**
  * Preloads and caches the decoded `.vox` terrain cells so the synchronous scene

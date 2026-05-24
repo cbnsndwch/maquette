@@ -8,7 +8,7 @@ import {
     CATEGORIES,
     TERRAIN_MANIFEST,
     type TerrainDef
-} from '@/config';
+} from '@cbnsndwch/scene-author';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useEngineSelector } from '@/store';

@@ -1,12 +1,13 @@
 import { toast } from 'sonner';
 
+import { TileMap } from '@cbnsndwch/scene-author';
+
 import { loadCatalog } from './config.js';
 import { Game } from './core/game.js';
 import { Input } from './core/input.js';
 import { SceneView } from './core/scene-view.js';
 import { TileEditor } from './core/tile-editor.js';
 import { VoxelAssets } from './core/voxel-assets.js';
-import { TileMap } from './grid/tile-map.js';
 import { renderThumbnails } from './ui/thumbnails.js';
 import { emit } from './store.js';
 

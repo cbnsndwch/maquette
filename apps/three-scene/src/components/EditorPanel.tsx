@@ -4,7 +4,11 @@ import { useNavigate } from 'react-router';
 
 import { saveTileFlow } from '@/actions';
 import { getEngine } from '@/bootstrap';
-import { CATEGORIES, type Category, type TerrainDef } from '@/config';
+import {
+    CATEGORIES,
+    type Category,
+    type TerrainDef
+} from '@cbnsndwch/scene-author';
 import type { EditTool } from '@/core/tile-editor';
 import type { TileMeta } from '@/core/tile-save';
 import { cn } from '@/lib/utils';

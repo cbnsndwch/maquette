@@ -1,4 +1,4 @@
-import { CATEGORIES } from '../config.js';
+import { CATEGORIES } from '@cbnsndwch/scene-author';
 import type { Game, Tool } from './game.js';
 import type { EditTool } from './tile-editor.js';
 

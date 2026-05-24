@@ -1,6 +1,6 @@
 import { encodeVox, type Voxel } from '@cbnsndwch/world-core';
 
-import type { Category, TerrainDef } from '../config.js';
+import type { Category, TerrainDef } from '@cbnsndwch/scene-author';
 
 export interface TileMeta {
     id: string;

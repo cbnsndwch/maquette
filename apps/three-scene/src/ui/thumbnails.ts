@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 import { VoxelBatch } from '@cbnsndwch/world-core';
 
-import { TERRAIN_MANIFEST } from '../config.js';
+import { TERRAIN_MANIFEST } from '@cbnsndwch/scene-author';
 import type { VoxelAssets } from '../core/voxel-assets.js';
 
 const SIZE = 128;
@@ -18,8 +18,8 @@ function makeRenderer(): THREE.WebGLRenderer {
     return renderer;
 }
 
-/** 
- * Render one tile to an isometric PNG data URL (null if it has no voxels). 
+/**
+ * Render one tile to an isometric PNG data URL (null if it has no voxels).
  */
 function renderInto(
     renderer: THREE.WebGLRenderer,
@@ -79,8 +79,8 @@ export function renderThumbnails(assets: VoxelAssets): Map<string, string> {
     return out;
 }
 
-/** 
- * Render a single tile's thumbnail (used after authoring a new tile). 
+/**
+ * Render a single tile's thumbnail (used after authoring a new tile).
  */
 export function renderThumbnail(
     assets: VoxelAssets,

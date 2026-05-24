@@ -1,6 +1,13 @@
-import { assetsForCategory, ASSET_INDEX, type Category } from '../config.js';
-import { PlacementSystem } from '../grid/placement-system.js';
-import type { Rotation, TerrainState, TileMap } from '../grid/tile-map.js';
+import {
+    assetsForCategory,
+    ASSET_INDEX,
+    PlacementSystem,
+    type Category,
+    type Rotation,
+    type TerrainState,
+    type TileMap
+} from '@cbnsndwch/scene-author';
+
 import { SaveSystem } from '../storage/save-system.js';
 import { downloadSceneVox } from './export-vox.js';
 import { History } from './history.js';
