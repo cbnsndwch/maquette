@@ -149,6 +149,11 @@ export class EditorPanel {
             opt.textContent = c[0]!.toUpperCase() + c.slice(1);
             this.catSelect.appendChild(opt);
         }
+        // Terrain is stackable by default (props/terrain can sit on top); other
+        // categories default off. The user can still override the checkbox.
+        this.catSelect.addEventListener('change', () => {
+            this.stackInput.checked = this.catSelect.value === 'terrain';
+        });
 
         const on = (id: string, fn: () => void) =>
             root.querySelector(`#${id}`)!.addEventListener('click', fn);
@@ -240,7 +245,7 @@ export class EditorPanel {
         this.headEl.textContent = 'New Tile';
         this.nameInput.value = '';
         this.catSelect.value = CATEGORIES[0]!;
-        this.stackInput.checked = false;
+        this.stackInput.checked = this.catSelect.value === 'terrain';
         this.refresh();
     }
 

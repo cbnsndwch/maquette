@@ -502,10 +502,13 @@ canvas {
     border-width: 1.5px;
     border-radius: 4px;
 }
-#editor-colors #edc-import {
-    flex-grow: 0;
-    flex-shrink: 0;
-    height: 32px;
+#editor-colors {
+    #edc-import,
+    #edc-trim {
+        flex-grow: 0;
+        flex-shrink: 0;
+        height: 32px;
+    }
 }
 /* Unassigned slot: white box with a red diagonal. */
 .ed-swatch.empty {
