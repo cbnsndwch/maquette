@@ -201,6 +201,15 @@ export class SceneView {
         this.rebuildNow();
     }
 
+    /**
+     * Force the next {@link syncTerrain} to rebuild even if the tile map is
+     * unchanged — used after a tile's voxels are edited so placed instances pick
+     * up the new geometry.
+     */
+    invalidateTerrain(): void {
+        this.builtVersion = -1;
+    }
+
     private rebuildNow(): void {
         this.disposeGroup(this.terrainGroup);
         const batch = new VoxelBatch(CONFIG.voxel.size);

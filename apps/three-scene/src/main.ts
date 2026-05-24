@@ -131,7 +131,10 @@ async function main(): Promise<void> {
         game.setCategory(def.category);
         game.selectAsset(def.id);
         palette.refresh();
-        router.navigate('/');
+        // Stay in the editor — Save commits, Done leaves. Re-point the editor at
+        // the saved tile so further saves update it in place (no duplicate).
+        editor.editingId = def.id;
+        editorPanel.loadMeta(def);
         showToast(`Saved tile "${def.name}"`);
     }
 
@@ -155,6 +158,9 @@ async function main(): Promise<void> {
     router
         .register('/', () => {
             game.setMode('build');
+            // Edited tiles reload their assets; rebuild so placed instances update.
+            sceneView.invalidateTerrain();
+            sceneView.syncTerrain();
             showChrome('scene');
             ui.update();
         })

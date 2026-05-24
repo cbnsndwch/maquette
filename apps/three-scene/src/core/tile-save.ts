@@ -40,7 +40,9 @@ export async function saveTile(
         if (!res.ok) return null;
         const data = (await res.json()) as { tile?: TerrainDef };
         return data.tile ?? null;
-    } catch {
+    } catch (err) {
+        // oxlint-disable-next-line no-console
+        console.error('Failed to save tile:', err);
         return null;
     }
 }
