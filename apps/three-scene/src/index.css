@@ -1,11 +1,17 @@
 @import 'tailwindcss';
-/* The original hand-authored panel CSS. Kept (unlayered, so it wins over Tailwind
-   utilities on the elements it targets by id) while panels migrate phase-by-phase;
-   its now-dead rules are pruned in the final cleanup phase. */
+
+/**
+ * The original hand-authored panel CSS. Kept (unlayered, so it wins over 
+ * Tailwind utilities on the elements it targets by id) while panels migrate 
+ * phase-by-phase;
+ * its now-dead rules are pruned in the final cleanup phase. 
+ */
 @import './styles.css';
 
-/* shadcn/ui design tokens, tuned to the app's existing palette
-   (ink #1b5ba8 / ink-deep #134680 / paper #fafaf5). Light-only. */
+/**
+ * shadcn/ui design tokens, tuned to the app's existing palette 
+ * (ink #1b5ba8 / ink-deep #134680 / paper #fafaf5). Light-only. 
+ */
 :root {
     --radius: 0.625rem;
 

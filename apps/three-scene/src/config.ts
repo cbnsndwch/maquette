@@ -10,14 +10,19 @@ export interface TerrainDef {
     id: string;
     name: string;
     category: Category;
-    /** Path under public/ of the baked MagicaVoxel cell. */
+
+    /**
+     * Path under public/ of the baked MagicaVoxel cell.
+     */
     file: string;
+
     /**
      * Whether this cell can be raised / stacked (and built upon). Solid risers
      * (sand, stone, path) are stackable; surface cells (grass, water, sea wall)
      * are ground-level only for now.
      */
     stackable: boolean;
+
     /**
      * Soft-deleted: hidden from the palette/inspector but its `.vox` file and
      * catalog entry are retained on disk (deletes are reversible by hand).
@@ -25,26 +30,30 @@ export interface TerrainDef {
     deleted?: boolean;
 }
 
-export type Category = 'terrain' | 'nature' | 'props' | 'buildings';
+export type Category = "terrain" | "nature" | "props" | "buildings";
 
 export const CATEGORIES: Category[] = [
-    'terrain',
-    'nature',
-    'props',
-    'buildings'
+    "terrain",
+    "nature",
+    "props",
+    "buildings",
 ];
 
 export const CONFIG = {
     grid: {
         width: 14,
-        height: 14
+        height: 14,
     },
 
     voxel: {
-        /** Voxels per cell edge — the terrain cells are a fixed 12×12 footprint. */
+        /**
+         * Voxels per cell edge — the terrain cells are a fixed 12×12 footprint.
+         */
         perTile: 12,
-        /** World units per voxel cube. */
-        size: 1
+        /**
+         * World units per voxel cube.
+         */
+        size: 1,
     },
 
     /**
@@ -58,10 +67,10 @@ export const CONFIG = {
     camera: {
         fov: 45,
         near: 0.1,
-        far: 4000
+        far: 4000,
     },
 
-    storageKey: 'mykonos-three-scene.save.v2'
+    storageKey: "mykonos-three-scene.save.v2",
 } as const;
 
 /**
@@ -72,7 +81,9 @@ export const CONFIG = {
  */
 export const TERRAIN_MANIFEST: TerrainDef[] = [];
 
-/** All tile defs, indexed by id. */
+/**
+ * All tile defs, indexed by id.
+ */
 export const ASSET_INDEX: Record<string, TerrainDef> = {};
 
 /**
@@ -81,31 +92,37 @@ export const ASSET_INDEX: Record<string, TerrainDef> = {};
  * the running app treats them as gone.
  */
 export function setCatalog(tiles: TerrainDef[]): void {
-    const live = tiles.filter(t => !t.deleted);
+    const live = tiles.filter((t) => !t.deleted);
     TERRAIN_MANIFEST.length = 0;
     TERRAIN_MANIFEST.push(...live);
     for (const k of Object.keys(ASSET_INDEX)) delete ASSET_INDEX[k];
     for (const t of live) ASSET_INDEX[t.id] = t;
 }
 
-/** Drop a tile from the in-memory catalog (after a soft delete on the server). */
+/**
+ * Drop a tile from the in-memory catalog (after a soft delete on the server).
+ */
 export function removeTile(id: string): void {
-    const i = TERRAIN_MANIFEST.findIndex(t => t.id === id);
+    const i = TERRAIN_MANIFEST.findIndex((t) => t.id === id);
     if (i >= 0) TERRAIN_MANIFEST.splice(i, 1);
     delete ASSET_INDEX[id];
 }
 
-/** Add or replace a single tile (e.g. one just saved from the editor). */
+/**
+ * Add or replace a single tile (e.g. one just saved from the editor).
+ */
 export function addTile(def: TerrainDef): void {
-    const i = TERRAIN_MANIFEST.findIndex(t => t.id === def.id);
+    const i = TERRAIN_MANIFEST.findIndex((t) => t.id === def.id);
     if (i >= 0) TERRAIN_MANIFEST[i] = def;
     else TERRAIN_MANIFEST.push(def);
     ASSET_INDEX[def.id] = def;
 }
 
-/** Fetch the catalog from the server, falling back to the static manifest. */
+/**
+ * Fetch the catalog from the server, falling back to the static manifest.
+ */
 export async function loadCatalog(): Promise<void> {
-    for (const url of ['/api/tiles', '/voxels/catalog.json']) {
+    for (const url of ["/api/tiles", "/voxels/catalog.json"]) {
         try {
             const res = await fetch(url);
             if (!res.ok) continue;
@@ -118,12 +135,16 @@ export async function loadCatalog(): Promise<void> {
     }
 }
 
-/** Tile defs for one category (empty for the not-yet-built top-layer tabs). */
+/**
+ * Tile defs for one category (empty for the not-yet-built top-layer tabs).
+ */
 export function assetsForCategory(cat: Category): TerrainDef[] {
-    return TERRAIN_MANIFEST.filter(d => d.category === cat);
+    return TERRAIN_MANIFEST.filter((d) => d.category === cat);
 }
 
-/** Whether a tile id can be raised / stacked (and built upon). */
+/**
+ * Whether a tile id can be raised / stacked (and built upon).
+ */
 export function isStackable(id: string): boolean {
     return ASSET_INDEX[id]?.stackable ?? false;
 }
