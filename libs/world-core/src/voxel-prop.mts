@@ -150,7 +150,8 @@ export function encodeVox(
             const key = v.c.toLowerCase();
             if (indexByColor.has(key)) continue;
             const free = slotRgb.indexOf(null);
-            if (free < 0) throw new Error('encodeVox: palette full (256 colors)');
+            if (free < 0)
+                throw new Error('encodeVox: palette full (256 colors)');
             slotRgb[free] = hexToRgb(v.c);
             indexByColor.set(key, free + 1);
         }

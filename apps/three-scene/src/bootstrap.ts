@@ -1,14 +1,14 @@
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-import { loadCatalog } from "./config.js";
-import { Game } from "./core/game.js";
-import { Input } from "./core/input.js";
-import { SceneView } from "./core/scene-view.js";
-import { TileEditor } from "./core/tile-editor.js";
-import { VoxelAssets } from "./core/voxel-assets.js";
-import { TileMap } from "./grid/tile-map.js";
-import { renderThumbnails } from "./ui/thumbnails.js";
-import { emit } from "./store.js";
+import { loadCatalog } from './config.js';
+import { Game } from './core/game.js';
+import { Input } from './core/input.js';
+import { SceneView } from './core/scene-view.js';
+import { TileEditor } from './core/tile-editor.js';
+import { VoxelAssets } from './core/voxel-assets.js';
+import { TileMap } from './grid/tile-map.js';
+import { renderThumbnails } from './ui/thumbnails.js';
+import { emit } from './store.js';
 
 /**
  * The imperative Three.js engine, created once and shared with React.
@@ -47,7 +47,7 @@ async function create(): Promise<Engine> {
     // The canvas starts in a detached container; <SceneCanvas/> appends the
     // renderer's domElement into the React-managed mount on first effect.
     const sceneView = new SceneView(
-        document.createElement("div"),
+        document.createElement('div'),
         tileMap,
         assets
     );
@@ -63,7 +63,7 @@ async function create(): Promise<Engine> {
     // Route the engine's existing single-callback contract into the React store.
     // sonner's toast() is callable outside React, so the engine fires toasts too.
     editor.onChange = emit;
-    game.ui = { update: emit, showToast: (m) => toast(m) };
+    game.ui = { update: emit, showToast: m => toast(m) };
 
     const thumbnails = renderThumbnails(assets);
 
@@ -83,7 +83,7 @@ export function initEngine(): Promise<Engine> {
         return Promise.resolve(engine);
     }
 
-    initPromise ??= create().then((e) => {
+    initPromise ??= create().then(e => {
         engine = e;
         if (import.meta.hot) {
             import.meta.hot.data.engine = e;
@@ -100,8 +100,8 @@ export function initEngine(): Promise<Engine> {
  */
 export function getEngine(): Engine {
     if (!engine) {
-        throw new Error("Engine not initialized — call initEngine()");
+        throw new Error('Engine not initialized — call initEngine()');
     }
-    
+
     return engine;
 }
