@@ -4,9 +4,11 @@ import {
     savePalette,
     type SavedPalette
 } from '../core/palette-store.js';
-import type { TileEditor } from '../core/tile-editor.js';
+import { hexToHsl, hslToHex, type TileEditor } from '../core/tile-editor.js';
 
 const HEX_RE = /^#?[0-9a-f]{6}$/i;
+/** Stops in a generated ramp (active color → target), endpoints included. */
+const RAMP_STEPS = 5;
 
 function hex2(n: number): string {
     return n.toString(16).padStart(2, '0');
@@ -34,6 +36,9 @@ export class EditorColors {
     private readonly cpColor: HTMLInputElement;
     private readonly cpHex: HTMLInputElement;
     private readonly cpClear: HTMLButtonElement;
+    private readonly cpH: HTMLInputElement;
+    private readonly cpS: HTMLInputElement;
+    private readonly cpL: HTMLInputElement;
     private activeSlot = 0;
     private popoverOpen = false;
 
@@ -54,6 +59,19 @@ export class EditorColors {
             <div class="ed-swatches compact" id="edc-swatches"></div>
             <button type="button" class="ed-btn" id="edc-add"
                 title="Assign a new color to the first free slot">+ Add color</button>
+            <div class="edc-gen">
+                <button type="button" class="ed-btn" id="edc-comp"
+                    title="Add the complement of the active color">Comp</button>
+                <button type="button" class="ed-btn" id="edc-analog"
+                    title="Add analogous colors (±30°) of the active color">Analog</button>
+                <button type="button" class="ed-btn" id="edc-triad"
+                    title="Add triad colors (±120°) of the active color">Triad</button>
+            </div>
+            <div class="edc-gen">
+                <input type="color" id="edc-ramp-to" value="#1b5ba8" title="Ramp target color" />
+                <button type="button" class="ed-btn" id="edc-ramp"
+                    title="Add a ramp from the active color to the target color">Ramp →</button>
+            </div>
             <button type="button" class="ed-btn" id="edc-trim" hidden
                 title="Remove palette colors no voxel uses"></button>
             <button type="button" class="ed-btn" id="edc-import"
@@ -88,6 +106,19 @@ export class EditorColors {
         root.querySelector('#edc-add')!.addEventListener('click', () =>
             this.addColor()
         );
+        root.querySelector('#edc-comp')!.addEventListener('click', () =>
+            this.editor.harmony('complement')
+        );
+        root.querySelector('#edc-analog')!.addEventListener('click', () =>
+            this.editor.harmony('analogous')
+        );
+        root.querySelector('#edc-triad')!.addEventListener('click', () =>
+            this.editor.harmony('triad')
+        );
+        const rampTo = root.querySelector<HTMLInputElement>('#edc-ramp-to')!;
+        root.querySelector('#edc-ramp')!.addEventListener('click', () =>
+            this.editor.rampTo(rampTo.value, RAMP_STEPS)
+        );
         root.querySelector('#edc-lib-load')!.addEventListener('click', () =>
             this.loadSelected()
         );
@@ -115,6 +146,11 @@ export class EditorColors {
         this.popover.innerHTML = `
             <input type="color" id="cp-color" />
             <input type="text" id="cp-hex" maxlength="7" spellcheck="false" />
+            <div class="cp-hsl">
+                <label>H<input type="range" id="cp-h" min="0" max="360" /></label>
+                <label>S<input type="range" id="cp-s" min="0" max="100" /></label>
+                <label>L<input type="range" id="cp-l" min="0" max="100" /></label>
+            </div>
             <div class="cp-actions">
                 <button type="button" class="ed-btn" id="cp-clear">Clear</button>
                 <button type="button" class="ed-btn ed-primary" id="cp-close">Done</button>
@@ -124,6 +160,9 @@ export class EditorColors {
         this.cpColor = this.popover.querySelector('#cp-color')!;
         this.cpHex = this.popover.querySelector('#cp-hex')!;
         this.cpClear = this.popover.querySelector('#cp-clear')!;
+        this.cpH = this.popover.querySelector('#cp-h')!;
+        this.cpS = this.popover.querySelector('#cp-s')!;
+        this.cpL = this.popover.querySelector('#cp-l')!;
 
         this.cpColor.addEventListener('input', () =>
             this.apply(this.cpColor.value)
@@ -133,6 +172,9 @@ export class EditorColors {
                 this.apply('#' + this.cpHex.value.replace('#', ''));
             }
         });
+        for (const sl of [this.cpH, this.cpS, this.cpL]) {
+            sl.addEventListener('input', () => this.applyFromSliders());
+        }
         this.cpClear.addEventListener('click', () => {
             if (this.cpClear.disabled) return;
             this.editor.clearSlot(this.activeSlot);
@@ -277,9 +319,7 @@ export class EditorColors {
 
     private openPopover(i: number): void {
         this.activeSlot = i;
-        const c = this.editor.palette[i] ?? '#ffffff';
-        this.cpColor.value = c;
-        this.cpHex.value = c;
+        this.setControls(this.editor.palette[i] ?? '#ffffff');
         // Clearing an in-use slot would orphan its voxels; block it here.
         const inUse = this.editor.slotInUse(i);
         this.cpClear.disabled = inUse;
@@ -303,8 +343,30 @@ export class EditorColors {
 
     private apply(hex: string): void {
         this.editor.setSlotColor(this.activeSlot, hex);
+        this.setControls(hex);
+    }
+
+    /** Drive the slot color from the H/S/L sliders (leaves the sliders alone). */
+    private applyFromSliders(): void {
+        const hex = hslToHex(
+            Number(this.cpH.value),
+            Number(this.cpS.value) / 100,
+            Number(this.cpL.value) / 100
+        );
+        this.editor.setSlotColor(this.activeSlot, hex);
+        this.setControls(hex, false);
+    }
+
+    /** Reflect `hex` in the popover inputs; `sliders` false when a slider drives it. */
+    private setControls(hex: string, sliders = true): void {
         this.cpColor.value = hex;
         this.cpHex.value = hex;
+        if (sliders) {
+            const [h, s, l] = hexToHsl(hex);
+            this.cpH.value = String(Math.round(h));
+            this.cpS.value = String(Math.round(s * 100));
+            this.cpL.value = String(Math.round(l * 100));
+        }
     }
 
     /** Read an 8×32 image into the 256 palette slots (transparent → unassigned). */
