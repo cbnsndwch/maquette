@@ -21,6 +21,12 @@ export interface VoxAsset {
     dims: [number, number, number];
     /** Decoded voxels in local coords (footprint x/y, z up), colors baked. */
     voxels: Voxel[];
+    /**
+     * The 256-entry palette as authored (slot index → hex, or null for an
+     * unassigned/zero-alpha slot). Lets an editor restore the full palette —
+     * including colors not currently painted — instead of only the used ones.
+     */
+    palette?: (string | null)[];
 }
 
 const MAGIC = 0x20584f56; // 'VOX ' little-endian
@@ -47,6 +53,8 @@ export function decodeVox(buffer: ArrayBuffer): VoxAsset {
 
     let dims: [number, number, number] = [0, 0, 0];
     const palette: string[] = new Array(256).fill('#ffffff');
+    // Authored palette: null for zero-alpha (unassigned) slots.
+    const slots: (string | null)[] = new Array(256).fill(null);
     let xyziOffset = -1;
     let numVoxels = 0;
 
@@ -68,8 +76,9 @@ export function decodeVox(buffer: ArrayBuffer): VoxAsset {
         } else if (id === 'RGBA') {
             for (let i = 0; i < 256; i++) {
                 const o = body + i * 4;
-                palette[i] =
-                    `#${hex2(view.getUint8(o))}${hex2(view.getUint8(o + 1))}${hex2(view.getUint8(o + 2))}`;
+                const hex = `#${hex2(view.getUint8(o))}${hex2(view.getUint8(o + 1))}${hex2(view.getUint8(o + 2))}`;
+                palette[i] = hex;
+                slots[i] = view.getUint8(o + 3) === 0 ? null : hex;
             }
         }
         pos = body + contentSize;
@@ -90,7 +99,7 @@ export function decodeVox(buffer: ArrayBuffer): VoxAsset {
         }
     }
 
-    return { dims, voxels };
+    return { dims, voxels, palette: slots };
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -104,30 +113,60 @@ function hexToRgb(hex: string): [number, number, number] {
 
 /**
  * Encode renderer voxels into a MagicaVoxel `.vox` buffer — the inverse of
- * {@link decodeVox}, so `decodeVox(encodeVox(v))` round-trips. Unique colors are
- * collected into the 256-entry palette with 1-based indices (matching
- * {@link decodeVox}); the bounded palette is intentional — a limited palette is
- * part of the voxel-art aesthetic.
+ * {@link decodeVox}, so `decodeVox(encodeVox(v))` round-trips. The bounded
+ * 256-entry palette is intentional — a limited palette is part of the voxel-art
+ * aesthetic.
+ *
+ * Pass `palette` (a 256-slot array, null = unassigned) to persist an authored
+ * palette verbatim — slot positions and all, including colors not currently
+ * painted — so an editor can reload it. Without it, colors are derived from the
+ * voxels in first-seen order (slots 0…N-1).
  *
  * Coordinates must be non-negative and fit one byte (0–255) per axis, the
  * format's grid limit. `dims` defaults to the voxels' bounding extent.
  */
 export function encodeVox(
     voxels: readonly Voxel[],
-    dims?: [number, number, number]
+    dims?: [number, number, number],
+    palette?: readonly (string | null)[]
 ): ArrayBuffer {
-    // Palette: first-seen order, 1-based color indices (index 0 is reserved).
+    // color (lowercased) → 1-based color index; slotRgb[j] → RGBA entry j.
     const indexByColor = new Map<string, number>();
-    const palette: number[] = []; // flat r,g,b triples
-    for (const v of voxels) {
-        const key = v.c.toLowerCase();
-        if (indexByColor.has(key)) continue;
-        if (palette.length / 3 >= 255) {
-            throw new Error('encodeVox: more than 255 unique colors');
+    const slotRgb: ([number, number, number] | null)[] = new Array(256).fill(
+        null
+    );
+
+    if (palette) {
+        // Explicit palette: keep slot positions (entry i → color index i+1).
+        for (let i = 0; i < Math.min(palette.length, 256); i++) {
+            const c = palette[i];
+            if (!c) continue;
+            slotRgb[i] = hexToRgb(c);
+            const key = c.toLowerCase();
+            if (!indexByColor.has(key)) indexByColor.set(key, i + 1);
         }
-        const [r, g, b] = hexToRgb(v.c);
-        palette.push(r, g, b);
-        indexByColor.set(key, palette.length / 3); // 1-based
+        // Any painted color missing from the palette gets the first free slot.
+        for (const v of voxels) {
+            const key = v.c.toLowerCase();
+            if (indexByColor.has(key)) continue;
+            const free = slotRgb.indexOf(null);
+            if (free < 0) throw new Error('encodeVox: palette full (256 colors)');
+            slotRgb[free] = hexToRgb(v.c);
+            indexByColor.set(key, free + 1);
+        }
+    } else {
+        // Derive: first-seen used colors into slots 0…N-1, 1-based indices.
+        let count = 0;
+        for (const v of voxels) {
+            const key = v.c.toLowerCase();
+            if (indexByColor.has(key)) continue;
+            if (count >= 255) {
+                throw new Error('encodeVox: more than 255 unique colors');
+            }
+            slotRgb[count] = hexToRgb(v.c);
+            indexByColor.set(key, count + 1); // 1-based
+            count++;
+        }
     }
 
     // Bounds (validate + derive dims).
@@ -196,12 +235,13 @@ export function encodeVox(
     writeU32(rgbaContent);
     writeU32(0);
     // Entry j (0-based) holds color j; voxel index j+1 reads it back, matching
-    // decodeVox's `palette[colorIndex - 1]`.
+    // decodeVox's `palette[colorIndex - 1]`. Unassigned slots stay zero-alpha.
     for (let j = 0; j < 256; j++) {
-        if (j * 3 + 2 < palette.length) {
-            view.setUint8(pos++, palette[j * 3]!);
-            view.setUint8(pos++, palette[j * 3 + 1]!);
-            view.setUint8(pos++, palette[j * 3 + 2]!);
+        const rgb = slotRgb[j];
+        if (rgb) {
+            view.setUint8(pos++, rgb[0]);
+            view.setUint8(pos++, rgb[1]);
+            view.setUint8(pos++, rgb[2]);
             view.setUint8(pos++, 255);
         } else {
             writeU32(0);

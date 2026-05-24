@@ -106,6 +106,24 @@ describe('encodeVox', () => {
         expect(decoded.voxels).toEqual(voxels);
     });
 
+    it('persists an explicit palette (slot positions + unused slots)', () => {
+        const voxels: Voxel[] = [
+            { x: 0, y: 0, z: 0, c: '#ff0000' },
+            { x: 1, y: 0, z: 0, c: '#00ff00' }
+        ];
+        // Slot 0 = red, slots 1–4 unassigned, slot 5 = green, slot 9 = unused blue.
+        const palette: (string | null)[] = new Array(256).fill(null);
+        palette[0] = '#ff0000';
+        palette[5] = '#00ff00';
+        palette[9] = '#0000ff';
+        const decoded = decodeVox(encodeVox(voxels, undefined, palette));
+        expect(decoded.voxels).toEqual(voxels);
+        expect(decoded.palette?.[0]).toBe('#ff0000');
+        expect(decoded.palette?.[5]).toBe('#00ff00');
+        expect(decoded.palette?.[9]).toBe('#0000ff'); // kept even though unused
+        expect(decoded.palette?.[1]).toBeNull();
+    });
+
     it('throws past 255 unique colors', () => {
         const voxels: Voxel[] = [];
         for (let i = 0; i < 256; i++) {
