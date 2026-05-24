@@ -562,6 +562,24 @@ canvas {
 .ed-swatches.compact .ed-swatch.empty {
     display: none;
 }
+/* Saved-palette library: select/name input + action button on one row. */
+.edc-lib {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    align-items: center;
+}
+.edc-lib select,
+.edc-lib input {
+    flex: 1;
+    min-width: 0;
+}
+.edc-lib .ed-btn {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 6px 12px;
+    height: 32px;
+}
 .ed-swatch.dragging {
     opacity: 0.4;
 }

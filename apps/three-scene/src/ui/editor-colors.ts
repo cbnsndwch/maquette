@@ -1,3 +1,9 @@
+import {
+    listPalettes,
+    paletteId,
+    savePalette,
+    type SavedPalette
+} from '../core/palette-store.js';
 import type { TileEditor } from '../core/tile-editor.js';
 
 const HEX_RE = /^#?[0-9a-f]{6}$/i;
@@ -18,6 +24,9 @@ export class EditorColors {
     private readonly fileInput: HTMLInputElement;
     private readonly trimBtn: HTMLButtonElement;
     private readonly compactBtn: HTMLButtonElement;
+    private readonly libSelect: HTMLSelectElement;
+    private readonly libNameInput: HTMLInputElement;
+    private saved: SavedPalette[] = [];
     private compact = true;
     /** Slot index being dragged for reorder, or null. */
     private dragSrc: number | null = null;
@@ -50,11 +59,23 @@ export class EditorColors {
             <button type="button" class="ed-btn" id="edc-import"
                 title="Load a 256-color palette from an 8×32 image">Import 8×32 image</button>
             <input type="file" id="edc-file" accept="image/png,image/jpeg,image/bmp,image/webp" hidden />
+            <div class="edc-lib">
+                <select id="edc-lib-select" title="Saved palettes"></select>
+                <button type="button" class="ed-btn" id="edc-lib-load"
+                    title="Apply the selected palette to this tile">Load</button>
+            </div>
+            <div class="edc-lib">
+                <input type="text" id="edc-lib-name" placeholder="save palette as…" spellcheck="false" />
+                <button type="button" class="ed-btn" id="edc-lib-save"
+                    title="Save the current palette to the shared library">Save</button>
+            </div>
         `;
         this.swatchesEl = root.querySelector('#edc-swatches')!;
         this.fileInput = root.querySelector('#edc-file')!;
         this.trimBtn = root.querySelector('#edc-trim')!;
         this.compactBtn = root.querySelector('#edc-compact')!;
+        this.libSelect = root.querySelector('#edc-lib-select')!;
+        this.libNameInput = root.querySelector('#edc-lib-name')!;
         this.buildSwatches();
 
         this.compactBtn.addEventListener('click', () => this.toggleCompact());
@@ -67,6 +88,13 @@ export class EditorColors {
         root.querySelector('#edc-add')!.addEventListener('click', () =>
             this.addColor()
         );
+        root.querySelector('#edc-lib-load')!.addEventListener('click', () =>
+            this.loadSelected()
+        );
+        root.querySelector('#edc-lib-save')!.addEventListener('click', () =>
+            void this.saveCurrent()
+        );
+        void this.refreshLibrary();
 
         this.trimBtn.addEventListener('click', () =>
             this.editor.removeUnusedColors()
@@ -192,6 +220,41 @@ export class EditorColors {
         const free = this.editor.palette.indexOf(null);
         if (free < 0) return; // palette full
         this.openPopover(free);
+    }
+
+    /* ── Saved-palette library ────────────────────────────────────── */
+
+    /** Fetch the library and (re)populate the select, keeping the selection. */
+    private async refreshLibrary(): Promise<void> {
+        this.saved = await listPalettes();
+        const cur = this.libSelect.value;
+        this.libSelect.replaceChildren(new Option('— saved palettes —', ''));
+        for (const p of this.saved) this.libSelect.add(new Option(p.name, p.id));
+        if (this.saved.some(p => p.id === cur)) this.libSelect.value = cur;
+    }
+
+    /** Apply the selected saved palette; voxels recolor against it by slot index. */
+    private loadSelected(): void {
+        const p = this.saved.find(s => s.id === this.libSelect.value);
+        if (p) this.editor.setPalette(p.colors);
+    }
+
+    /** Save the current palette to the shared library under the typed name. */
+    private async saveCurrent(): Promise<void> {
+        const name = this.libNameInput.value.trim();
+        if (!name) {
+            this.libNameInput.focus();
+            return;
+        }
+        const saved = await savePalette(
+            paletteId(name),
+            name,
+            this.editor.palette
+        );
+        if (!saved) return;
+        this.libNameInput.value = '';
+        await this.refreshLibrary();
+        this.libSelect.value = saved.id;
     }
 
     /** Move the dragged assigned color to the dropped-on slot's position. */
