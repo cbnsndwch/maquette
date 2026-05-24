@@ -3,8 +3,7 @@
 /**
  * The original hand-authored panel CSS. Kept (unlayered, so it wins over 
  * Tailwind utilities on the elements it targets by id) while panels migrate 
- * phase-by-phase;
- * its now-dead rules are pruned in the final cleanup phase. 
+ * phase-by-phase; its now-dead rules are pruned in the final cleanup phase. 
  */
 @import './styles.css';
 
