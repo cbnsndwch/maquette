@@ -1,4 +1,4 @@
-import { useRef, useSyncExternalStore } from 'react';
+import { useRef, useSyncExternalStore } from "react";
 
 /**
  * The engine bridge. The Three.js engine owns all mutable state imperatively;
@@ -16,7 +16,9 @@ const listeners = new Set<() => void>();
 /** Bump the version and notify React subscribers. Callable from outside React. */
 export function emit(): void {
     version++;
-    for (const l of listeners) l();
+    for (const l of listeners) {
+        l();
+    }
 }
 
 const subscribe = (listener: () => void): (() => void) => {
@@ -41,7 +43,7 @@ export function useEngineSelector<T>(
 ): T {
     const last = useRef<{ has: boolean; value: T }>({
         has: false,
-        value: undefined as T
+        value: undefined as T,
     });
     const getSnapshot = (): T => {
         const next = selector();

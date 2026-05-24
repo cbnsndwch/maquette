@@ -18,7 +18,9 @@ function makeRenderer(): THREE.WebGLRenderer {
     return renderer;
 }
 
-/** Render one tile to an isometric PNG data URL (null if it has no voxels). */
+/** 
+ * Render one tile to an isometric PNG data URL (null if it has no voxels). 
+ */
 function renderInto(
     renderer: THREE.WebGLRenderer,
     assets: VoxelAssets,
@@ -77,7 +79,9 @@ export function renderThumbnails(assets: VoxelAssets): Map<string, string> {
     return out;
 }
 
-/** Render a single tile's thumbnail (used after authoring a new tile). */
+/** 
+ * Render a single tile's thumbnail (used after authoring a new tile). 
+ */
 export function renderThumbnail(
     assets: VoxelAssets,
     id: string
