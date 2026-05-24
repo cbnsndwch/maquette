@@ -17,6 +17,10 @@ export class EditorColors {
     private readonly swatchEls: HTMLButtonElement[] = [];
     private readonly fileInput: HTMLInputElement;
     private readonly trimBtn: HTMLButtonElement;
+    private readonly compactBtn: HTMLButtonElement;
+    private compact = true;
+    /** Slot index being dragged for reorder, or null. */
+    private dragSrc: number | null = null;
     private readonly popover: HTMLElement;
     private readonly cpColor: HTMLInputElement;
     private readonly cpHex: HTMLInputElement;
@@ -30,7 +34,17 @@ export class EditorColors {
     ) {
         root.innerHTML = `
             <div class="ed-head">Colors</div>
-            <div class="ed-swatches" id="edc-swatches"></div>
+            <div class="edc-bar">
+                <button type="button" class="ed-tool active" id="edc-compact"
+                    title="Show only assigned colors (toggle to the full 256-slot grid)">Compact</button>
+                <button type="button" class="ed-btn" id="edc-sort-hue"
+                    title="Sort colors by hue">Hue</button>
+                <button type="button" class="ed-btn" id="edc-sort-light"
+                    title="Sort colors by lightness">Light</button>
+            </div>
+            <div class="ed-swatches compact" id="edc-swatches"></div>
+            <button type="button" class="ed-btn" id="edc-add"
+                title="Assign a new color to the first free slot">+ Add color</button>
             <button type="button" class="ed-btn" id="edc-trim" hidden
                 title="Remove palette colors no voxel uses"></button>
             <button type="button" class="ed-btn" id="edc-import"
@@ -40,7 +54,19 @@ export class EditorColors {
         this.swatchesEl = root.querySelector('#edc-swatches')!;
         this.fileInput = root.querySelector('#edc-file')!;
         this.trimBtn = root.querySelector('#edc-trim')!;
+        this.compactBtn = root.querySelector('#edc-compact')!;
         this.buildSwatches();
+
+        this.compactBtn.addEventListener('click', () => this.toggleCompact());
+        root.querySelector('#edc-sort-hue')!.addEventListener('click', () =>
+            this.editor.sortPalette('hue')
+        );
+        root.querySelector('#edc-sort-light')!.addEventListener('click', () =>
+            this.editor.sortPalette('light')
+        );
+        root.querySelector('#edc-add')!.addEventListener('click', () =>
+            this.addColor()
+        );
 
         this.trimBtn.addEventListener('click', () =>
             this.editor.removeUnusedColors()
@@ -130,7 +156,21 @@ export class EditorColors {
             const sw = document.createElement('button');
             sw.type = 'button';
             sw.className = 'ed-swatch';
+            sw.draggable = true;
             sw.addEventListener('click', () => this.onSwatchClick(i));
+            sw.addEventListener('dragstart', e => {
+                this.dragSrc = i;
+                e.dataTransfer!.effectAllowed = 'move';
+                sw.classList.add('dragging');
+            });
+            sw.addEventListener('dragend', () => sw.classList.remove('dragging'));
+            sw.addEventListener('dragover', e => {
+                if (this.dragSrc != null) e.preventDefault(); // allow drop
+            });
+            sw.addEventListener('drop', e => {
+                e.preventDefault();
+                this.onDrop(i);
+            });
             this.swatchesEl.appendChild(sw);
             this.swatchEls.push(sw);
         }
@@ -139,6 +179,37 @@ export class EditorColors {
     private onSwatchClick(i: number): void {
         this.editor.selectColorIdx(i); // no-op for an empty slot
         this.openPopover(i);
+    }
+
+    private toggleCompact(): void {
+        this.compact = !this.compact;
+        this.swatchesEl.classList.toggle('compact', this.compact);
+        this.compactBtn.classList.toggle('active', this.compact);
+    }
+
+    /** Open the popover on the first free slot so the user can assign a new color. */
+    private addColor(): void {
+        const free = this.editor.palette.indexOf(null);
+        if (free < 0) return; // palette full
+        this.openPopover(free);
+    }
+
+    /** Move the dragged assigned color to the dropped-on slot's position. */
+    private onDrop(target: number): void {
+        const src = this.dragSrc;
+        this.dragSrc = null;
+        if (src == null || src === target) return;
+        const assigned: number[] = [];
+        const empty: number[] = [];
+        for (let i = 0; i < this.editor.palette.length; i++) {
+            if (this.editor.palette[i] != null) assigned.push(i);
+            else empty.push(i);
+        }
+        const from = assigned.indexOf(src);
+        const to = assigned.indexOf(target);
+        if (from < 0 || to < 0) return; // only reorder among assigned colors
+        assigned.splice(to, 0, assigned.splice(from, 1)[0]!);
+        this.editor.reorderPalette([...assigned, ...empty]);
     }
 
     private openPopover(i: number): void {

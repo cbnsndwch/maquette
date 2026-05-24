@@ -539,11 +539,31 @@ canvas {
 }
 #editor-colors {
     #edc-import,
-    #edc-trim {
+    #edc-trim,
+    #edc-add {
         flex-grow: 0;
         flex-shrink: 0;
         height: 32px;
     }
+}
+/* Color-panel toolbar: compact toggle + sort buttons. */
+.edc-bar {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.edc-bar .ed-tool,
+.edc-bar .ed-btn {
+    flex: 1;
+    padding: 6px 4px;
+    height: 30px;
+}
+/* Compact view: hide unassigned slots so only real colors show, tightly packed. */
+.ed-swatches.compact .ed-swatch.empty {
+    display: none;
+}
+.ed-swatch.dragging {
+    opacity: 0.4;
 }
 /* Unassigned slot: white box with a red diagonal. */
 .ed-swatch.empty {
