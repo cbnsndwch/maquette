@@ -111,6 +111,8 @@ def generate_concept(
     ckpt_name: Optional[str] = None,
     lora_name: Optional[str] = None,
     workflow_name: str = "obj-concept",
+    steps: Optional[int] = None,
+    cfg: Optional[float] = None,
     timeout: float = 180.0,
 ) -> Path:
     """Run the concept-image workflow and return the path to the first PNG."""
@@ -120,6 +122,8 @@ def generate_concept(
         seed=seed,
         ckpt_name=ckpt_name,
         lora_name=lora_name,
+        steps=steps,
+        cfg=cfg,
     )
     client = ComfyClient(base_url)
     prompt_id = client.queue(wf)

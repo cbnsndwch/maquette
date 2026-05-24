@@ -1,8 +1,8 @@
 """End-to-end voxel generation CLI.
 
 Path A (default):  description -> LLM JSON voxels (skeleton fallback offline).
-Path B:            description -> concept image (ComfyUI) -> mesh (TripoSR)
-                   -> voxelized grid.
+Path B:            description -> concept image (ComfyUI) -> mesh
+                   (TripoSR or, with --mesh-model trellis, TRELLIS) -> voxelized grid.
 
 Both paths then run the chunk-merge pass and write ``<id>.json`` +
 ``<id>.vox`` to the output dir.
@@ -54,18 +54,28 @@ def run_path_a(args, palette: Palette, unit_id: str) -> VoxelUnit:
     return result.unit
 
 
+# Mesh frame differs by model: TripoSR is Y-up; TRELLIS's raw FlexiCubes mesh
+# (we skip the GLB Y-up conversion) is Z-up. Used to pick voxelize's up axis
+# when --up-axis isn't given.
+_MODEL_UP_AXIS = {"triposr": 1, "trellis": 2}
+
+
 def run_path_b(args, palette: Palette, unit_id: str) -> VoxelUnit:
     from .voxelize import voxelize
 
     stage = staging_dir() / unit_id
     mesh_path = args.mesh
+    model = args.model_b
 
     if not mesh_path:
         image_path = args.image
         if not image_path:
             from .comfy import generate_concept
 
-            _log(f"Path B: ComfyUI concept image @ {args.comfy_url}")
+            workflow = args.workflow or (
+                "obj-concept-nolora" if args.no_lora else "obj-concept"
+            )
+            _log(f"Path B: ComfyUI concept image @ {args.comfy_url} (workflow={workflow})")
             image_path = str(
                 generate_concept(
                     args.desc,
@@ -73,24 +83,51 @@ def run_path_b(args, palette: Palette, unit_id: str) -> VoxelUnit:
                     base_url=args.comfy_url,
                     seed=args.seed,
                     ckpt_name=args.ckpt,
-                    lora_name=args.lora,
+                    lora_name=None if args.no_lora else args.lora,
+                    workflow_name=workflow,
+                    steps=args.steps,
+                    cfg=args.cfg,
                 )
             )
         _log(f"  concept image: {image_path}")
 
-        from .triposr_infer import infer
+        if model == "trellis":
+            from .trellis_infer import infer as trellis_infer
 
-        _log("Path B: TripoSR image -> mesh")
-        mesh_path = str(infer(image_path, str(stage / "mesh.obj")))
+            _log("Path B: TRELLIS image -> mesh")
+            mesh_path = str(
+                trellis_infer(
+                    image_path,
+                    str(stage / "mesh.glb"),
+                    seed=args.seed,
+                    ss_steps=args.ss_steps,
+                    slat_steps=args.slat_steps,
+                    half=args.half,
+                    preprocess=not args.no_remove_bg,
+                )
+            )
+        else:
+            from .triposr_infer import infer as triposr_infer
+
+            _log("Path B: TripoSR image -> mesh")
+            mesh_path = str(
+                triposr_infer(
+                    image_path,
+                    str(stage / "mesh.obj"),
+                    resolution=args.mc_resolution,
+                    remove_bg=not args.no_remove_bg,
+                )
+            )
     _log(f"  mesh: {mesh_path}")
 
-    _log("Path B: voxelizing mesh")
+    up_axis = args.up_axis if args.up_axis is not None else _MODEL_UP_AXIS[model]
+    _log(f"Path B: voxelizing mesh (model={model}, up_axis={up_axis})")
     unit = voxelize(
         mesh_path,
         palette,
         unit_id=unit_id,
         biome=args.biome,
-        up_axis=args.up_axis,
+        up_axis=up_axis,
         fill=not args.no_fill,
     )
     return unit
@@ -117,13 +154,36 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--model", default=None, help="override VOXEL_LLM_MODEL")
 
     # Path B
+    ap.add_argument(
+        "--mesh-model",
+        dest="model_b",
+        choices=("triposr", "trellis"),
+        default="triposr",
+        help="image->mesh model (default triposr; trellis = cleaner geometry, bigger install)",
+    )
     ap.add_argument("--image", default=None, help="use this concept image (skip ComfyUI)")
-    ap.add_argument("--mesh", default=None, help="use this mesh (skip ComfyUI + TripoSR)")
+    ap.add_argument("--mesh", default=None, help="use this mesh (skip the image->mesh model)")
     ap.add_argument("--comfy-url", default="http://127.0.0.1:8188")
     ap.add_argument("--ckpt", default=None, help="ComfyUI checkpoint name override")
     ap.add_argument("--lora", default=None, help="ComfyUI LoRA name override")
-    ap.add_argument("--up-axis", type=int, default=1, choices=(0, 1, 2))
+    ap.add_argument("--no-lora", action="store_true", help="use the LoRA-free workflow")
+    ap.add_argument("--workflow", default=None, help="ComfyUI workflow name (overrides --no-lora)")
+    ap.add_argument("--steps", type=int, default=None, help="sampler steps (Turbo: ~4)")
+    ap.add_argument("--cfg", type=float, default=None, help="CFG scale (Turbo: ~1.0)")
+    ap.add_argument(
+        "--up-axis",
+        type=int,
+        default=None,
+        choices=(0, 1, 2),
+        help="mesh axis -> grid height (default: per-model; triposr=1, trellis=2)",
+    )
     ap.add_argument("--no-fill", action="store_true")
+    ap.add_argument("--no-remove-bg", action="store_true", help="skip background removal / preprocess")
+    ap.add_argument("--mc-resolution", type=int, default=256, help="TripoSR marching-cubes grid")
+    # TRELLIS sampler knobs (only used with --mesh-model trellis)
+    ap.add_argument("--ss-steps", type=int, default=12, help="TRELLIS sparse-structure steps")
+    ap.add_argument("--slat-steps", type=int, default=12, help="TRELLIS SLAT steps")
+    ap.add_argument("--half", action="store_true", help="TRELLIS: experimental fp16 cast (less VRAM)")
     ap.add_argument("--seed", type=int, default=0)
     return ap
 

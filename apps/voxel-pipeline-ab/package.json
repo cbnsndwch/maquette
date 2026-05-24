@@ -13,6 +13,7 @@
         "voxel:bake": "uv run --no-sync python -m voxel.bake",
         "voxel:skeletons": "uv run --no-sync python -m voxel.skeletons --all",
         "voxel:llm": "uv run --no-sync python -m voxel.llm_voxels",
+        "voxel:concept": "uv run --no-sync python -m voxel.concept",
         "voxel:validate": "uv run --no-sync python -m voxel.validate_unit",
         "voxel:voxelize": "uv run --no-sync python -m voxel.voxelize",
         "voxel:chunk-merge": "uv run --no-sync python -m voxel.chunk_merge",
@@ -20,8 +21,10 @@
         "voxel:remap": "uv run --no-sync python -m voxel.remap",
         "bench": "uv run --no-sync python -m voxel.bench",
         "voxel:triposr": "uv run --no-sync python -m voxel.triposr_infer",
+        "voxel:trellis": "uv run --no-sync python -m voxel.trellis_infer",
         "comfyui:setup": "uv run --no-sync python -m voxel.setup_external comfyui",
         "triposr:setup": "uv run --no-sync python -m voxel.setup_external triposr",
+        "trellis:setup": "uv run --no-sync python -m voxel.setup_external trellis",
         "py:test": "uv run --no-sync python -m pytest"
     },
     "engines": {
