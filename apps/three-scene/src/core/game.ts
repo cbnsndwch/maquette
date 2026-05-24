@@ -42,8 +42,6 @@ export class Game {
     private lastHover: Cell | null = null;
     ui: GameUI | null = null;
     editor: TileEditor | null = null;
-    /** Notified when the build/edit mode changes (UI shows the right panel). */
-    onModeChange: ((mode: Mode) => void) | null = null;
 
     constructor(
         readonly tileMap: TileMap,
@@ -89,7 +87,6 @@ export class Game {
             this.sceneView.frameBuild();
         }
         this.updateCursor();
-        this.onModeChange?.(mode);
         this.ui?.update();
     }
 

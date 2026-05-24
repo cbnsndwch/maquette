@@ -54,6 +54,8 @@ export class SceneView {
     private builtVersion = -1;
     private gridOn = false;
     private readonly animating = new Map<string, Pop>();
+    /** Bound resize handler, kept as a field so {@link dispose} can remove it. */
+    private readonly onResizeBound = (): void => this.onResize();
 
     constructor(
         container: HTMLElement,
@@ -131,8 +133,21 @@ export class SceneView {
         this.highlight.visible = false;
         this.scene.add(this.highlight);
 
-        window.addEventListener('resize', () => this.onResize());
+        window.addEventListener('resize', this.onResizeBound);
         this.renderer.setAnimationLoop(t => this.frame(t));
+    }
+
+    /**
+     * Tear down the render loop, listeners and the WebGL context. Only needed if
+     * the engine singleton is ever recreated (e.g. an HMR path that rebuilds the
+     * bootstrap); the persistent canvas otherwise never disposes the renderer.
+     */
+    dispose(): void {
+        this.renderer.setAnimationLoop(null);
+        window.removeEventListener('resize', this.onResizeBound);
+        this.controls.dispose();
+        this.renderer.dispose();
+        this.renderer.forceContextLoss();
     }
 
     /* ── World ↔ cell mapping ─────────────────────────────────── */
