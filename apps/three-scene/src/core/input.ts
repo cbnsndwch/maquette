@@ -31,6 +31,8 @@ export class Input {
 
     /** Tool to restore when the spacebar (temporary pan) is released. */
     private spacePrevTool: Tool | null = null;
+    /** True while Space holds a temporary left-drag pan in tile-edit mode. */
+    private editPanning = false;
 
     constructor(
         private readonly canvas: HTMLElement,
@@ -66,6 +68,8 @@ export class Input {
 
         // Edit mode: left button edits voxels (camera orbit stays on right-drag).
         if (this.game.mode === 'edit') {
+            // Space held → the left button is the camera's pan (OrbitControls).
+            if (this.editPanning) return;
             this.editing = true;
             this.lastEditX = e.clientX;
             this.lastEditY = e.clientY;
@@ -108,6 +112,8 @@ export class Input {
     private onUp(e: PointerEvent): void {
         if (this.game.mode === 'edit') {
             this.editing = false;
+            if (e.button === 2 && !this.editPanning) this.inverseClick(e);
+            else this.game.endEditStroke();
             return;
         }
         const moved =
@@ -139,6 +145,26 @@ export class Input {
         this.game.onPrimaryClick(c.gx, c.gy);
     }
 
+    /**
+     * Right-click (no drag) in edit mode inverts the sculpt tool: Add removes,
+     * Delete adds. A right-*drag* is a camera orbit, so we only act within the tap
+     * slop; with a live selection the right-click belongs to the context menu.
+     */
+    private inverseClick(e: PointerEvent): void {
+        const ed = this.game.editor;
+        if (!ed || ed.selection.size > 0) return;
+        const moved =
+            Math.hypot(e.clientX - this.downX, e.clientY - this.downY) >
+            TAP_SLOP;
+        if (moved) return;
+        const inverse =
+            ed.tool === 'add' ? 'delete' : ed.tool === 'delete' ? 'add' : null;
+        if (!inverse) return;
+        this.game.beginEditStroke();
+        this.game.editAt(e.clientX, e.clientY, false, inverse);
+        this.game.endEditStroke();
+    }
+
     private onWheel(e: WheelEvent): void {
         // Free wheel zooms (handled by OrbitControls). Ctrl/Cmd + wheel rotates
         // the tile brush while placing; we intercept only that case.
@@ -156,10 +182,30 @@ export class Input {
         ) {
             return;
         }
-        // Tile-editor mode: only the per-voxel tool shortcuts apply.
+        // Tile-editor mode: undo/redo, per-voxel tool shortcuts, hold-Space pan.
         if (this.game.mode === 'edit') {
             const ed = this.game.editor;
-            if (!ed || e.ctrlKey || e.metaKey) return;
+            if (!ed) return;
+            if (e.ctrlKey || e.metaKey) {
+                const k = e.key.toLowerCase();
+                if (k === 'z' && !e.shiftKey) {
+                    ed.undo();
+                    e.preventDefault();
+                } else if ((k === 'z' && e.shiftKey) || k === 'y') {
+                    ed.redo();
+                    e.preventDefault();
+                }
+                return;
+            }
+            if (e.code === 'Space') {
+                if (!e.repeat && !this.editPanning) {
+                    this.editPanning = true;
+                    this.editing = false; // drop any in-progress brush stroke
+                    this.game.setEditPan(true);
+                }
+                e.preventDefault();
+                return;
+            }
             const tool = EDIT_KEYS[e.key.toLowerCase()];
             if (tool) {
                 ed.setTool(tool);
@@ -235,7 +281,12 @@ export class Input {
     }
 
     private onKeyUp(e: KeyboardEvent): void {
-        if (e.code === 'Space' && this.spacePrevTool) {
+        if (e.code !== 'Space') return;
+        if (this.editPanning) {
+            this.editPanning = false;
+            this.game.setEditPan(false);
+            e.preventDefault();
+        } else if (this.spacePrevTool) {
             this.game.setTool(this.spacePrevTool);
             this.spacePrevTool = null;
             e.preventDefault();

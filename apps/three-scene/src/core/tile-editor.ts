@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { decodeVox, VoxelBatch, type Voxel } from '@cbnsndwch/world-core';
 
 import { CONFIG } from '../config.js';
+import { History } from './history.js';
 import type { SceneView } from './scene-view.js';
 
 const N = CONFIG.voxel.perTile; // 12 — footprint edge in voxels
@@ -30,6 +31,12 @@ interface EditVoxel {
     z: number;
     /** Index into {@link TileEditor.palette}. */
     ci: number;
+}
+
+/** Undoable document state: the voxels and the palette that colors them. */
+interface TileSnapshot {
+    voxels: EditVoxel[];
+    palette: (string | null)[];
 }
 
 const DEFAULT_PALETTE = [
@@ -84,7 +91,7 @@ export class TileEditor {
     /** Id of the tile being edited (set by {@link loadTile}); null for a new tile. */
     editingId: string | null = null;
     gridOn = true;
-    edgesOn = false;
+    edgesOn = true;
     /** Exploded view: extra vertical gap (in voxels) inserted between layers. */
     explode = 0;
     /** When set, only this z layer is shown (isolate a layer); null = all. */
@@ -127,6 +134,14 @@ export class TileEditor {
     /** Called after any edit so the UI (panels, info) can refresh. */
     onChange: (() => void) | null = null;
 
+    private readonly history = new History<TileSnapshot>();
+    /** Pre-mutation state of the open transaction; null when none is open. */
+    private txBefore: TileSnapshot | null = null;
+    /** Coalesce key of the open transaction (groups continuous edits). */
+    private txKey: string | null = null;
+    /** Coalesce key of the last recorded step; matching keys fold together. */
+    private lastCommitKey: string | null = null;
+
     constructor(private readonly view: SceneView) {
         this.raycaster.layers.set(1);
         this.root.visible = false;
@@ -154,6 +169,7 @@ export class TileEditor {
         this.explode = 0;
         this.focusLayer = null;
         this.selection.clear();
+        this.resetHistory();
         this.rebuild();
         this.onChange?.();
     }
@@ -218,6 +234,7 @@ export class TileEditor {
         this.explode = 0;
         this.focusLayer = null;
         this.selection.clear();
+        this.resetHistory();
         this.rebuild();
         this.onChange?.();
     }
@@ -282,17 +299,19 @@ export class TileEditor {
 
     /** Make `hex` the active color, assigning it to its slot (or the first free one). */
     setColor(hex: string): void {
-        const c = hex.toLowerCase();
-        const existing = this.palette.indexOf(c);
-        if (existing >= 0) {
-            this.activeColorIdx = existing;
-        } else {
-            const free = this.palette.indexOf(null);
-            const i = free >= 0 ? free : this.activeColorIdx;
-            this.palette[i] = c;
-            this.activeColorIdx = i;
-        }
-        this.onChange?.();
+        this.transact(() => {
+            const c = hex.toLowerCase();
+            const existing = this.palette.indexOf(c);
+            if (existing >= 0) {
+                this.activeColorIdx = existing;
+            } else {
+                const free = this.palette.indexOf(null);
+                const i = free >= 0 ? free : this.activeColorIdx;
+                this.palette[i] = c;
+                this.activeColorIdx = i;
+            }
+            this.onChange?.();
+        });
     }
 
     /**
@@ -301,22 +320,27 @@ export class TileEditor {
      */
     setSlotColor(i: number, hex: string): void {
         if (i < 0 || i >= PALETTE_SIZE) return;
-        this.palette[i] = hex.toLowerCase();
-        this.activeColorIdx = i;
-        this.rebuild();
-        this.onChange?.();
+        // Coalesce by slot so dragging a single color slider is one undo step.
+        this.transact(() => {
+            this.palette[i] = hex.toLowerCase();
+            this.activeColorIdx = i;
+            this.rebuild();
+            this.onChange?.();
+        }, `slot:${i}`);
     }
 
     /** Unassign a palette slot. Refuses while a voxel still uses it (would orphan). */
     clearSlot(i: number): void {
         if (i < 0 || i >= PALETTE_SIZE || this.palette[i] == null) return;
         if (this.slotInUse(i)) return;
-        this.palette[i] = null;
-        if (this.activeColorIdx === i) {
-            const next = this.palette.findIndex(c => c != null);
-            this.activeColorIdx = next >= 0 ? next : 0;
-        }
-        this.onChange?.();
+        this.transact(() => {
+            this.palette[i] = null;
+            if (this.activeColorIdx === i) {
+                const next = this.palette.findIndex(c => c != null);
+                this.activeColorIdx = next >= 0 ? next : 0;
+            }
+            this.onChange?.();
+        });
     }
 
     /**
@@ -325,11 +349,13 @@ export class TileEditor {
      * palette; any voxel whose slot is now unassigned renders {@link FALLBACK_COLOR}.
      */
     setPalette(colors: readonly (string | null)[]): void {
-        this.palette = toSlots(colors);
-        const first = this.palette.findIndex(c => c != null);
-        this.activeColorIdx = first >= 0 ? first : 0;
-        this.rebuild();
-        this.onChange?.();
+        this.transact(() => {
+            this.palette = toSlots(colors);
+            const first = this.palette.findIndex(c => c != null);
+            this.activeColorIdx = first >= 0 ? first : 0;
+            this.rebuild();
+            this.onChange?.();
+        });
     }
 
     /**
@@ -338,18 +364,20 @@ export class TileEditor {
      * unchanged). `order` must be a permutation of 0…{@link PALETTE_SIZE}-1.
      */
     reorderPalette(order: readonly number[]): void {
-        const next: (string | null)[] = new Array(PALETTE_SIZE).fill(null);
-        const oldToNew: number[] = new Array(PALETTE_SIZE).fill(0);
-        for (let i = 0; i < PALETTE_SIZE; i++) {
-            const old = order[i]!;
-            next[i] = this.palette[old] ?? null;
-            oldToNew[old] = i;
-        }
-        for (const v of this.voxels) v.ci = oldToNew[v.ci]!;
-        this.palette = next;
-        this.activeColorIdx = oldToNew[this.activeColorIdx]!;
-        this.rebuild();
-        this.onChange?.();
+        this.transact(() => {
+            const next: (string | null)[] = new Array(PALETTE_SIZE).fill(null);
+            const oldToNew: number[] = new Array(PALETTE_SIZE).fill(0);
+            for (let i = 0; i < PALETTE_SIZE; i++) {
+                const old = order[i]!;
+                next[i] = this.palette[old] ?? null;
+                oldToNew[old] = i;
+            }
+            for (const v of this.voxels) v.ci = oldToNew[v.ci]!;
+            this.palette = next;
+            this.activeColorIdx = oldToNew[this.activeColorIdx]!;
+            this.rebuild();
+            this.onChange?.();
+        });
     }
 
     /** Sort assigned colors (by hue or lightness) to the front; empties trail. */
@@ -389,7 +417,7 @@ export class TileEditor {
                 ])
             );
         }
-        return this.addColors(out);
+        return this.transact(() => this.addColors(out));
     }
 
     /**
@@ -405,7 +433,9 @@ export class TileEditor {
                 : kind === 'analogous'
                   ? [30, -30]
                   : [120, -120];
-        return this.addColors(offsets.map(d => hslToHex(h + d, s, l)));
+        return this.transact(() =>
+            this.addColors(offsets.map(d => hslToHex(h + d, s, l)))
+        );
     }
 
     /** Add the distinct, not-yet-present colors to free slots; false if no room. */
@@ -422,6 +452,8 @@ export class TileEditor {
     selectColorIdx(i: number): void {
         if (i >= 0 && i < PALETTE_SIZE && this.palette[i] != null) {
             this.activeColorIdx = i;
+            // Picking a slot ends any slider-coalescing run on it (reopen = new step).
+            this.lastCommitKey = null;
             this.onChange?.();
         }
     }
@@ -438,24 +470,29 @@ export class TileEditor {
     /** Remove every selected voxel. */
     deleteSelection(): void {
         if (this.selection.size === 0) return;
-        this.voxels = this.voxels.filter(
-            v => !this.selection.has(keyOf(v.x, v.y, v.z))
-        );
-        this.selection.clear();
-        this.rebuild();
-        this.onChange?.();
+        this.transact(() => {
+            this.voxels = this.voxels.filter(
+                v => !this.selection.has(keyOf(v.x, v.y, v.z))
+            );
+            this.selection.clear();
+            this.rebuild();
+            this.onChange?.();
+        });
     }
 
     /** Recolor every selected voxel; the selection stays so it can be reused. */
     recolorSelection(hex: string): void {
         if (this.selection.size === 0) return;
-        this.setColor(hex); // ensure it's in the palette + active
-        const ci = this.activeColorIdx;
-        for (const v of this.voxels) {
-            if (this.selection.has(keyOf(v.x, v.y, v.z))) v.ci = ci;
-        }
-        this.rebuild();
-        this.onChange?.();
+        // Coalesce: scrubbing the recolor picker over one selection is one step.
+        this.transact(() => {
+            this.setColor(hex); // ensure it's in the palette + active
+            const ci = this.activeColorIdx;
+            for (const v of this.voxels) {
+                if (this.selection.has(keyOf(v.x, v.y, v.z))) v.ci = ci;
+            }
+            this.rebuild();
+            this.onChange?.();
+        }, 'recolor-selection');
     }
 
     /**
@@ -465,6 +502,10 @@ export class TileEditor {
      */
     moveSelection(dx: number, dy: number, dz: number): boolean {
         if (this.selection.size === 0) return false;
+        return this.transact(() => this.moveSelectionInner(dx, dy, dz));
+    }
+
+    private moveSelectionInner(dx: number, dy: number, dz: number): boolean {
         const fixed = new Set<string>();
         for (const v of this.voxels) {
             const k = keyOf(v.x, v.y, v.z);
@@ -499,32 +540,43 @@ export class TileEditor {
 
     /** Fill the buried base layers (z 0..GROUND-1) with the active color. */
     fillBase(): void {
-        const occ = this.occupied();
-        for (let z = 0; z < GROUND; z++) {
-            for (let y = 0; y < N; y++) {
-                for (let x = 0; x < N; x++) {
-                    if (!occ.has(keyOf(x, y, z))) {
-                        this.voxels.push({ x, y, z, ci: this.activeColorIdx });
+        this.transact(() => {
+            const occ = this.occupied();
+            for (let z = 0; z < GROUND; z++) {
+                for (let y = 0; y < N; y++) {
+                    for (let x = 0; x < N; x++) {
+                        if (!occ.has(keyOf(x, y, z))) {
+                            this.voxels.push({
+                                x,
+                                y,
+                                z,
+                                ci: this.activeColorIdx
+                            });
+                        }
                     }
                 }
             }
-        }
-        this.rebuild();
-        this.onChange?.();
+            this.rebuild();
+            this.onChange?.();
+        });
     }
 
     /** Remove the buried base layers (z < GROUND). */
     clearBase(): void {
-        this.voxels = this.voxels.filter(v => v.z >= GROUND);
-        this.rebuild();
-        this.onChange?.();
+        this.transact(() => {
+            this.voxels = this.voxels.filter(v => v.z >= GROUND);
+            this.rebuild();
+            this.onChange?.();
+        });
     }
 
     /** Remove everything above ground (z >= GROUND). */
     clearTop(): void {
-        this.voxels = this.voxels.filter(v => v.z < GROUND);
-        this.rebuild();
-        this.onChange?.();
+        this.transact(() => {
+            this.voxels = this.voxels.filter(v => v.z < GROUND);
+            this.rebuild();
+            this.onChange?.();
+        });
     }
 
     /* ── Shading + hull ───────────────────────────────────────── */
@@ -538,26 +590,31 @@ export class TileEditor {
      */
     applyShading(spread: number): boolean {
         if (!this.voxels.length) return true;
-        const shades = this.shadePalette(spread);
-        const distinct = [...new Set(shades.map(s => s.toLowerCase()))];
-        const missing = distinct.filter(s => !this.palette.includes(s));
-        // Refuse rather than silently overflow the bounded palette.
-        if (missing.length > this.freeSlotCount()) return false;
-        for (const s of missing) this.ensurePaletteColor(s);
-        // Map each shade to its (now-present) slot so voxels point at indices.
-        const shadeIdx = shades.map(s => this.palette.indexOf(s.toLowerCase()));
-        const sel = this.selection;
-        const pick = (): number => {
-            const z = Math.max(-2.5, Math.min(2.5, gaussian()));
-            const idx = Math.round(((z + 2.5) / 5) * (SHADE_STEPS - 1));
-            return shadeIdx[Math.max(0, Math.min(SHADE_STEPS - 1, idx))]!;
-        };
-        for (const v of this.voxels) {
-            if (sel.size === 0 || sel.has(keyOf(v.x, v.y, v.z))) v.ci = pick();
-        }
-        this.rebuild();
-        this.onChange?.();
-        return true;
+        return this.transact(() => {
+            const shades = this.shadePalette(spread);
+            const distinct = [...new Set(shades.map(s => s.toLowerCase()))];
+            const missing = distinct.filter(s => !this.palette.includes(s));
+            // Refuse rather than silently overflow the bounded palette.
+            if (missing.length > this.freeSlotCount()) return false;
+            for (const s of missing) this.ensurePaletteColor(s);
+            // Map each shade to its (now-present) slot so voxels point at indices.
+            const shadeIdx = shades.map(s =>
+                this.palette.indexOf(s.toLowerCase())
+            );
+            const sel = this.selection;
+            const pick = (): number => {
+                const z = Math.max(-2.5, Math.min(2.5, gaussian()));
+                const idx = Math.round(((z + 2.5) / 5) * (SHADE_STEPS - 1));
+                return shadeIdx[Math.max(0, Math.min(SHADE_STEPS - 1, idx))]!;
+            };
+            for (const v of this.voxels) {
+                if (sel.size === 0 || sel.has(keyOf(v.x, v.y, v.z)))
+                    v.ci = pick();
+            }
+            this.rebuild();
+            this.onChange?.();
+            return true;
+        });
     }
 
     /** The SHADE_STEPS discrete shade colors the current settings would produce. */
@@ -608,20 +665,22 @@ export class TileEditor {
 
     /** Unassign palette slots no voxel uses (e.g. imported junk); returns count. */
     removeUnusedColors(): number {
-        const used = new Set(this.voxels.map(v => v.ci));
-        let removed = 0;
-        for (let i = 0; i < this.palette.length; i++) {
-            if (this.palette[i] != null && !used.has(i)) {
-                this.palette[i] = null;
-                removed++;
+        return this.transact(() => {
+            const used = new Set(this.voxels.map(v => v.ci));
+            let removed = 0;
+            for (let i = 0; i < this.palette.length; i++) {
+                if (this.palette[i] != null && !used.has(i)) {
+                    this.palette[i] = null;
+                    removed++;
+                }
             }
-        }
-        if (this.palette[this.activeColorIdx] == null) {
-            const first = this.palette.findIndex(c => c != null);
-            this.activeColorIdx = first >= 0 ? first : 0;
-        }
-        if (removed) this.onChange?.();
-        return removed;
+            if (this.palette[this.activeColorIdx] == null) {
+                const first = this.palette.findIndex(c => c != null);
+                this.activeColorIdx = first >= 0 ? first : 0;
+            }
+            if (removed) this.onChange?.();
+            return removed;
+        });
     }
 
     /**
@@ -631,17 +690,19 @@ export class TileEditor {
      */
     hull(): void {
         if (!this.voxels.length) return;
-        const occ = this.occupied();
-        const buried = (v: EditVoxel): boolean =>
-            occ.has(keyOf(v.x + 1, v.y, v.z)) &&
-            occ.has(keyOf(v.x - 1, v.y, v.z)) &&
-            occ.has(keyOf(v.x, v.y + 1, v.z)) &&
-            occ.has(keyOf(v.x, v.y - 1, v.z)) &&
-            occ.has(keyOf(v.x, v.y, v.z + 1)) &&
-            occ.has(keyOf(v.x, v.y, v.z - 1));
-        this.voxels = this.voxels.filter(v => !buried(v));
-        this.rebuild();
-        this.onChange?.();
+        this.transact(() => {
+            const occ = this.occupied();
+            const buried = (v: EditVoxel): boolean =>
+                occ.has(keyOf(v.x + 1, v.y, v.z)) &&
+                occ.has(keyOf(v.x - 1, v.y, v.z)) &&
+                occ.has(keyOf(v.x, v.y + 1, v.z)) &&
+                occ.has(keyOf(v.x, v.y - 1, v.z)) &&
+                occ.has(keyOf(v.x, v.y, v.z + 1)) &&
+                occ.has(keyOf(v.x, v.y, v.z - 1));
+            this.voxels = this.voxels.filter(v => !buried(v));
+            this.rebuild();
+            this.onChange?.();
+        });
     }
 
     /* ── Floor (geometry z-shift) ─────────────────────────────── */
@@ -653,31 +714,33 @@ export class TileEditor {
      */
     shiftZ(dz: number): void {
         if (!this.voxels.length || dz === 0) return;
-        let minZ = Infinity;
-        let maxZ = -Infinity;
-        for (const v of this.voxels) {
-            if (v.z < minZ) minZ = v.z;
-            if (v.z > maxZ) maxZ = v.z;
-        }
-        let d = dz;
-        if (minZ + d < 0) d = -minZ;
-        if (maxZ + d > 63) d = 63 - maxZ;
-        if (d === 0) return;
-        for (const v of this.voxels) v.z += d;
-        if (this.selection.size) {
-            const shifted = [...this.selection].map(k => {
-                const [x, y, z] = k.split(',').map(Number) as [
-                    number,
-                    number,
-                    number
-                ];
-                return keyOf(x, y, z + d);
-            });
-            this.selection.clear();
-            for (const k of shifted) this.selection.add(k);
-        }
-        this.rebuild();
-        this.onChange?.();
+        this.transact(() => {
+            let minZ = Infinity;
+            let maxZ = -Infinity;
+            for (const v of this.voxels) {
+                if (v.z < minZ) minZ = v.z;
+                if (v.z > maxZ) maxZ = v.z;
+            }
+            let d = dz;
+            if (minZ + d < 0) d = -minZ;
+            if (maxZ + d > 63) d = 63 - maxZ;
+            if (d === 0) return;
+            for (const v of this.voxels) v.z += d;
+            if (this.selection.size) {
+                const shifted = [...this.selection].map(k => {
+                    const [x, y, z] = k.split(',').map(Number) as [
+                        number,
+                        number,
+                        number
+                    ];
+                    return keyOf(x, y, z + d);
+                });
+                this.selection.clear();
+                for (const k of shifted) this.selection.add(k);
+            }
+            this.rebuild();
+            this.onChange?.();
+        });
     }
 
     raiseFloor(): void {
@@ -776,24 +839,141 @@ export class TileEditor {
     }
 
     clearAll(): void {
-        this.voxels = [];
-        this.selection.clear();
-        this.rebuild();
+        this.transact(() => {
+            this.voxels = [];
+            this.selection.clear();
+            this.rebuild();
+            this.onChange?.();
+        });
+    }
+
+    /* ── Undo / redo ──────────────────────────────────────────── */
+
+    private snapshot(): TileSnapshot {
+        return {
+            voxels: this.voxels.map(v => ({ ...v })),
+            palette: [...this.palette]
+        };
+    }
+
+    /** Drop undo history and any open transaction (a new document is loading). */
+    private resetHistory(): void {
+        this.history.clear();
+        this.txBefore = null;
+        this.txKey = null;
+        this.lastCommitKey = null;
+    }
+
+    /**
+     * Run `fn` as one undoable step: snapshot first, record only if the document
+     * actually changed. Re-entrant — a call made while a stroke or another
+     * transaction is open folds into that outer step instead of recording its own.
+     * Pass `coalesceKey` to merge consecutive same-key steps (e.g. dragging a
+     * single color slider) into one undo entry.
+     */
+    private transact<T>(fn: () => T, coalesceKey: string | null = null): T {
+        if (this.txBefore) return fn(); // fold into the open transaction
+        this.txBefore = this.snapshot();
+        this.txKey = coalesceKey;
+        try {
+            return fn();
+        } finally {
+            this.commitTx();
+        }
+    }
+
+    /** Record the open transaction if the document changed, then close it. */
+    private commitTx(): void {
+        const before = this.txBefore;
+        if (!before) return;
+        const key = this.txKey;
+        this.txBefore = null;
+        this.txKey = null;
+        if (!this.documentChanged(before)) return;
+        // A run of same-key edits keeps the first step's "before" on the stack.
+        if (key != null && key === this.lastCommitKey) {
+            this.onChange?.();
+            return;
+        }
+        this.history.record(before);
+        this.lastCommitKey = key;
         this.onChange?.();
+    }
+
+    private documentChanged(before: TileSnapshot): boolean {
+        if (this.voxels.length !== before.voxels.length) return true;
+        for (let i = 0; i < this.voxels.length; i++) {
+            const a = this.voxels[i]!;
+            const b = before.voxels[i]!;
+            if (a.x !== b.x || a.y !== b.y || a.z !== b.z || a.ci !== b.ci) {
+                return true;
+            }
+        }
+        if (this.palette.length !== before.palette.length) return true;
+        for (let i = 0; i < this.palette.length; i++) {
+            if (this.palette[i] !== before.palette[i]) return true;
+        }
+        return false;
+    }
+
+    private restore(snap: TileSnapshot): void {
+        this.voxels = snap.voxels.map(v => ({ ...v }));
+        this.palette = [...snap.palette];
+        if (this.palette[this.activeColorIdx] == null) {
+            const first = this.palette.findIndex(c => c != null);
+            this.activeColorIdx = first >= 0 ? first : 0;
+        }
+        this.lastCommitKey = null;
+        this.rebuild(); // rebuildSelection prunes keys whose voxel is now gone
+        this.onChange?.();
+    }
+
+    undo(): void {
+        const prev = this.history.undo(this.snapshot());
+        if (prev) this.restore(prev);
+    }
+
+    redo(): void {
+        const next = this.history.redo(this.snapshot());
+        if (next) this.restore(next);
+    }
+
+    get canUndo(): boolean {
+        return this.history.canUndo;
+    }
+
+    get canRedo(): boolean {
+        return this.history.canRedo;
     }
 
     /* ── Editing via raycast ──────────────────────────────────── */
 
-    /** Reset per-stroke dedup state (call on pointer-down). */
+    /** Open an undoable stroke: reset drag-dedup and snapshot the pre-edit state. */
     beginStroke(): void {
         this.lastTargetKey = null;
+        this.commitTx(); // flush a stroke interrupted before its endStroke
+        this.txBefore = this.snapshot();
+        this.txKey = null;
+    }
+
+    /** Close the stroke opened by {@link beginStroke}, recording it if it changed. */
+    endStroke(): void {
+        this.commitTx();
     }
 
     /**
      * Apply the active tool at a screen pixel. `remove` (modifier held) flips the
-     * Select tool to deselect. Returns true if anything changed.
+     * Select tool to deselect. `toolOverride` runs a different tool for this call
+     * only — used by right-click to invert the sculpt tool (Add↔Delete) without
+     * changing the active selection. Returns true if anything changed.
      */
-    editAt(clientX: number, clientY: number, remove = false): boolean {
+    editAt(
+        clientX: number,
+        clientY: number,
+        remove = false,
+        toolOverride?: EditTool
+    ): boolean {
+        const tool = toolOverride ?? this.tool;
         const ndc = this.toNdc(clientX, clientY);
         this.raycaster.layers.set(1);
         this.raycaster.setFromCamera(ndc, this.view.camera);
@@ -803,7 +983,7 @@ export class TileEditor {
 
         if (!hit || hit.instanceId == null) {
             // No voxel under the cursor: only "add" works, dropping onto the floor.
-            if (this.tool !== 'add') return false;
+            if (tool !== 'add') return false;
             const cell = this.floorCell(ndc);
             if (!cell || !this.claimTarget(keyOf(cell.x, cell.y, cell.z))) {
                 return false;
@@ -815,7 +995,7 @@ export class TileEditor {
         if (!v) return false;
         const here = keyOf(v.x, v.y, v.z);
 
-        switch (this.tool) {
+        switch (tool) {
             case 'add': {
                 const n = hit.face!.normal;
                 const tx = v.x + Math.round(n.x);

@@ -37,4 +37,10 @@ export class History<T> {
     get canRedo(): boolean {
         return this.redoStack.length > 0;
     }
+
+    /** Drop all history (e.g. when a fresh document is loaded). */
+    clear(): void {
+        this.undoStack.length = 0;
+        this.redoStack.length = 0;
+    }
 }

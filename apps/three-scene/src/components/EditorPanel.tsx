@@ -139,6 +139,8 @@ export function EditorPanel({
     const voxFileRef = useRef<HTMLInputElement>(null);
 
     const tool = useEngineSelector(() => editor.tool);
+    const canUndo = useEngineSelector(() => editor.canUndo);
+    const canRedo = useEngineSelector(() => editor.canRedo);
     const selectionSize = useEngineSelector(() => editor.selection.size);
     const voxelCount = useEngineSelector(() => editor.voxels.length);
     const floorOffset = useEngineSelector(() => editor.floorOffset);
@@ -223,6 +225,25 @@ export function EditorPanel({
                                 onClick={() => editor.setTool(t.id)}
                             />
                         ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                        <EdBtn
+                            title="Undo (Ctrl+Z)"
+                            disabled={!canUndo}
+                            onClick={() => editor.undo()}
+                        >
+                            Undo
+                        </EdBtn>
+                        <EdBtn
+                            title="Redo (Ctrl+Shift+Z)"
+                            disabled={!canRedo}
+                            onClick={() => editor.redo()}
+                        >
+                            Redo
+                        </EdBtn>
+                    </div>
+                    <div className="text-[11px] opacity-60">
+                        Hold Space to pan · right-click inverts Add/Delete
                     </div>
                 </Section>
 

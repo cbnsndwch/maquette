@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import { VoxelBatch } from '@cbnsndwch/world-core';
-import type { Rotation, TileMap } from '@cbnsndwch/scene-author';
+import { ASSET_INDEX, type Rotation, type TileMap } from '@cbnsndwch/scene-author';
 
 import { CONFIG } from '../config.js';
 import type { Tool } from './game.js';
@@ -179,6 +179,12 @@ export class SceneView {
         return this.assets.dims(id)[2];
     }
 
+    /** Nature and props tiles render at the column base (z=0) so they clip into terrain. */
+    private isGroundAnchored(id: string): boolean {
+        const cat = ASSET_INDEX[id]?.category ?? 'terrain';
+        return cat === 'nature' || cat === 'props';
+    }
+
     /** Cumulative voxel height of a column = base altitude for the next cell. */
     private columnBaseZ(gx: number, gy: number): number {
         let base = 0;
@@ -233,18 +239,19 @@ export class SceneView {
             for (let level = 0; level < stack.length; level++) {
                 const cell = stack[level]!;
                 const voxels = this.assets.get(cell.id);
+                const anchored = this.isGroundAnchored(cell.id);
                 // A popping cell is drawn by the overlay, not the static mesh.
                 if (
                     voxels.length &&
                     !this.animating.has(`${gx},${gy}:${level}`)
                 ) {
                     batch.add(voxels, {
-                        origin: this.cellOrigin(gx, gy, base),
+                        origin: this.cellOrigin(gx, gy, anchored ? 0 : base),
                         rotation: cell.rot,
                         span: CONFIG.voxel.perTile
                     });
                 }
-                base += this.cellHeight(cell.id);
+                if (!anchored) base += this.cellHeight(cell.id);
             }
         });
         if (batch.count > 0) this.terrainGroup.add(batch.build());
@@ -263,7 +270,9 @@ export class SceneView {
             return;
         }
         const level = this.tileMap.stackHeight(gx, gy) - 1;
-        const baseBelow = this.columnBaseZ(gx, gy) - this.cellHeight(cell.id);
+        const baseBelow = this.isGroundAnchored(cell.id)
+            ? 0
+            : this.columnBaseZ(gx, gy) - this.cellHeight(cell.id);
         const key = `${gx},${gy}:${level}`;
         const existing = this.animating.get(key);
         if (existing) {
@@ -336,7 +345,7 @@ export class SceneView {
         if (!voxels.length) return;
         const batch = new VoxelBatch(CONFIG.voxel.size);
         batch.add(voxels, {
-            origin: this.cellOrigin(cell.gx, cell.gy, base),
+            origin: this.cellOrigin(cell.gx, cell.gy, this.isGroundAnchored(assetId) ? 0 : base),
             rotation,
             span: CONFIG.voxel.perTile
         });

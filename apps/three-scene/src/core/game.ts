@@ -12,7 +12,7 @@ import { SaveSystem } from '../storage/save-system.js';
 import { downloadSceneVox } from './export-vox.js';
 import { History } from './history.js';
 import type { SceneView } from './scene-view.js';
-import type { TileEditor } from './tile-editor.js';
+import type { EditTool, TileEditor } from './tile-editor.js';
 import type { VoxelAssets } from './voxel-assets.js';
 
 export type Tool = 'place' | 'erase' | 'pan';
@@ -97,14 +97,35 @@ export class Game {
         this.ui?.update();
     }
 
-    /** Begin a per-voxel edit stroke (resets drag-dedup state). */
+    /** Begin a per-voxel edit stroke (opens an undo step, resets drag-dedup). */
     beginEditStroke(): void {
         this.editor?.beginStroke();
     }
 
+    /** Close the per-voxel edit stroke, recording it as one undo step. */
+    endEditStroke(): void {
+        this.editor?.endStroke();
+    }
+
+    /**
+     * Hold-to-pan override while editing a tile (Space). Grabs the left button
+     * for OrbitControls pan; releasing restores it to the per-voxel brush. Mirrors
+     * the build-mode spacebar pan, but without a Tool to swap (edit tools differ).
+     */
+    setEditPan(on: boolean): void {
+        this.sceneView.setCameraButtons(on ? 'pan' : 'place');
+        if (on) this.sceneView.renderer.domElement.style.cursor = 'grab';
+        else this.updateCursor();
+    }
+
     /** Forward an editor edit (per-voxel) at a screen pixel. */
-    editAt(clientX: number, clientY: number, remove = false): void {
-        this.editor?.editAt(clientX, clientY, remove);
+    editAt(
+        clientX: number,
+        clientY: number,
+        remove = false,
+        toolOverride?: EditTool
+    ): void {
+        this.editor?.editAt(clientX, clientY, remove, toolOverride);
     }
 
     setCategory(cat: Category): void {
