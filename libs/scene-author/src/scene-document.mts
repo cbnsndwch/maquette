@@ -34,11 +34,22 @@ export const terrainCellSchema = z.object({
     rot: rotationSchema
 });
 
+/** A multi-cell building placement in the scene document (PRD §4, Option B). */
+export const buildingPlacementSchema = z.object({
+    id: z.string(),
+    ax: z.number().int().nonnegative(),
+    ay: z.number().int().nonnegative(),
+    rot: rotationSchema,
+    baseLevel: z.number().int().nonnegative()
+});
+
 export const sceneDocumentSchema = z
     .object({
         width: z.number().int().positive(),
         height: z.number().int().positive(),
-        terrain: z.array(z.array(terrainCellSchema))
+        terrain: z.array(z.array(terrainCellSchema)),
+        // Additive + back-compat: pre-buildings saves omit this ⇒ empty overlay.
+        buildings: z.array(buildingPlacementSchema).default([])
     })
     .refine(d => d.terrain.length === d.width * d.height, {
         message: 'terrain must hold exactly width*height columns'

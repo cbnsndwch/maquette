@@ -33,6 +33,14 @@ export interface TerrainDef {
     stackable: boolean;
 
     /**
+     * Rectangular grid footprint `[w, d]` in cells (default `[1, 1]`). A tile
+     * with a multi-cell footprint is authored at `(w·12) × (d·12)` voxels and
+     * placed/rotated/erased as one atomic building unit (the separate placements
+     * overlay), rather than a per-column terrain stack.
+     */
+    footprint?: [number, number];
+
+    /**
      * Soft-deleted: hidden from the palette/inspector but its `.vox` file and
      * catalog entry are retained on disk (deletes are reversible by hand).
      */
@@ -81,4 +89,26 @@ export function assetsForCategory(cat: Category): TerrainDef[] {
 /** Whether a tile id can be raised / stacked (and built upon). */
 export function isStackable(id: string): boolean {
     return ASSET_INDEX[id]?.stackable ?? false;
+}
+
+/** Grid footprint `[w, d]` in cells for a tile id (defaults to `[1, 1]`). */
+export function footprintOf(id: string): [number, number] {
+    const fp = ASSET_INDEX[id]?.footprint;
+    return fp ? [fp[0], fp[1]] : [1, 1];
+}
+
+/** True when a tile occupies more than one grid cell (a building unit). */
+export function isMultiCell(id: string): boolean {
+    const [w, d] = footprintOf(id);
+    return w > 1 || d > 1;
+}
+
+/**
+ * Nature and props tiles are *ground-anchored*: they render at the column base
+ * (z = 0) so they clip into terrain instead of riding on top of it, and they
+ * never advance a column's altitude.
+ */
+export function isGroundAnchored(id: string): boolean {
+    const cat = ASSET_INDEX[id]?.category;
+    return cat === 'nature' || cat === 'props';
 }
