@@ -76,3 +76,5 @@ yarn.lock
 
 # Local-only scratch / cloned reference repos (not part of this repo)
 .local/
+
+/apps/three-scene/public/renders
