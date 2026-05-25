@@ -179,8 +179,42 @@ export interface VoxelPlacement {
     origin: [number, number, number];
     /** Quarter-turns about the footprint's vertical axis. */
     rotation?: 0 | 1 | 2 | 3;
-    /** Footprint width in voxels; defaults to the voxels' bounding box. */
+    /**
+     * Square footprint edge in voxels (shorthand for `spanX === spanY`); defaults
+     * to the voxels' bounding box. Use {@link spanX}/{@link spanY} for rectangular
+     * (multi-cell) footprints.
+     */
     span?: number;
+    /** Footprint width (x) in voxels for a rectangular footprint. */
+    spanX?: number;
+    /** Footprint depth (y) in voxels for a rectangular footprint. */
+    spanY?: number;
+}
+
+/**
+ * Rotate a footprint-local `(x, y)` by `rot` quarter-turns about the footprint's
+ * vertical axis. `spanX`/`spanY` are the **authored** footprint dimensions (a
+ * `w×d` footprint becomes `d×w` at 90°/270°). For a square footprint
+ * (`spanX === spanY`) this is bit-identical to the original single-`span`
+ * formula, so existing tiles are unaffected.
+ */
+export function rotateFootprintXY(
+    x: number,
+    y: number,
+    rot: 0 | 1 | 2 | 3,
+    spanX: number,
+    spanY: number
+): [number, number] {
+    switch (rot) {
+        case 1:
+            return [y, spanX - 1 - x];
+        case 2:
+            return [spanX - 1 - x, spanY - 1 - y];
+        case 3:
+            return [spanY - 1 - y, x];
+        default:
+            return [x, y];
+    }
 }
 
 /**
@@ -201,27 +235,17 @@ export class VoxelBatch {
         const [ox, oy, oz] = placement.origin;
         const rot = placement.rotation ?? 0;
 
-        let span = placement.span ?? 0;
-        if (rot !== 0 && span === 0) {
+        let spanX = placement.spanX ?? placement.span ?? 0;
+        let spanY = placement.spanY ?? placement.span ?? 0;
+        if (rot !== 0 && (spanX === 0 || spanY === 0)) {
             for (const v of voxels) {
-                span = Math.max(span, v.x + 1, v.y + 1);
+                spanX = Math.max(spanX, v.x + 1);
+                spanY = Math.max(spanY, v.y + 1);
             }
         }
 
         for (const v of voxels) {
-            let vx = v.x;
-            let vy = v.y;
-            if (rot === 1) {
-                vx = v.y;
-                vy = span - 1 - v.x;
-            } else if (rot === 2) {
-                vx = span - 1 - v.x;
-                vy = span - 1 - v.y;
-            } else if (rot === 3) {
-                vx = span - 1 - v.y;
-                vy = v.x;
-            }
-
+            const [vx, vy] = rotateFootprintXY(v.x, v.y, rot, spanX, spanY);
             const arr = this.#byColor.get(v.c) ?? this.#newColor(v.c);
             arr.push(
                 ox + (vx + 0.5) * this.#size,
