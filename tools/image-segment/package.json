@@ -1,0 +1,21 @@
+{
+    "name": "@cbnsndwch/image-segment",
+    "description": "CLI to segment an image by connected shape + HSL color (gaussian tolerance). Emits a wireframe layer, per-segment transparent masks, and mean colors.",
+    "type": "module",
+    "private": true,
+    "bin": {
+        "image-segment": "./main.ts"
+    },
+    "scripts": {
+        "segment": "tsx main.ts",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "sharp": "^0.33.5"
+    },
+    "devDependencies": {
+        "@types/node": "^22.19.19",
+        "tsx": "^4.22.3",
+        "typescript": "^5.9.3"
+    }
+}
