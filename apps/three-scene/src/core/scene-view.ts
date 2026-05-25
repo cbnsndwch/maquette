@@ -6,9 +6,11 @@ import {
     ASSET_INDEX,
     type BuildingPlacement,
     footprintOf,
+    resolutionOf,
     rotatedFootprint,
     type Rotation,
-    type TileMap
+    type TileMap,
+    voxelSizeFor
 } from '@cbnsndwch/scene-author';
 
 import { CONFIG } from '../config.js';
@@ -18,6 +20,30 @@ import type { VoxelAssets } from './voxel-assets.js';
 const P = CONFIG.voxel.perTile * CONFIG.voxel.size; // world span of one cell edge
 const G = CONFIG.groundLayers * CONFIG.voxel.size; // buried depth below y = 0
 const { width: W, height: H } = CONFIG.grid;
+
+/**
+ * Accumulates voxels into one {@link VoxelBatch} per distinct resolution `r`
+ * (cube size `P/r`), so mixed-`r` placements coexist in a few instanced meshes
+ * (PRD §5.7). A handful of extra meshes; draw calls stay flat.
+ */
+class ResolutionBatches {
+    private readonly byRes = new Map<number, VoxelBatch>();
+
+    for(resolution: number): VoxelBatch {
+        let batch = this.byRes.get(resolution);
+        if (!batch) {
+            batch = new VoxelBatch(voxelSizeFor(resolution));
+            this.byRes.set(resolution, batch);
+        }
+        return batch;
+    }
+
+    addTo(group: THREE.Group): void {
+        for (const batch of this.byRes.values()) {
+            if (batch.count > 0) group.add(batch.build());
+        }
+    }
+}
 
 type HoverStyle = 'valid' | 'invalid' | 'erase';
 const HOVER_COLOR: Record<HoverStyle, number> = {
@@ -160,19 +186,16 @@ export class SceneView {
     /* ── World ↔ cell mapping ─────────────────────────────────── */
 
     /**
-     * World-space origin (voxel-local 0,0,0 corner) of a cell sitting at voxel
-     * altitude `baseZ` in its column (0 = ground level, buried `groundLayers`).
+     * World-space origin (voxel-local 0,0,0 corner) of a cell sitting at
+     * **world** altitude `baseY` in its column (0 = ground datum, buried
+     * `GROUND_DEPTH`). World units, so mixed resolutions stack consistently.
      */
     private cellOrigin(
         gx: number,
         gy: number,
-        baseZ = 0
+        baseY = 0
     ): [number, number, number] {
-        return [
-            (gx - W / 2) * P,
-            -G + baseZ * CONFIG.voxel.size,
-            (gy - H / 2) * P
-        ];
+        return [(gx - W / 2) * P, -G + baseY, (gy - H / 2) * P];
     }
 
     /** World-space center of a cell footprint (y ignored by callers). */
@@ -181,9 +204,9 @@ export class SceneView {
         return new THREE.Vector3(ox + P / 2, 0, oz + P / 2);
     }
 
-    /** Voxel height of a cell asset. */
+    /** World height of a cell asset = voxel z-extent × its voxel size (P/r). */
     private cellHeight(id: string): number {
-        return this.assets.dims(id)[2];
+        return this.assets.dims(id)[2] * voxelSizeFor(resolutionOf(id));
     }
 
     /** Nature and props tiles render at the column base (z=0) so they clip into terrain. */
@@ -192,7 +215,7 @@ export class SceneView {
         return cat === 'nature' || cat === 'props';
     }
 
-    /** Cumulative voxel height of a column = base altitude for the next cell. */
+    /** Cumulative world height of a column = base altitude for the next cell. */
     private columnBaseZ(gx: number, gy: number): number {
         let base = 0;
         for (const c of this.tileMap.getStack(gx, gy)) {
@@ -202,9 +225,10 @@ export class SceneView {
     }
 
     /**
-     * Terrain surface altitude at a column — non-ground-anchored heights only
-     * (props/nature clip in at z=0 and don't raise the surface). This is the
-     * altitude a building footprint rests on; mirrors `PlacementSystem.columnBase`.
+     * Terrain surface altitude (world units) at a column — non-ground-anchored
+     * heights only (props/nature clip in at z=0 and don't raise the surface).
+     * This is the altitude a building footprint rests on; mirrors
+     * `PlacementSystem.columnBase`.
      */
     private columnTerrainBaseZ(gx: number, gy: number): number {
         let base = 0;
@@ -253,9 +277,9 @@ export class SceneView {
 
     private rebuildNow(): void {
         this.disposeGroup(this.terrainGroup);
-        const batch = new VoxelBatch(CONFIG.voxel.size);
+        const batches = new ResolutionBatches();
         this.tileMap.forEachColumn((gx, gy, stack) => {
-            let base = 0;
+            let base = 0; // world altitude
             for (let level = 0; level < stack.length; level++) {
                 const cell = stack[level]!;
                 const voxels = this.assets.get(cell.id);
@@ -265,10 +289,11 @@ export class SceneView {
                     voxels.length &&
                     !this.animating.has(`${gx},${gy}:${level}`)
                 ) {
-                    batch.add(voxels, {
+                    const r = resolutionOf(cell.id);
+                    batches.for(r).add(voxels, {
                         origin: this.cellOrigin(gx, gy, anchored ? 0 : base),
                         rotation: cell.rot,
-                        span: CONFIG.voxel.perTile
+                        span: r
                     });
                 }
                 if (!anchored) base += this.cellHeight(cell.id);
@@ -281,14 +306,15 @@ export class SceneView {
             const voxels = this.assets.get(b.id);
             if (!voxels.length) continue;
             const [fw, fd] = footprintOf(b.id);
-            batch.add(voxels, {
+            const r = resolutionOf(b.id);
+            batches.for(r).add(voxels, {
                 origin: this.cellOrigin(b.ax, b.ay, b.baseLevel),
                 rotation: b.rot,
-                spanX: fw * CONFIG.voxel.perTile,
-                spanY: fd * CONFIG.voxel.perTile
+                spanX: fw * r,
+                spanY: fd * r
             });
         }
-        if (batch.count > 0) this.terrainGroup.add(batch.build());
+        batches.addTo(this.terrainGroup);
         this.builtVersion = this.tileMap.terrainVersion;
     }
 
@@ -311,15 +337,16 @@ export class SceneView {
             this.disposeObject(existing.group);
         }
         const [ox, , oz] = this.cellOrigin(b.ax, b.ay, b.baseLevel);
-        const baseWorldY = -G + b.baseLevel * CONFIG.voxel.size;
+        const baseWorldY = -G + b.baseLevel;
         const centerX = ox + (rw * P) / 2;
         const centerZ = oz + (rh * P) / 2;
-        const batch = new VoxelBatch(CONFIG.voxel.size);
+        const r = resolutionOf(b.id);
+        const batch = new VoxelBatch(voxelSizeFor(r));
         batch.add(voxels, {
             origin: [ox - centerX, 0, oz - centerZ],
             rotation: b.rot,
-            spanX: fw * CONFIG.voxel.perTile,
-            spanY: fd * CONFIG.voxel.perTile
+            spanX: fw * r,
+            spanY: fd * r
         });
         const group = batch.build();
         group.position.set(centerX, baseWorldY, centerZ);
@@ -354,12 +381,13 @@ export class SceneView {
         // Build relative to the cell's base center so the pop scales from there.
         const center = this.cellCenter(gx, gy);
         const [ox, , oz] = this.cellOrigin(gx, gy, baseBelow);
-        const baseWorldY = -G + baseBelow * CONFIG.voxel.size;
-        const batch = new VoxelBatch(CONFIG.voxel.size);
+        const baseWorldY = -G + baseBelow;
+        const r = resolutionOf(cell.id);
+        const batch = new VoxelBatch(voxelSizeFor(r));
         batch.add(this.assets.get(cell.id), {
             origin: [ox - center.x, 0, oz - center.z],
             rotation: cell.rot,
-            span: CONFIG.voxel.perTile
+            span: r
         });
         const group = batch.build();
         group.position.set(center.x, baseWorldY, center.z);
@@ -393,7 +421,7 @@ export class SceneView {
             const [fw, fd] = footprintOf(b.id);
             const [rw, rh] = rotatedFootprint(fw, fd, b.rot);
             const [ox, , oz] = this.cellOrigin(b.ax, b.ay);
-            const surfaceY = Math.max(0, -G + b.baseLevel * CONFIG.voxel.size);
+            const surfaceY = Math.max(0, -G + b.baseLevel);
             this.highlight.position.set(
                 ox + (rw * P) / 2,
                 surfaceY + 0.06,
@@ -415,7 +443,7 @@ export class SceneView {
         const base = multi
             ? this.columnTerrainBaseZ(cell.gx, cell.gy)
             : this.columnBaseZ(cell.gx, cell.gy);
-        const surfaceY = Math.max(0, -G + base * CONFIG.voxel.size);
+        const surfaceY = Math.max(0, -G + base);
 
         const [ox, , oz] = this.cellOrigin(cell.gx, cell.gy);
         const centerX = ox + (rw * P) / 2;
@@ -453,7 +481,8 @@ export class SceneView {
         const voxels = this.assets.get(assetId);
         if (!voxels.length) return;
         const [fw, fd] = footprintOf(assetId);
-        const batch = new VoxelBatch(CONFIG.voxel.size);
+        const r = resolutionOf(assetId);
+        const batch = new VoxelBatch(voxelSizeFor(r));
         batch.add(voxels, {
             origin: this.cellOrigin(
                 cell.gx,
@@ -461,8 +490,8 @@ export class SceneView {
                 this.isGroundAnchored(assetId) ? 0 : base
             ),
             rotation,
-            spanX: fw * CONFIG.voxel.perTile,
-            spanY: fd * CONFIG.voxel.perTile
+            spanX: fw * r,
+            spanY: fd * r
         });
         const group = batch.build();
         group.traverse(o => {
@@ -511,15 +540,17 @@ export class SceneView {
     }
 
     /**
-     * Frame an origin-centered tile (editing view); stops auto-rotate. `cells`
-     * is the footprint's larger edge so multi-cell buildings frame fully.
+     * Frame an origin-centered tile (editing view); stops auto-rotate. `voxels`
+     * is the author grid's larger edge (in voxels) — the editor works in pure
+     * voxel space at unit cube size, so framing by voxel count is independent of
+     * the asset's render voxel size `P/r` (PRD R4). Defaults to one base cell.
      */
-    frameEdit(cells = 1): void {
-        const s = Math.max(1, cells);
+    frameEdit(voxels: number = CONFIG.voxel.perTile): void {
+        const extent = Math.max(CONFIG.voxel.perTile, voxels);
         this.controls.autoRotate = false;
         // Let the camera dip below the horizon so the tile's underside is visible.
         this.controls.maxPolarAngle = Math.PI;
-        this.camera.position.set(P * 1.5 * s, P * 1.4 * s, P * 1.5 * s);
+        this.camera.position.set(extent * 1.5, extent * 1.4, extent * 1.5);
         this.controls.target.set(0, G, 0);
         this.controls.update();
     }

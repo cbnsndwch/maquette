@@ -9,6 +9,8 @@ export interface TileMeta {
     stackable: boolean;
     /** Grid footprint `[w, d]` in cells (default `[1, 1]`). */
     footprint?: [number, number];
+    /** Per-asset resolution `r` (voxels per cell edge, default 12). */
+    resolution?: number;
 }
 
 /** Base64-encode an ArrayBuffer in chunks (avoids arg-count limits on large files). */

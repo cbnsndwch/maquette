@@ -2,6 +2,8 @@ import {
     assetsForCategory,
     ASSET_INDEX,
     PlacementSystem,
+    resolutionOf,
+    voxelSizeFor,
     type Category,
     type Rotation,
     type TileMap,
@@ -57,7 +59,9 @@ export class Game {
     ) {
         this.placement = new PlacementSystem(
             tileMap,
-            id => this.assets.dims(id)[2]
+            // World height = voxel z-extent × the asset's voxel size (P/r), so a
+            // building rests on a surface measured in world units (PRD §5.1).
+            id => this.assets.dims(id)[2] * voxelSizeFor(resolutionOf(id))
         );
         this.selectedAssetId = assetsForCategory('terrain')[0]?.id ?? '';
         this.sceneView.setGridVisible(this.gridVisible);

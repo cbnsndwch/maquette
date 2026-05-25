@@ -1,14 +1,19 @@
 import * as THREE from 'three';
 
 import { decodeVox, VoxelBatch, type Voxel } from '@cbnsndwch/world-core';
+import {
+    groundLayersFor,
+    isAllowedResolution,
+    VOXEL_PER_TILE
+} from '@cbnsndwch/scene-author';
 
 import { CONFIG } from '../config.js';
 import { History } from './history.js';
 import type { SceneView } from './scene-view.js';
 
-const PER_TILE = CONFIG.voxel.perTile; // 12 — voxels per cell edge
-const MAX_Z = 64; // tallest a tile may rise (voxel layers)
-const GROUND = CONFIG.groundLayers; // scene ground line; lower layers are buried
+const PER_TILE = CONFIG.voxel.perTile; // 12 — base voxels per cell edge
+/** Tallest a base-resolution (r=12) tile may rise, in voxel layers. */
+const MAX_Z_BASE = 64;
 /** Fixed palette size — an 8×32 grid, matching the importable palette image. */
 const PALETTE_SIZE = 256;
 /** Discrete shade levels the Shade tool quantizes a color to. */
@@ -88,7 +93,13 @@ export class TileEditor {
      * 12×12 author grid. Drives {@link nx}/{@link ny}.
      */
     footprint: [number, number] = [1, 1];
-    /** Author-grid voxel extents, derived from the footprint. */
+    /**
+     * Per-asset resolution `r` (voxels per cell edge), default 12. A higher `r`
+     * authors finer cubes inside the same world cell, so the author grid is
+     * `(w·r) × (d·r)` voxels and the buried datum sits proportionally deeper.
+     */
+    resolution: number = PER_TILE;
+    /** Author-grid voxel extents, derived from the footprint × resolution. */
     private nx: number = PER_TILE;
     private ny: number = PER_TILE;
     /** Fixed 256-slot palette; null = unassigned (shown as an empty swatch). */
@@ -112,6 +123,20 @@ export class TileEditor {
 
     private get halfY(): number {
         return this.ny / 2;
+    }
+
+    /** Buried base-layer count for the current resolution (datum sits here). */
+    private get ground(): number {
+        return groundLayersFor(this.resolution);
+    }
+
+    /**
+     * Tallest the tile may rise, in voxel layers — the base cap scaled by `r`
+     * (PRD §5.6) so the *world* height budget is resolution-independent. Stays
+     * within the `.vox` 256-layer limit (64 × 48/12 = 256).
+     */
+    private get zCap(): number {
+        return MAX_Z_BASE * (this.resolution / PER_TILE);
     }
 
     private readonly root = new THREE.Group();
@@ -187,7 +212,7 @@ export class TileEditor {
         this.explode = 0;
         this.focusLayer = null;
         this.selection.clear();
-        this.applyFootprint([1, 1]);
+        this.applyFootprint([1, 1], PER_TILE);
         this.resetHistory();
         this.rebuild();
         this.onChange?.();
@@ -203,7 +228,7 @@ export class TileEditor {
         const d = Math.max(1, Math.min(8, Math.round(footprint[1])));
         if (w === this.footprint[0] && d === this.footprint[1]) return;
         this.transact(() => {
-            this.applyFootprint([w, d]);
+            this.applyFootprint([w, d], this.resolution);
             this.voxels = this.voxels.filter(
                 v => v.x >= 0 && v.x < this.nx && v.y >= 0 && v.y < this.ny
             );
@@ -213,13 +238,43 @@ export class TileEditor {
         });
     }
 
-    /** Set the footprint + derived extents and rebuild the floor / re-frame. */
-    private applyFootprint(footprint: [number, number]): void {
+    /**
+     * Change the per-asset resolution `r` (voxels per cell edge). The author grid
+     * scales to `(w·r) × (d·r)`; voxels outside the new extent are dropped, and
+     * the floor / datum / camera reframe. A no-op when unchanged or invalid.
+     */
+    setResolution(resolution: number): void {
+        const r = Math.round(resolution);
+        if (r === this.resolution || !isAllowedResolution(r)) return;
+        this.transact(() => {
+            this.applyFootprint(this.footprint, r);
+            this.voxels = this.voxels.filter(
+                v =>
+                    v.x >= 0 &&
+                    v.x < this.nx &&
+                    v.y >= 0 &&
+                    v.y < this.ny &&
+                    v.z < this.zCap
+            );
+            this.selection.clear();
+            this.rebuild();
+            this.onChange?.();
+        });
+    }
+
+    /** Set the footprint + resolution + derived extents and rebuild / re-frame. */
+    private applyFootprint(
+        footprint: [number, number],
+        resolution: number = this.resolution
+    ): void {
         this.footprint = footprint;
-        this.nx = footprint[0] * PER_TILE;
-        this.ny = footprint[1] * PER_TILE;
+        this.resolution = resolution;
+        this.nx = footprint[0] * resolution;
+        this.ny = footprint[1] * resolution;
         if (this.grid) this.buildFloor();
-        this.view.frameEdit(Math.max(footprint[0], footprint[1]));
+        // Pure voxel space (unit cubes): frame by the larger voxel extent, not
+        // world cell size, so the camera fits any resolution (PRD R4).
+        this.view.frameEdit(Math.max(this.nx, this.ny));
     }
 
     /**
@@ -230,9 +285,10 @@ export class TileEditor {
         voxels: readonly Voxel[],
         id: string,
         palette?: readonly (string | null)[],
-        footprint: [number, number] = [1, 1]
+        footprint: [number, number] = [1, 1],
+        resolution: number = PER_TILE
     ): void {
-        this.load(voxels, palette, id, footprint);
+        this.load(voxels, palette, id, footprint, resolution);
     }
 
     /**
@@ -243,7 +299,7 @@ export class TileEditor {
         voxels: readonly Voxel[],
         palette?: readonly (string | null)[]
     ): void {
-        this.load(voxels, palette, null, [1, 1]);
+        this.load(voxels, palette, null, [1, 1], PER_TILE);
     }
 
     /** Decode a `.vox` buffer and load it as a new tile. Returns success. */
@@ -261,12 +317,13 @@ export class TileEditor {
         voxels: readonly Voxel[],
         palette: readonly (string | null)[] | undefined,
         id: string | null,
-        footprint: [number, number] = [1, 1]
+        footprint: [number, number] = [1, 1],
+        resolution: number = PER_TILE
     ): void {
-        this.applyFootprint([
-            Math.max(1, footprint[0]),
-            Math.max(1, footprint[1])
-        ]);
+        this.applyFootprint(
+            [Math.max(1, footprint[0]), Math.max(1, footprint[1])],
+            isAllowedResolution(resolution) ? resolution : PER_TILE
+        );
         const hexes = voxels.map(v => v.c.toLowerCase());
         this.palette = this.resolvePalette(hexes, palette);
         // Point every voxel at its palette slot. Colors derive from / were saved
@@ -578,7 +635,7 @@ export class TileEditor {
                 nx >= this.nx ||
                 ny >= this.ny ||
                 nz < 0 ||
-                nz >= MAX_Z
+                nz >= this.zCap
             ) {
                 return false;
             }
@@ -599,11 +656,12 @@ export class TileEditor {
 
     /* ── Bulk clear actions ───────────────────────────────────── */
 
-    /** Fill the buried base layers (z 0..GROUND-1) with the active color. */
+    /** Fill the buried base layers (z 0..ground-1) with the active color. */
     fillBase(): void {
         this.transact(() => {
             const occ = this.occupied();
-            for (let z = 0; z < GROUND; z++) {
+            const ground = this.ground;
+            for (let z = 0; z < ground; z++) {
                 for (let y = 0; y < this.ny; y++) {
                     for (let x = 0; x < this.nx; x++) {
                         if (!occ.has(keyOf(x, y, z))) {
@@ -622,19 +680,21 @@ export class TileEditor {
         });
     }
 
-    /** Remove the buried base layers (z < GROUND). */
+    /** Remove the buried base layers (z < ground). */
     clearBase(): void {
         this.transact(() => {
-            this.voxels = this.voxels.filter(v => v.z >= GROUND);
+            const ground = this.ground;
+            this.voxels = this.voxels.filter(v => v.z >= ground);
             this.rebuild();
             this.onChange?.();
         });
     }
 
-    /** Remove everything above ground (z >= GROUND). */
+    /** Remove everything above ground (z >= ground). */
     clearTop(): void {
         this.transact(() => {
-            this.voxels = this.voxels.filter(v => v.z < GROUND);
+            const ground = this.ground;
+            this.voxels = this.voxels.filter(v => v.z < ground);
             this.rebuild();
             this.onChange?.();
         });
@@ -769,9 +829,10 @@ export class TileEditor {
     /* ── Floor (geometry z-shift) ─────────────────────────────── */
 
     /**
-     * Shift the whole model in z, clamped to stay within [0, 63]. This bakes into
-     * the saved geometry, so the chosen burial depth determines where the tile
-     * lands when placed (the datum at z = GROUND marks the scene ground line).
+     * Shift the whole model in z, clamped to stay within the resolution's voxel
+     * height budget. This bakes into the saved geometry, so the chosen burial
+     * depth determines where the tile lands when placed (the datum at z = ground
+     * marks the scene ground line).
      */
     shiftZ(dz: number): void {
         if (!this.voxels.length || dz === 0) return;
@@ -782,9 +843,10 @@ export class TileEditor {
                 if (v.z < minZ) minZ = v.z;
                 if (v.z > maxZ) maxZ = v.z;
             }
+            const top = this.zCap - 1;
             let d = dz;
             if (minZ + d < 0) d = -minZ;
-            if (maxZ + d > 63) d = 63 - maxZ;
+            if (maxZ + d > top) d = top - maxZ;
             if (d === 0) return;
             for (const v of this.voxels) v.z += d;
             if (this.selection.size) {
@@ -817,7 +879,7 @@ export class TileEditor {
         if (!this.voxels.length) return null;
         let minZ = Infinity;
         for (const v of this.voxels) if (v.z < minZ) minZ = v.z;
-        return minZ - GROUND;
+        return minZ - this.ground;
     }
 
     private ensurePaletteColor(hex: string): void {
@@ -1141,7 +1203,14 @@ export class TileEditor {
     }
 
     private addVoxel(x: number, y: number, z: number): boolean {
-        if (x < 0 || y < 0 || x >= this.nx || y >= this.ny || z < 0 || z >= MAX_Z)
+        if (
+            x < 0 ||
+            y < 0 ||
+            x >= this.nx ||
+            y >= this.ny ||
+            z < 0 ||
+            z >= this.zCap
+        )
             return false;
         if (this.occupied().has(keyOf(x, y, z))) return false;
         this.voxels.push({ x, y, z, ci: this.activeColorIdx });
@@ -1332,7 +1401,7 @@ export class TileEditor {
                 mesh.geometry?.dispose();
             });
         }
-        // Datum: the fixed plane that meets scene ground (z = GROUND). Voxels
+        // Datum: the fixed plane that meets scene ground (z = ground). Voxels
         // below it are buried when placed; the Floor tool shifts the model
         // relative to this line. The fill extends far outward but is hollowed
         // over the footprint so it doesn't clip through tiles inside it.
@@ -1383,7 +1452,7 @@ export class TileEditor {
                 })
             )
         );
-        datum.position.y = GROUND * CONFIG.voxel.size;
+        datum.position.y = this.ground * CONFIG.voxel.size;
         this.datum = datum;
         this.root.add(datum);
     }

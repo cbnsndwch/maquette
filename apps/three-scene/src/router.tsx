@@ -4,6 +4,7 @@ import { getEngine } from './bootstrap.js';
 import {
     ASSET_INDEX,
     footprintOf,
+    resolutionOf,
     type TerrainDef
 } from '@cbnsndwch/scene-author';
 import { BuildChrome } from './routes/BuildChrome.js';
@@ -65,7 +66,8 @@ export function createAppRouter(): ReturnType<typeof createBrowserRouter> {
                                     assets.get(def.id),
                                     def.id,
                                     assets.palette(def.id),
-                                    footprintOf(def.id)
+                                    footprintOf(def.id),
+                                    resolutionOf(def.id)
                                 );
                                 return { def };
                             }

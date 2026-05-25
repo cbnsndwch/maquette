@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router';
 import { saveTileFlow } from '@/actions';
 import { getEngine } from '@/bootstrap';
 import {
+    ALLOWED_RESOLUTIONS,
     CATEGORIES,
     type Category,
     type TerrainDef
@@ -166,12 +167,21 @@ export function EditorPanel({
     const [footprint, setFootprintState] = useState<[number, number]>(
         def?.footprint ?? [1, 1]
     );
+    const [resolution, setResolutionState] = useState<number>(
+        def?.resolution ?? 12
+    );
 
     /** Resize the author grid for a building footprint. */
     function setFootprint(w: number, d: number): void {
         const fp: [number, number] = [w, d];
         setFootprintState(fp);
         editor.setFootprint(fp);
+    }
+
+    /** Change the per-asset resolution (finer cubes in the same cell). */
+    function setResolution(r: number): void {
+        setResolutionState(r);
+        editor.setResolution(r);
     }
 
     const setSpread = (v: number): void =>
@@ -213,7 +223,8 @@ export function EditorPanel({
             name: cleanName,
             category,
             stackable,
-            footprint: category === 'buildings' ? footprint : [1, 1]
+            footprint: category === 'buildings' ? footprint : [1, 1],
+            resolution
         };
         void saveTileFlow(meta);
     }
@@ -465,6 +476,25 @@ export function EditorPanel({
                             </select>
                         </div>
                     )}
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-semibold text-ink-deep opacity-70">
+                            Resolution
+                        </span>
+                        <select
+                            aria-label="Tile resolution"
+                            value={resolution}
+                            onChange={e =>
+                                setResolution(Number(e.target.value))
+                            }
+                            className="flex-1 rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
+                        >
+                            {ALLOWED_RESOLUTIONS.map(n => (
+                                <option key={n} value={n}>
+                                    {n} vox/cell{n === 12 ? ' (default)' : ''}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                     <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-ink-deep">
                         <input
                             type="checkbox"
