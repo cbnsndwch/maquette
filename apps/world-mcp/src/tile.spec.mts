@@ -143,6 +143,107 @@ describe('tile authoring', () => {
         expect(payload(missing).error).toBe('not_found');
     });
 
+    it('authors a 2×2 building, places it as one unit, and bakes it', async () => {
+        const { tileSessionId, footprint } = payload(
+            await call('create_tile', {
+                category: 'buildings',
+                stackable: false,
+                footprint: [2, 2]
+            })
+        );
+        expect(footprint).toEqual({ cells: [2, 2], width: 24, height: 24 });
+
+        const box = payload(
+            await call('add_shape', {
+                tileSessionId,
+                shape: 'box',
+                x: 0,
+                y: 0,
+                z: 0,
+                w: 24,
+                d: 24,
+                h: 2,
+                color: '#cdc8b8'
+            })
+        );
+        expect(box.outOfFootprint).toBe(0);
+        expect(box.dims).toEqual([24, 24, 2]);
+
+        const saved = payload(
+            await call('save_tile', { tileSessionId, id: 'agent_house' })
+        );
+        expect(saved.ok).toBe(true);
+        expect(saved.footprint).toEqual([2, 2]);
+        expect(saved.tile.footprint).toEqual([2, 2]);
+
+        const { sceneId } = payload(
+            await call('create_scene', { width: 6, height: 6 })
+        );
+
+        // Hangs off the edge of a 6×6 grid → out_of_bounds.
+        const oob = payload(
+            await call('can_place', { sceneId, id: 'agent_house', gx: 5, gy: 5 })
+        );
+        expect(oob).toMatchObject({ ok: false, reason: 'out_of_bounds' });
+
+        const placed = payload(
+            await call('place_tile', {
+                sceneId,
+                id: 'agent_house',
+                gx: 1,
+                gy: 1
+            })
+        );
+        expect(placed.ok).toBe(true);
+        expect(placed.placed).toMatchObject({ ax: 1, ay: 1, footprint: [2, 2] });
+
+        // A 1×1 tile may not land inside the footprint.
+        const intruder = await call('place_tile', {
+            sceneId,
+            id: 'grass',
+            gx: 2,
+            gy: 2
+        });
+        expect(intruder.isError).toBe(true);
+        expect(payload(intruder).error).toBe('occupied');
+
+        const scene = payload(await call('get_scene', { sceneId }));
+        expect(scene.document.buildings).toHaveLength(1);
+
+        const fin = payload(await call('finalize_scene', { sceneId }));
+        expect(fin.ok).toBe(true);
+        expect(fin.voxelCount).toBeGreaterThan(0);
+
+        // Erasing any covered cell removes the whole building.
+        const erased = payload(
+            await call('erase_cell', { sceneId, gx: 2, gy: 2 })
+        );
+        expect(erased.removed).toBe(true);
+        const after = payload(await call('get_scene', { sceneId }));
+        expect(after.document.buildings).toHaveLength(0);
+    });
+
+    it('flags voxels outside the declared footprint', async () => {
+        const { tileSessionId } = payload(
+            await call('create_tile', { category: 'buildings', footprint: [2, 1] })
+        );
+        // A 2×1 footprint is 24×12 voxels; y up to 13 overflows the depth.
+        const over = payload(
+            await call('add_shape', {
+                tileSessionId,
+                shape: 'box',
+                x: 0,
+                y: 0,
+                z: 0,
+                w: 24,
+                d: 14,
+                h: 1,
+                color: '#ffffff'
+            })
+        );
+        expect(over.outOfFootprint).toBeGreaterThan(0);
+    });
+
     it('rejects an empty tile and an out-of-footprint tile', async () => {
         const empty = payload(await call('create_tile', {}));
         const emptySave = await call('save_tile', {
