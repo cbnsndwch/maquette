@@ -223,6 +223,89 @@ describe('tile authoring', () => {
         expect(after.document.buildings).toHaveLength(0);
     });
 
+    it('authors a high-resolution (r=24) tile, persists r, and bakes it', async () => {
+        const { tileSessionId, footprint, resolution } = payload(
+            await call('create_tile', {
+                category: 'nature',
+                stackable: false,
+                resolution: 24
+            })
+        );
+        // A 1×1 cell at r=24 is a 24×24 author grid in the same world cell.
+        expect(footprint).toEqual({ cells: [1, 1], width: 24, height: 24 });
+        expect(resolution).toBe(24);
+
+        const box = payload(
+            await call('add_shape', {
+                tileSessionId,
+                shape: 'box',
+                x: 0,
+                y: 0,
+                z: 0,
+                w: 24,
+                d: 24,
+                h: 2,
+                color: '#7eaa5f'
+            })
+        );
+        expect(box.outOfFootprint).toBe(0);
+        expect(box.dims).toEqual([24, 24, 2]);
+
+        const saved = payload(
+            await call('save_tile', { tileSessionId, id: 'agent_fine' })
+        );
+        expect(saved.ok).toBe(true);
+        expect(saved.resolution).toBe(24);
+        expect(saved.tile.resolution).toBe(24);
+
+        const cat = payload(await call('list_catalog'));
+        const fine = cat.tiles.find((t: { id: string }) => t.id === 'agent_fine');
+        expect(fine.resolution).toBe(24);
+
+        // …and it places + bakes among ordinary r=12 terrain.
+        const { sceneId } = payload(
+            await call('create_scene', { width: 3, height: 3 })
+        );
+        await call('fill_terrain', { sceneId, id: 'grass' });
+        await call('erase_cell', { sceneId, gx: 1, gy: 1 });
+        const placed = payload(
+            await call('place_tile', { sceneId, id: 'agent_fine', gx: 1, gy: 1 })
+        );
+        expect(placed.ok).toBe(true);
+        const fin = payload(await call('finalize_scene', { sceneId }));
+        expect(fin.ok).toBe(true);
+        expect(fin.voxelCount).toBeGreaterThan(0);
+    });
+
+    it('rejects a tile whose footprint × resolution exceeds the 256-axis cap', async () => {
+        const { tileSessionId, footprint } = payload(
+            await call('create_tile', {
+                category: 'buildings',
+                footprint: [6, 1],
+                resolution: 48
+            })
+        );
+        // 6 cells × 48 = 288 voxels wide — over the .vox 256-per-axis cap.
+        expect(footprint.width).toBe(288);
+
+        await call('add_shape', {
+            tileSessionId,
+            shape: 'box',
+            x: 0,
+            y: 0,
+            z: 0,
+            w: 4,
+            d: 1,
+            h: 1,
+            color: '#cdc8b8'
+        });
+        const save = await call('save_tile', { tileSessionId, id: 'agent_huge' });
+        expect(save.isError).toBe(true);
+        const out = payload(save);
+        expect(out.error).toBe('invalid_tile');
+        expect(out.issues.join(' ')).toMatch(/256/);
+    });
+
     it('flags voxels outside the declared footprint', async () => {
         const { tileSessionId } = payload(
             await call('create_tile', { category: 'buildings', footprint: [2, 1] })
