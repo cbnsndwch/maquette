@@ -3,12 +3,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+    bakeSceneVox,
     composeSceneVoxels,
     toSceneDocument,
     type SceneDocument,
     type TerrainDef
 } from '@cbnsndwch/scene-author';
-import { encodeVox } from '@cbnsndwch/world-core';
 
 import type { FsVoxelSource } from './catalog.mjs';
 import type { SceneSession } from './sessions.mjs';
@@ -58,10 +58,13 @@ export async function finalizeScene(
     const scenePath = path.join(dir, 'scene.json');
     await writeFile(scenePath, `${JSON.stringify(document, null, 2)}\n`);
 
+    // bakeSceneVox handles the mixed-resolution common-grid upscale + the
+    // 256-axis guard (throws a descriptive error past the cap).
+    const vox = bakeSceneVox(session.tileMap, voxSource);
     let voxPath: string | null = null;
-    if (voxels.length > 0) {
+    if (vox) {
         voxPath = path.join(dir, 'scene.vox');
-        await writeFile(voxPath, Buffer.from(encodeVox(voxels)));
+        await writeFile(voxPath, Buffer.from(vox));
     }
 
     const catalogPath = path.join(dir, 'catalog.snapshot.json');

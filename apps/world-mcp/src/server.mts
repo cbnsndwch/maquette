@@ -1,5 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+import { resolutionOf, voxelSizeFor } from '@cbnsndwch/scene-author';
+
 import { FsVoxelSource, loadCatalogFromDisk, PUBLIC_DIR } from './catalog.mjs';
 import { OUT_DIR } from './finalize.mjs';
 import { SessionStore } from './sessions.mjs';
@@ -45,7 +47,9 @@ export async function buildServer(
     );
 
     registerTools(server, {
-        sessions: new SessionStore(id => voxSource.dims(id)[2]),
+        sessions: new SessionStore(
+            id => voxSource.dims(id)[2] * voxelSizeFor(resolutionOf(id))
+        ),
         tileBuilders: new TileBuilderStore(),
         voxSource,
         publicDir,

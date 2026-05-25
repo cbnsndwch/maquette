@@ -101,12 +101,15 @@ export function buildShape(
     }
 }
 
+/** MagicaVoxel grid cap (voxels per axis). */
+const MAX_AXIS = 256;
+
 export interface TileAnalysis {
     voxelCount: number;
     /** SIZE for the baked `.vox`: the footprint edge(s) × the stack height. */
     dims: [number, number, number];
     colorCount: number;
-    /** Voxels lying outside the `(w·12) × (d·12)` footprint (x,y >= 0, z >= 0). */
+    /** Voxels lying outside the `(w·r) × (d·r)` footprint (x,y >= 0, z >= 0). */
     outOfFootprint: number;
     /** Blocking problems; a tile saves only when this is empty. */
     errors: string[];
@@ -114,15 +117,17 @@ export interface TileAnalysis {
 
 /**
  * Inspect a tile's voxels against its footprint + the `.vox` format constraints.
- * `footprint` is the grid footprint `[w, d]` in cells; the author voxel grid is
- * `(w·12) × (d·12)` (default 1×1 = the legacy 12×12 tile).
+ * `footprint` is the grid footprint `[w, d]` in cells and `resolution` is the
+ * per-asset `r` (voxels per cell edge, default 12); the author voxel grid is
+ * `(w·r) × (d·r)` (default 1×1 @ 12 = the legacy 12×12 tile).
  */
 export function analyzeTile(
     voxels: readonly Voxel[],
-    footprint: [number, number] = [1, 1]
+    footprint: [number, number] = [1, 1],
+    resolution: number = N
 ): TileAnalysis {
-    const nx = footprint[0] * N;
-    const ny = footprint[1] * N;
+    const nx = footprint[0] * resolution;
+    const ny = footprint[1] * resolution;
     let maxZ = 0;
     let outOfFootprint = 0;
     const colors = new Set<string>();
@@ -142,6 +147,18 @@ export function analyzeTile(
         errors.push(
             `${outOfFootprint} voxel(s) lie outside the ${nx}x${ny} footprint ` +
                 `(x must be 0..${nx - 1}, y must be 0..${ny - 1}, z >= 0)`
+        );
+    }
+    // Per-tile 256-axis cap (PRD §5.4): r·max(w,d) must fit the .vox grid.
+    if (nx > MAX_AXIS || ny > MAX_AXIS) {
+        errors.push(
+            `footprint × resolution = ${nx}x${ny} exceeds the ${MAX_AXIS}-voxel ` +
+                `axis cap — lower the resolution or footprint`
+        );
+    }
+    if (maxZ + 1 > MAX_AXIS) {
+        errors.push(
+            `tile height ${maxZ + 1} exceeds the ${MAX_AXIS}-voxel axis cap`
         );
     }
     if (colors.size > 255) {
@@ -166,6 +183,8 @@ export interface TileMetaDraft {
     stackable: boolean;
     /** Grid footprint `[w, d]` in cells (default `[1, 1]`). */
     footprint: [number, number];
+    /** Per-asset resolution `r` (voxels per cell edge, default 12). */
+    resolution: number;
 }
 
 /**
@@ -186,7 +205,8 @@ export class TileBuilder {
             name: meta.name ?? null,
             category,
             stackable: meta.stackable ?? category === 'terrain',
-            footprint: meta.footprint ?? [1, 1]
+            footprint: meta.footprint ?? [1, 1],
+            resolution: meta.resolution ?? N
         };
     }
 

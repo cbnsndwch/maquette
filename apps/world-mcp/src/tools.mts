@@ -88,6 +88,12 @@ const size = z.number().int().min(1).max(64);
 const footprintSchema = z
     .tuple([z.number().int().min(1).max(8), z.number().int().min(1).max(8)])
     .describe('Grid footprint [w, d] in cells (default [1, 1])');
+const tileResolutionSchema = z
+    .union([z.literal(12), z.literal(24), z.literal(36), z.literal(48)])
+    .describe(
+        'Per-asset resolution r (voxels per cell edge, default 12). Higher r ' +
+            'authors finer cubes in the same world cell; grid is (r·w) × (r·d).'
+    );
 
 function liveTiles() {
     return [...TERRAIN_MANIFEST];
@@ -131,7 +137,9 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     id: t.id,
                     name: t.name,
                     category: t.category,
-                    stackable: t.stackable
+                    stackable: t.stackable,
+                    footprint: footprintOf(t.id),
+                    resolution: t.resolution ?? VOXEL_PER_TILE
                 }))
             });
         }
@@ -159,7 +167,9 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     id: t.id,
                     name: t.name,
                     category: t.category,
-                    stackable: t.stackable
+                    stackable: t.stackable,
+                    footprint: footprintOf(t.id),
+                    resolution: t.resolution ?? VOXEL_PER_TILE
                 }))
             });
         }
@@ -193,7 +203,13 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                         'one unit: every covered cell must be in bounds, free of ' +
                         'other buildings, and on one level terrain surface, else ' +
                         'the placement rejects with out_of_bounds / occupied / ' +
-                        'not_level. Erasing any covered cell removes the building.'
+                        'not_level. Erasing any covered cell removes the building.',
+                    resolution:
+                        'A tile may declare a per-asset resolution r (voxels per ' +
+                        'cell edge: 12 default, or 24/36/48) for finer detail in ' +
+                        'the same world cell — terrain stays at 12. Placement and ' +
+                        'footprint rules are unchanged by r; mixed resolutions ' +
+                        'coexist in one scene and bake onto a common .vox grid.'
                 }
             })
     );
@@ -455,14 +471,29 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
         ({ sceneId }) =>
             needScene(sceneId, async session => {
                 const tiles = liveTiles();
-                const result = await finalizeScene(
-                    session,
-                    voxSource,
-                    computeCatalogVersion(tiles),
-                    tiles,
-                    outDir
-                );
-                return json({ ok: true, ...result });
+                try {
+                    const result = await finalizeScene(
+                        session,
+                        voxSource,
+                        computeCatalogVersion(tiles),
+                        tiles,
+                        outDir
+                    );
+                    return json({ ok: true, ...result });
+                } catch (err) {
+                    // Most likely the mixed-resolution bake overflowed the
+                    // 256-voxel axis cap (PRD §5.3) — surface it machine-readably.
+                    return json(
+                        {
+                            ok: false,
+                            error: 'scene_too_large',
+                            sceneId,
+                            message:
+                                err instanceof Error ? err.message : String(err)
+                        },
+                        true
+                    );
+                }
             })
     );
 
@@ -519,12 +550,13 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
             title: 'Create a tile',
             description:
                 `Start a tile-builder session. A tile occupies a w×d block of grid ` +
-                `cells (default 1×1), authored at (w·${N}) × (d·${N}) voxels, ` +
-                'variable height; z rises from 0 (the bottom ' +
-                `${GROUND_LAYERS} layers sit below scene ground). Pass footprint ` +
-                '[w, d] for multi-cell buildings (e.g. [2,2] house, [3,2] terrace). ' +
-                'Build it with add_shape / add_voxels, check with get_tile_info, ' +
-                'then save_tile. Returns a tileSessionId.',
+                `cells (default 1×1) at resolution r (voxels per cell edge, ` +
+                `default ${N}), authored at (r·w) × (r·d) voxels, variable height; ` +
+                'z rises from 0 (the bottom layers sit below scene ground). Pass ' +
+                'footprint [w, d] for multi-cell buildings (e.g. [2,2] house, ' +
+                '[3,2] terrace) and resolution (12/24/36/48) for finer detail in ' +
+                'the same world cell. Build it with add_shape / add_voxels, check ' +
+                'with get_tile_info, then save_tile. Returns a tileSessionId.',
             inputSchema: {
                 name: z.string().optional(),
                 id: z
@@ -538,21 +570,24 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     .describe(
                         'Can other tiles stack on top? defaults per category'
                     ),
-                footprint: footprintSchema.optional()
+                footprint: footprintSchema.optional(),
+                resolution: tileResolutionSchema.optional()
             }
         },
         args => {
             const builder = tileBuilders.create(args);
             const [fw, fd] = builder.meta.footprint;
-            const nx = fw * N;
-            const ny = fd * N;
+            const r = builder.meta.resolution;
+            const nx = fw * r;
+            const ny = fd * r;
             return json({
                 ok: true,
                 tileSessionId: builder.id,
                 footprint: { cells: [fw, fd], width: nx, height: ny },
+                resolution: r,
                 conventions: {
                     axes: `x in 0..${nx - 1}, y in 0..${ny - 1} on the ground plane, z up`,
-                    groundLayers: GROUND_LAYERS,
+                    groundLayers: GROUND_LAYERS * (r / N),
                     colorLimit: 255
                 },
                 meta: builder.meta
@@ -607,7 +642,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                 builder.add(voxels);
                 const a = analyzeTile(
                     builder.materialize(),
-                    builder.meta.footprint
+                    builder.meta.footprint,
+                    builder.meta.resolution
                 );
                 return json({
                     ok: true,
@@ -653,7 +689,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                 );
                 const a = analyzeTile(
                     builder.materialize(),
-                    builder.meta.footprint
+                    builder.meta.footprint,
+                    builder.meta.resolution
                 );
                 return json({
                     ok: true,
@@ -696,7 +733,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
             needTile(tileSessionId, builder => {
                 const a = analyzeTile(
                     builder.materialize(),
-                    builder.meta.footprint
+                    builder.meta.footprint,
+                    builder.meta.resolution
                 );
                 return json({
                     tileSessionId,
@@ -705,6 +743,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     colorCount: a.colorCount,
                     outOfFootprint: a.outOfFootprint,
                     footprint: builder.meta.footprint,
+                    resolution: builder.meta.resolution,
                     ready: a.errors.length === 0,
                     issues: a.errors,
                     meta: builder.meta
@@ -777,10 +816,11 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                 name: z.string().optional(),
                 category: categorySchema.optional(),
                 stackable: z.boolean().optional(),
-                footprint: footprintSchema.optional()
+                footprint: footprintSchema.optional(),
+                resolution: tileResolutionSchema.optional()
             }
         },
-        ({ tileSessionId, id, name, category, stackable, footprint }) =>
+        ({ tileSessionId, id, name, category, stackable, footprint, resolution }) =>
             needTile(tileSessionId, async builder => {
                 const finalName =
                     name ??
@@ -801,9 +841,15 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                 const resolvedStackable = stackable ?? builder.meta.stackable;
                 const resolvedFootprint: [number, number] =
                     footprint ?? builder.meta.footprint;
+                const resolvedResolution =
+                    resolution ?? builder.meta.resolution;
 
                 const voxels = builder.materialize();
-                const a = analyzeTile(voxels, resolvedFootprint);
+                const a = analyzeTile(
+                    voxels,
+                    resolvedFootprint,
+                    resolvedResolution
+                );
                 if (a.errors.length > 0) {
                     return json(
                         {
@@ -840,7 +886,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                         name: finalName,
                         category: resolvedCategory,
                         stackable: resolvedStackable,
-                        footprint: resolvedFootprint
+                        footprint: resolvedFootprint,
+                        resolution: resolvedResolution
                     },
                     vox
                 );
@@ -852,7 +899,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     name: def.name,
                     category: def.category,
                     stackable: def.stackable,
-                    footprint: resolvedFootprint
+                    footprint: resolvedFootprint,
+                    resolution: resolvedResolution
                 };
 
                 return json({
@@ -862,6 +910,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     dims: a.dims,
                     colorCount: a.colorCount,
                     footprint: resolvedFootprint,
+                    resolution: resolvedResolution,
                     file: def.file
                 });
             })
