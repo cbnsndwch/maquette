@@ -39,6 +39,8 @@ export interface SaveTileInput {
     name: string;
     category: Category;
     stackable: boolean;
+    /** Grid footprint `[w, d]` in cells (default `[1, 1]`). */
+    footprint?: [number, number];
 }
 
 /**
@@ -65,6 +67,9 @@ export async function saveTileToDisk(
         file: `/voxels/terrain/${input.id}.vox`,
         stackable: input.stackable
     };
+    // Persist a multi-cell footprint; a 1×1 default stays implicit (back-compat).
+    const fp = input.footprint;
+    if (fp && (fp[0] > 1 || fp[1] > 1)) tile.footprint = [fp[0], fp[1]];
 
     await mkdir(terrainDir, { recursive: true });
     await writeFile(path.join(terrainDir, `${input.id}.vox`), Buffer.from(vox));

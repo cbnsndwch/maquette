@@ -45,7 +45,7 @@ export async function buildServer(
     );
 
     registerTools(server, {
-        sessions: new SessionStore(),
+        sessions: new SessionStore(id => voxSource.dims(id)[2]),
         tileBuilders: new TileBuilderStore(),
         voxSource,
         publicDir,

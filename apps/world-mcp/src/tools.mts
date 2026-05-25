@@ -3,6 +3,7 @@ import {
     CATEGORIES,
     composeSceneVoxels,
     DEFAULT_GRID,
+    footprintOf,
     GROUND_LAYERS,
     TERRAIN_MANIFEST,
     VOXEL_PER_TILE,
@@ -84,6 +85,9 @@ const hexColor = z
     );
 const coord = z.number().int().min(-64).max(64);
 const size = z.number().int().min(1).max(64);
+const footprintSchema = z
+    .tuple([z.number().int().min(1).max(8), z.number().int().min(1).max(8)])
+    .describe('Grid footprint [w, d] in cells (default [1, 1])');
 
 function liveTiles() {
     return [...TERRAIN_MANIFEST];
@@ -181,7 +185,15 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                 rules: {
                     bounds: '0 <= gx < width and 0 <= gy < height',
                     stacking: STACKING_RULE,
-                    rotation: 'rot is a quarter-turn: 0, 1, 2 or 3'
+                    rotation: 'rot is a quarter-turn: 0, 1, 2 or 3',
+                    footprint:
+                        'A tile may declare a w×d cell footprint (default 1×1). ' +
+                        'A multi-cell building anchors at (gx, gy) and reserves ' +
+                        'its rotated footprint (w×d becomes d×w at rot 1 or 3) as ' +
+                        'one unit: every covered cell must be in bounds, free of ' +
+                        'other buildings, and on one level terrain surface, else ' +
+                        'the placement rejects with out_of_bounds / occupied / ' +
+                        'not_level. Erasing any covered cell removes the building.'
                 }
             })
     );
@@ -228,9 +240,12 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
         {
             title: 'Place a tile',
             description:
-                'Push a tile onto the top of a column at (gx, gy). Rejects illegal ' +
-                'placements with a machine-readable reason (unknown_tile, ' +
-                'out_of_bounds, not_stackable) so you can self-correct.',
+                'Place a tile at (gx, gy). A single-cell tile pushes onto the ' +
+                'column top; a multi-cell building anchors its footprint at ' +
+                '(gx, gy) and reserves every covered cell as one unit. Rejects ' +
+                'illegal placements with a machine-readable reason (unknown_tile, ' +
+                'out_of_bounds, not_stackable, occupied, not_level) so you can ' +
+                'self-correct.',
             inputSchema: {
                 sceneId: z.string(),
                 id: z.string().describe('Tile id from list_catalog'),
@@ -241,10 +256,23 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
         },
         ({ sceneId, id, gx, gy, rot }) =>
             needScene(sceneId, session => {
-                const check = session.placement.checkPlace(id, gx, gy);
+                const check = session.placement.checkPlace(
+                    id,
+                    gx,
+                    gy,
+                    rot as Rotation
+                );
                 if (!check.ok) {
                     return json(
-                        { ok: false, error: check.reason, sceneId, id, gx, gy },
+                        {
+                            ok: false,
+                            error: check.reason,
+                            sceneId,
+                            id,
+                            gx,
+                            gy,
+                            rot
+                        },
                         true
                     );
                 }
@@ -254,10 +282,21 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     gy,
                     rot as Rotation
                 );
+                const placed =
+                    result?.kind === 'building'
+                        ? {
+                              id,
+                              ax: result.ax,
+                              ay: result.ay,
+                              rot,
+                              baseLevel: result.baseLevel,
+                              footprint: footprintOf(id)
+                          }
+                        : { id, gx, gy, rot, level: result?.level ?? 0 };
                 return json({
                     ok: true,
                     sceneId,
-                    placed: { id, gx, gy, rot, level: result?.level ?? 0 },
+                    placed,
                     stackHeight: session.tileMap.stackHeight(gx, gy)
                 });
             })
@@ -327,22 +366,25 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
             title: 'Probe a placement',
             description:
                 'Check whether a tile could be placed at (gx, gy) without ' +
-                'mutating the scene. Returns ok, or a rejection reason.',
+                'mutating the scene. For a multi-cell building, pass rot to probe ' +
+                'the rotated footprint. Returns ok, or a rejection reason.',
             inputSchema: {
                 sceneId: z.string(),
                 id: z.string(),
                 gx: z.number().int(),
-                gy: z.number().int()
+                gy: z.number().int(),
+                rot: z.number().int().min(0).max(3).default(0)
             }
         },
-        ({ sceneId, id, gx, gy }) =>
+        ({ sceneId, id, gx, gy, rot }) =>
             needScene(sceneId, session =>
                 json({
                     sceneId,
                     id,
                     gx,
                     gy,
-                    ...session.placement.checkPlace(id, gx, gy)
+                    rot,
+                    ...session.placement.checkPlace(id, gx, gy, rot as Rotation)
                 })
             )
     );
@@ -476,11 +518,13 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
         {
             title: 'Create a tile',
             description:
-                `Start a tile-builder session. A tile is a fixed ${N}x${N} footprint, ` +
-                'variable height; x and y span 0..' +
-                `${N - 1}, z rises from 0 (the bottom ${GROUND_LAYERS} layers sit ` +
-                'below scene ground). Build it with add_shape / add_voxels, check ' +
-                'with get_tile_info, then save_tile. Returns a tileSessionId.',
+                `Start a tile-builder session. A tile occupies a w×d block of grid ` +
+                `cells (default 1×1), authored at (w·${N}) × (d·${N}) voxels, ` +
+                'variable height; z rises from 0 (the bottom ' +
+                `${GROUND_LAYERS} layers sit below scene ground). Pass footprint ` +
+                '[w, d] for multi-cell buildings (e.g. [2,2] house, [3,2] terrace). ' +
+                'Build it with add_shape / add_voxels, check with get_tile_info, ' +
+                'then save_tile. Returns a tileSessionId.',
             inputSchema: {
                 name: z.string().optional(),
                 id: z
@@ -493,17 +537,21 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     .optional()
                     .describe(
                         'Can other tiles stack on top? defaults per category'
-                    )
+                    ),
+                footprint: footprintSchema.optional()
             }
         },
         args => {
             const builder = tileBuilders.create(args);
+            const [fw, fd] = builder.meta.footprint;
+            const nx = fw * N;
+            const ny = fd * N;
             return json({
                 ok: true,
                 tileSessionId: builder.id,
-                footprint: { width: N, height: N },
+                footprint: { cells: [fw, fd], width: nx, height: ny },
                 conventions: {
-                    axes: 'x,y on the ground plane (0..' + (N - 1) + '), z up',
+                    axes: `x in 0..${nx - 1}, y in 0..${ny - 1} on the ground plane, z up`,
                     groundLayers: GROUND_LAYERS,
                     colorLimit: 255
                 },
@@ -557,7 +605,10 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     );
                 }
                 builder.add(voxels);
-                const a = analyzeTile(builder.materialize());
+                const a = analyzeTile(
+                    builder.materialize(),
+                    builder.meta.footprint
+                );
                 return json({
                     ok: true,
                     tileSessionId,
@@ -600,7 +651,10 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                 builder.add(
                     voxels.map(v => ({ x: v.x, y: v.y, z: v.z, c: v.color }))
                 );
-                const a = analyzeTile(builder.materialize());
+                const a = analyzeTile(
+                    builder.materialize(),
+                    builder.meta.footprint
+                );
                 return json({
                     ok: true,
                     tileSessionId,
@@ -640,13 +694,17 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
         },
         ({ tileSessionId }) =>
             needTile(tileSessionId, builder => {
-                const a = analyzeTile(builder.materialize());
+                const a = analyzeTile(
+                    builder.materialize(),
+                    builder.meta.footprint
+                );
                 return json({
                     tileSessionId,
                     voxelCount: a.voxelCount,
                     dims: a.dims,
                     colorCount: a.colorCount,
                     outOfFootprint: a.outOfFootprint,
+                    footprint: builder.meta.footprint,
                     ready: a.errors.length === 0,
                     issues: a.errors,
                     meta: builder.meta
@@ -718,10 +776,11 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     ),
                 name: z.string().optional(),
                 category: categorySchema.optional(),
-                stackable: z.boolean().optional()
+                stackable: z.boolean().optional(),
+                footprint: footprintSchema.optional()
             }
         },
-        ({ tileSessionId, id, name, category, stackable }) =>
+        ({ tileSessionId, id, name, category, stackable, footprint }) =>
             needTile(tileSessionId, async builder => {
                 const finalName =
                     name ??
@@ -740,9 +799,11 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                 const resolvedCategory: Category =
                     category ?? builder.meta.category;
                 const resolvedStackable = stackable ?? builder.meta.stackable;
+                const resolvedFootprint: [number, number] =
+                    footprint ?? builder.meta.footprint;
 
                 const voxels = builder.materialize();
-                const a = analyzeTile(voxels);
+                const a = analyzeTile(voxels, resolvedFootprint);
                 if (a.errors.length > 0) {
                     return json(
                         {
@@ -778,7 +839,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                         id: resolvedId,
                         name: finalName,
                         category: resolvedCategory,
-                        stackable: resolvedStackable
+                        stackable: resolvedStackable,
+                        footprint: resolvedFootprint
                     },
                     vox
                 );
@@ -789,7 +851,8 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     id: def.id,
                     name: def.name,
                     category: def.category,
-                    stackable: def.stackable
+                    stackable: def.stackable,
+                    footprint: resolvedFootprint
                 };
 
                 return json({
@@ -798,6 +861,7 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     voxelCount: voxels.length,
                     dims: a.dims,
                     colorCount: a.colorCount,
+                    footprint: resolvedFootprint,
                     file: def.file
                 });
             })

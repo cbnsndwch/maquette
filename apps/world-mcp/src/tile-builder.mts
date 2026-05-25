@@ -103,23 +103,32 @@ export function buildShape(
 
 export interface TileAnalysis {
     voxelCount: number;
-    /** SIZE for the baked `.vox`: the footprint edge × the stack height. */
+    /** SIZE for the baked `.vox`: the footprint edge(s) × the stack height. */
     dims: [number, number, number];
     colorCount: number;
-    /** Voxels lying outside the N×N footprint (x,y in [0,N), z >= 0). */
+    /** Voxels lying outside the `(w·12) × (d·12)` footprint (x,y >= 0, z >= 0). */
     outOfFootprint: number;
     /** Blocking problems; a tile saves only when this is empty. */
     errors: string[];
 }
 
-/** Inspect a tile's voxels against the footprint + `.vox` format constraints. */
-export function analyzeTile(voxels: readonly Voxel[]): TileAnalysis {
+/**
+ * Inspect a tile's voxels against its footprint + the `.vox` format constraints.
+ * `footprint` is the grid footprint `[w, d]` in cells; the author voxel grid is
+ * `(w·12) × (d·12)` (default 1×1 = the legacy 12×12 tile).
+ */
+export function analyzeTile(
+    voxels: readonly Voxel[],
+    footprint: [number, number] = [1, 1]
+): TileAnalysis {
+    const nx = footprint[0] * N;
+    const ny = footprint[1] * N;
     let maxZ = 0;
     let outOfFootprint = 0;
     const colors = new Set<string>();
     for (const v of voxels) {
         colors.add(v.c.toLowerCase());
-        if (v.x < 0 || v.x >= N || v.y < 0 || v.y >= N || v.z < 0) {
+        if (v.x < 0 || v.x >= nx || v.y < 0 || v.y >= ny || v.z < 0) {
             outOfFootprint++;
         }
         if (v.z > maxZ) maxZ = v.z;
@@ -131,8 +140,8 @@ export function analyzeTile(voxels: readonly Voxel[]): TileAnalysis {
     }
     if (outOfFootprint > 0) {
         errors.push(
-            `${outOfFootprint} voxel(s) lie outside the ${N}x${N} footprint ` +
-                `(x and y must be 0..${N - 1}, z >= 0)`
+            `${outOfFootprint} voxel(s) lie outside the ${nx}x${ny} footprint ` +
+                `(x must be 0..${nx - 1}, y must be 0..${ny - 1}, z >= 0)`
         );
     }
     if (colors.size > 255) {
@@ -143,7 +152,7 @@ export function analyzeTile(voxels: readonly Voxel[]): TileAnalysis {
 
     return {
         voxelCount: voxels.length,
-        dims: [N, N, Math.max(1, maxZ + 1)],
+        dims: [nx, ny, Math.max(1, maxZ + 1)],
         colorCount: colors.size,
         outOfFootprint,
         errors
@@ -155,6 +164,8 @@ export interface TileMetaDraft {
     name: string | null;
     category: Category;
     stackable: boolean;
+    /** Grid footprint `[w, d]` in cells (default `[1, 1]`). */
+    footprint: [number, number];
 }
 
 /**
@@ -174,7 +185,8 @@ export class TileBuilder {
             id: meta.id ?? null,
             name: meta.name ?? null,
             category,
-            stackable: meta.stackable ?? category === 'terrain'
+            stackable: meta.stackable ?? category === 'terrain',
+            footprint: meta.footprint ?? [1, 1]
         };
     }
 

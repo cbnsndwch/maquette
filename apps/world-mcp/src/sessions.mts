@@ -31,6 +31,13 @@ export interface CreateSceneOptions {
 export class SessionStore {
     readonly #sessions = new Map<string, SceneSession>();
 
+    /**
+     * `heightOf` resolves a tile's voxel height (its `.vox` SIZE z), so footprint
+     * placements can check the level terrain surface under a building. Defaults
+     * to 1 unit/cell when no voxel source is wired (e.g. unit tests).
+     */
+    constructor(private readonly heightOf: (id: string) => number = () => 1) {}
+
     create(opts: CreateSceneOptions = {}): SceneSession {
         const width = opts.width ?? DEFAULT_GRID.width;
         const height = opts.height ?? DEFAULT_GRID.height;
@@ -38,7 +45,7 @@ export class SessionStore {
         const session: SceneSession = {
             id: randomUUID(),
             tileMap,
-            placement: new PlacementSystem(tileMap),
+            placement: new PlacementSystem(tileMap, this.heightOf),
             biome: opts.biome ?? null,
             prompt: opts.prompt ?? null,
             createdAt: new Date().toISOString()
