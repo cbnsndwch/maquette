@@ -17,6 +17,11 @@ export default defineConfig({
         }
     },
     server: {
-        port: 8302
+        port: 8302,
+        watch: {
+            // Ignore files written by the tiles/palettes controllers so Vite
+            // does not trigger a full reload when a tile is saved or deleted.
+            ignored: ['**/public/voxels/**']
+        }
     }
 });
