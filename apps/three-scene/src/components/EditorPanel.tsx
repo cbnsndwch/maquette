@@ -4,16 +4,16 @@ import { useNavigate, useSearchParams } from "react-router";
 
 import { saveTileFlow } from "@/actions";
 import { getEngine } from "@/bootstrap";
+import type { EditTool, EditorLayer } from "@/core/tile-editor";
+import type { TileMeta } from "@/core/tile-save";
+import { cn } from "@/lib/utils";
+import { useEngineSelector } from "@/store";
 import {
     ALLOWED_RESOLUTIONS,
     CATEGORIES,
     type Category,
     type TerrainDef,
 } from "@cbnsndwch/scene-author";
-import type { EditTool, EditorLayer } from "@/core/tile-editor";
-import type { TileMeta } from "@/core/tile-save";
-import { cn } from "@/lib/utils";
-import { useEngineSelector } from "@/store";
 
 const TOOLS: { id: EditTool; label: string; key: string }[] = [
     { id: "add", label: "Add", key: "A" },
@@ -577,7 +577,9 @@ export function EditorPanel({
                             title="Toggle ground-level grid"
                             active={groundGridOn}
                             onClick={() =>
-                                editor.setGroundGridVisible(!editor.groundGridOn)
+                                editor.setGroundGridVisible(
+                                    !editor.groundGridOn
+                                )
                             }
                         />
                         <EdTool
@@ -710,7 +712,7 @@ export function EditorPanel({
                             </select>
                         </div>
                     )}
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col justify-start items-stretch">
                         <span className="text-[11px] font-semibold text-ink-deep opacity-70">
                             Resolution
                         </span>
