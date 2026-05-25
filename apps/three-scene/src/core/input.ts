@@ -212,6 +212,14 @@ export class Input {
                 e.preventDefault();
                 return;
             }
+            if (
+                (e.key === 'Delete' || e.key === 'Backspace') &&
+                ed.selection.size > 0
+            ) {
+                ed.deleteSelection();
+                e.preventDefault();
+                return;
+            }
             const tool = EDIT_KEYS[e.key.toLowerCase()];
             if (tool) {
                 ed.setTool(tool);
