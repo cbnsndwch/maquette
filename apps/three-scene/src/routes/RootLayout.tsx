@@ -1,8 +1,8 @@
-import { Outlet } from 'react-router';
-import { Toaster } from 'sonner';
+import { Outlet } from "react-router";
+import { Toaster } from "sonner";
 
-import { SceneCanvas } from '@/components/SceneCanvas';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { SceneCanvas } from "@/components/SceneCanvas";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 /**
  * The persistent app shell. The WebGL canvas mounts here once and never unmounts
@@ -15,9 +15,23 @@ export function RootLayout(): React.JSX.Element {
             <SceneCanvas />
 
             <header id="title-card">
-                <div className="title-text">
-                    <h1>Maquette • 3D Builder</h1>
-                    <p>Scene · Mykonos Biome</p>
+                <div className="title-text font-semibold flex justify-start items-center gap-1">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-rotate3d-icon lucide-rotate-3d text-ink-deep size-5"
+                    >
+                        <path d="m15.194 13.707 3.814 1.86-1.86 3.814" />
+                        <path d="M16.47214 7.52786 A 5 10 0 1 0 13 21.79796" />
+                        <path d="M21.79796 11 A 10 5 0 1 0 19 15.57071" />
+                    </svg>
+                    <h1>Maquette</h1>
+                    {/* <p>Mykonos Biome</p> */}
                 </div>
             </header>
 
