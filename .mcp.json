@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "maquette-world": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["apps/world-mcp/dist/index.js"]
+    }
+  }
+}
