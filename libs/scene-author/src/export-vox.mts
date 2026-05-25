@@ -1,8 +1,8 @@
-import { encodeVox, type Voxel } from '@cbnsndwch/world-core';
+import { encodeVox, rotateFootprintXY, type Voxel } from '@cbnsndwch/world-core';
 
-import { ASSET_INDEX } from './catalog.mjs';
+import { footprintOf, isGroundAnchored } from './catalog.mjs';
 import { VOXEL_PER_TILE } from './constants.mjs';
-import type { Rotation, TileMap } from './tile-map.mjs';
+import type { TileMap } from './tile-map.mjs';
 
 const SPAN = VOXEL_PER_TILE;
 
@@ -18,24 +18,14 @@ export interface VoxelSource {
     dims(id: string): readonly [number, number, number];
 }
 
-/** Rotate a cell-local (x, y) within the footprint — matches VoxelBatch. */
-function rotateXY(x: number, y: number, rot: Rotation): [number, number] {
-    switch (rot) {
-        case 1:
-            return [y, SPAN - 1 - x];
-        case 2:
-            return [SPAN - 1 - x, SPAN - 1 - y];
-        case 3:
-            return [SPAN - 1 - y, x];
-        default:
-            return [x, y];
-    }
-}
-
 /**
  * Compose every placed cell into one voxel list in global grid coordinates,
  * baking in each cell's rotation, then normalize so the model's lowest corner
  * sits at the origin (a tight, centered `.vox`).
+ *
+ * Single-cell terrain stacks emit per column; multi-cell buildings emit **once**
+ * at their anchor (spanning `w·12 × d·12` voxels, crossing cell boundaries),
+ * never double-drawn against their occupied cells.
  */
 export function composeSceneVoxels(
     tileMap: TileMap,
@@ -48,11 +38,18 @@ export function composeSceneVoxels(
             // Nature and props tiles are ground-anchored: they render at the
             // column base (z=0) so their geometry clips into the terrain rather
             // than floating above it. Only terrain and buildings advance base.
-            const cat = ASSET_INDEX[cell.id]?.category ?? 'terrain';
-            const groundAnchored = cat === 'nature' || cat === 'props';
+            const groundAnchored = isGroundAnchored(cell.id);
             const zBase = groundAnchored ? 0 : base;
             for (const v of source.get(cell.id)) {
-                const [rx, ry] = rotateXY(v.x, v.y, cell.rot);
+                // Square footprint: spanX === spanY === SPAN (bit-identical to
+                // the previous single-span rotation).
+                const [rx, ry] = rotateFootprintXY(
+                    v.x,
+                    v.y,
+                    cell.rot,
+                    SPAN,
+                    SPAN
+                );
                 out.push({
                     x: gx * SPAN + rx,
                     y: gy * SPAN + ry,
@@ -65,6 +62,20 @@ export function composeSceneVoxels(
             }
         }
     });
+    for (const b of tileMap.getBuildings()) {
+        const [fw, fd] = footprintOf(b.id);
+        const spanX = fw * SPAN;
+        const spanY = fd * SPAN;
+        for (const v of source.get(b.id)) {
+            const [rx, ry] = rotateFootprintXY(v.x, v.y, b.rot, spanX, spanY);
+            out.push({
+                x: b.ax * SPAN + rx,
+                y: b.ay * SPAN + ry,
+                z: b.baseLevel + v.z,
+                c: v.c
+            });
+        }
+    }
     if (out.length === 0) return out;
 
     let minX = Infinity;
