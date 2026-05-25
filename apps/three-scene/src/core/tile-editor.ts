@@ -1745,7 +1745,7 @@ export class TileEditor {
             this.root.remove(this.grid);
             this.disposeGridGroup(this.grid);
         }
-        this.grid = this.buildFlatGridGroup(0, 0x9c8f6e, 0.7, 0.25);
+        this.grid = this.buildFlatGridGroup(0, 0x9c8f6e, 0.9, 0.7, 0.25);
         this.grid.visible = this.gridOn;
         this.root.add(this.grid);
 
@@ -1787,7 +1787,7 @@ export class TileEditor {
             this.groundGridMesh = null;
         }
         const yg = this.ground * CONFIG.voxel.size;
-        this.groundGridMesh = this.buildFlatGridGroup(yg, 0x4a7fb5, 0.65, 0.2);
+        this.groundGridMesh = this.buildFlatGridGroup(yg, 0x4a7fb5, 0.85, 0.65, 0.2);
         this.groundGridMesh.visible = this.groundGridOn;
         this.root.add(this.groundGridMesh);
     }
@@ -1817,25 +1817,29 @@ export class TileEditor {
         this.updateWallsForCamera();
     }
 
-    /** Build a Group with two LineSegments children: major (world-cell boundaries) and minor. */
+    /**
+     * Build a Group with up to three LineSegments children:
+     * cell-boundary (darkest, multi-cell only), major (world-cell lines), minor.
+     */
     private makeLinesGroup(
+        cell: number[],
         major: number[],
         minor: number[],
         color: number,
+        cellOpacity: number,
         majorOpacity: number,
         minorOpacity: number
     ): THREE.Group {
         const group = new THREE.Group();
-        if (major.length) {
+        const add = (pts: number[], opacity: number) => {
+            if (!pts.length) return;
             const geo = new THREE.BufferGeometry();
-            geo.setAttribute('position', new THREE.Float32BufferAttribute(major, 3));
-            group.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: majorOpacity })));
-        }
-        if (minor.length) {
-            const geo = new THREE.BufferGeometry();
-            geo.setAttribute('position', new THREE.Float32BufferAttribute(minor, 3));
-            group.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: minorOpacity })));
-        }
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+            group.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity })));
+        };
+        add(cell, cellOpacity);
+        add(major, majorOpacity);
+        add(minor, minorOpacity);
         return group;
     }
 
@@ -1851,24 +1855,45 @@ export class TileEditor {
     }
 
     /**
-     * Flat (horizontal) grid at world y=`yPos`. Lines at base-12-aligned voxel
-     * positions are darker; sub-cell lines are lighter.
+     * Flat (horizontal) grid at world y=`yPos`. Three line tiers:
+     * - cell boundary (darkest): interior edges at `index % resolution === 0`; only
+     *   appear on multi-cell tiles, never on the outer perimeter.
+     * - major: base-12-aligned lines (`index % step === 0`).
+     * - minor: all remaining sub-cell voxel lines.
      */
-    private buildFlatGridGroup(yPos: number, color: number, majorOpacity: number, minorOpacity: number): THREE.Group {
+    private buildFlatGridGroup(
+        yPos: number,
+        color: number,
+        cellOpacity: number,
+        majorOpacity: number,
+        minorOpacity: number
+    ): THREE.Group {
         const hx = this.halfX;
         const hy = this.halfY;
-        const step = this.resolution / PER_TILE; // base-12 interval in voxels
+        const step = this.resolution / PER_TILE;
+        const res = this.resolution;
+        const cell: number[] = [];
         const major: number[] = [];
         const minor: number[] = [];
+
+        const tierX = (i: number) => {
+            if (i > 0 && i < this.nx && i % res === 0) return cell;
+            return i % step === 0 ? major : minor;
+        };
+        const tierZ = (j: number) => {
+            if (j > 0 && j < this.ny && j % res === 0) return cell;
+            return j % step === 0 ? major : minor;
+        };
+
         for (let i = 0; i <= this.nx; i++) {
             const x = i - hx;
-            (i % step === 0 ? major : minor).push(x, yPos, -hy, x, yPos, hy);
+            tierX(i).push(x, yPos, -hy, x, yPos, hy);
         }
         for (let j = 0; j <= this.ny; j++) {
             const z = j - hy;
-            (j % step === 0 ? major : minor).push(-hx, yPos, z, hx, yPos, z);
+            tierZ(j).push(-hx, yPos, z, hx, yPos, z);
         }
-        return this.makeLinesGroup(major, minor, color, majorOpacity, minorOpacity);
+        return this.makeLinesGroup(cell, major, minor, color, cellOpacity, majorOpacity, minorOpacity);
     }
 
     /**
@@ -1888,10 +1913,18 @@ export class TileEditor {
         const top = this.zCap * CONFIG.voxel.size;
         const vs = CONFIG.voxel.size;
         const step = this.resolution / PER_TILE;
+        const res = this.resolution;
         const color = 0x7a6d5c;
+        const cell: number[] = [];
         const major: number[] = [];
         const minor: number[] = [];
         const v = fixedVal;
+
+        // Vertical column lines: cell boundary > major > minor.
+        const tierV = (j: number) => {
+            if (j > 0 && j < nRange && j % res === 0) return cell;
+            return j % step === 0 ? major : minor;
+        };
 
         if (fixedAxis === 'x') {
             // Outline (always major)
@@ -1906,8 +1939,7 @@ export class TileEditor {
             }
             // Vertical lines along the range axis
             for (let j = 1; j < nRange; j++) {
-                const r = rangeMin + j;
-                (j % step === 0 ? major : minor).push(v, 0, r, v, top, r);
+                tierV(j).push(v, 0, rangeMin + j, v, top, rangeMin + j);
             }
         } else {
             // Outline (always major)
@@ -1922,12 +1954,11 @@ export class TileEditor {
             }
             // Vertical lines along the range axis
             for (let i = 1; i < nRange; i++) {
-                const r = rangeMin + i;
-                (i % step === 0 ? major : minor).push(r, 0, v, r, top, v);
+                tierV(i).push(rangeMin + i, 0, v, rangeMin + i, top, v);
             }
         }
 
-        return this.makeLinesGroup(major, minor, color, 0.45, 0.15);
+        return this.makeLinesGroup(cell, major, minor, color, 0.65, 0.45, 0.15);
     }
 
     private occupied(): Set<string> {
