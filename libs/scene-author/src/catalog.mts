@@ -8,6 +8,8 @@
  * `catalog.json` on disk — both call {@link setCatalog} once at startup.
  */
 
+import { VOXEL_PER_TILE } from './constants.mjs';
+
 export type Category = 'terrain' | 'nature' | 'props' | 'buildings';
 
 export const CATEGORIES: Category[] = [
@@ -39,6 +41,15 @@ export interface TerrainDef {
      * overlay), rather than a per-column terrain stack.
      */
     footprint?: [number, number];
+
+    /**
+     * Per-asset resolution `r` (voxels per cell edge), default
+     * {@link VOXEL_PER_TILE} = 12. A higher `r` renders finer cubes (`P/r`) in
+     * the **same** world cell, so an ornate asset can carry more detail without
+     * changing its footprint. Its `.vox` is authored at `(r·w) × (r·d)` voxels.
+     * Must be one of {@link ALLOWED_RESOLUTIONS}.
+     */
+    resolution?: number;
 
     /**
      * Soft-deleted: hidden from the palette/inspector but its `.vox` file and
@@ -95,6 +106,11 @@ export function isStackable(id: string): boolean {
 export function footprintOf(id: string): [number, number] {
     const fp = ASSET_INDEX[id]?.footprint;
     return fp ? [fp[0], fp[1]] : [1, 1];
+}
+
+/** Per-asset resolution `r` (voxels per cell edge) for a tile id, default 12. */
+export function resolutionOf(id: string): number {
+    return ASSET_INDEX[id]?.resolution ?? VOXEL_PER_TILE;
 }
 
 /** True when a tile occupies more than one grid cell (a building unit). */

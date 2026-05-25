@@ -40,7 +40,10 @@ export const buildingPlacementSchema = z.object({
     ax: z.number().int().nonnegative(),
     ay: z.number().int().nonnegative(),
     rot: rotationSchema,
-    baseLevel: z.number().int().nonnegative()
+    // World-unit altitude the building's z = 0 rests at. Integer for an all-base
+    // (r = 12) terrain surface; may be fractional once a mixed-resolution riser
+    // contributes a non-integer world height (the base math is in world units).
+    baseLevel: z.number().nonnegative()
 });
 
 export const sceneDocumentSchema = z

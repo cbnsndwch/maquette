@@ -25,7 +25,11 @@ export interface BuildingPlacement {
     ax: number;
     ay: number;
     rot: Rotation;
-    /** Voxel altitude the building's z = 0 rests at (the level terrain surface). */
+    /**
+     * World-unit altitude the building's z = 0 rests at (the level terrain
+     * surface). World units, not voxel layers, so it stays comparable across
+     * mixed-resolution columns (PRD §5.1).
+     */
     baseLevel: number;
 }
 

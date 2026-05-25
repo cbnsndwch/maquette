@@ -48,10 +48,11 @@ export type PlacementCheck =
  * placements raise terraced terrain); multi-cell tiles (footprint > 1×1) are
  * placed as one atomic building in the overlay, reserving every covered cell.
  *
- * `heightOf` resolves a tile's voxel height (its `.vox` SIZE z), used to compute
- * the level terrain surface under a footprint. It defaults to 1 unit/cell so the
- * shared core stays usable without a voxel source; both apps inject a real,
- * dims-backed function.
+ * `heightOf` resolves a tile's **world** height (its `.vox` SIZE z scaled by the
+ * asset's voxel size `P/r`), used to compute the level terrain surface under a
+ * footprint. World units keep heights comparable across mixed-resolution columns
+ * (PRD §5.1). It defaults to 1 unit/cell so the shared core stays usable without
+ * a voxel source; both apps inject a real, dims-and-resolution-backed function.
  */
 export class PlacementSystem {
     constructor(
@@ -60,9 +61,10 @@ export class PlacementSystem {
     ) {}
 
     /**
-     * Cumulative voxel altitude of the terrain surface at a column — the sum of
-     * non-ground-anchored cell heights (nature/props clip in at z = 0 and don't
-     * raise the surface). This is the altitude a building rests on.
+     * Cumulative **world-unit** altitude of the terrain surface at a column —
+     * the sum of non-ground-anchored cell heights (nature/props clip in at
+     * z = 0 and don't raise the surface). This is the altitude a building
+     * rests on (its `baseLevel`).
      */
     columnBase(gx: number, gy: number): number {
         let base = 0;
