@@ -238,6 +238,17 @@
             "category": "props",
             "file": "/voxels/terrain/flower_pot.vox",
             "stackable": false
+        },
+        {
+            "id": "the_block",
+            "name": "The Block",
+            "category": "buildings",
+            "file": "/voxels/terrain/the_block.vox",
+            "stackable": false,
+            "footprint": [
+                2,
+                2
+            ]
         }
     ]
 }
