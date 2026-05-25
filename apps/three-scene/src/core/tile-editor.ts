@@ -1756,55 +1756,20 @@ export class TileEditor {
                 mesh.geometry?.dispose();
             });
         }
-        // Datum: the fixed plane that meets scene ground (z = ground). Voxels
-        // below it are buried when placed; the Floor tool shifts the model
-        // relative to this line. The fill extends far outward but is hollowed
-        // over the footprint so it doesn't clip through tiles inside it.
-        const outerHalf = 500;
-        const shape = new THREE.Shape();
-        shape.moveTo(-outerHalf, -outerHalf);
-        shape.lineTo(outerHalf, -outerHalf);
-        shape.lineTo(outerHalf, outerHalf);
-        shape.lineTo(-outerHalf, outerHalf);
-        shape.closePath();
-        const hole = new THREE.Path();
-        hole.moveTo(-hx, -hy);
-        hole.lineTo(-hx, hy);
-        hole.lineTo(hx, hy);
-        hole.lineTo(hx, -hy);
-        hole.closePath();
-        shape.holes.push(hole);
-        const fillGeo = new THREE.ShapeGeometry(shape);
-        fillGeo.rotateX(-Math.PI / 2);
-
+        // Datum: border outline at the ground level — shows where buried meets visible.
         const borderCorners = [
             new THREE.Vector3(-hx, 0, -hy),
             new THREE.Vector3(hx, 0, -hy),
             new THREE.Vector3(hx, 0, hy),
             new THREE.Vector3(-hx, 0, hy)
         ];
-        const borderGeo = new THREE.BufferGeometry().setFromPoints(
-            borderCorners
-        );
+        const borderGeo = new THREE.BufferGeometry().setFromPoints(borderCorners);
 
         const datum = new THREE.Group();
         datum.add(
-            new THREE.Mesh(
-                fillGeo,
-                new THREE.MeshBasicMaterial({
-                    color: 0x1b5ba8,
-                    transparent: true,
-                    opacity: 0.12,
-                    depthWrite: false
-                })
-            ),
             new THREE.LineLoop(
                 borderGeo,
-                new THREE.LineBasicMaterial({
-                    color: 0x1b5ba8,
-                    opacity: 0.5,
-                    transparent: true
-                })
+                new THREE.LineBasicMaterial({ color: 0x1b5ba8, opacity: 0.5, transparent: true })
             )
         );
         datum.position.y = this.ground * CONFIG.voxel.size;
