@@ -296,6 +296,18 @@
                 3
             ],
             "deleted": true
+        },
+        {
+            "id": "house",
+            "name": "house",
+            "category": "buildings",
+            "file": "/voxels/terrain/house.vox",
+            "stackable": true,
+            "footprint": [
+                2,
+                2
+            ],
+            "resolution": 48
         }
     ]
 }
