@@ -2,7 +2,14 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import { VoxelBatch } from '@cbnsndwch/world-core';
-import { ASSET_INDEX, type Rotation, type TileMap } from '@cbnsndwch/scene-author';
+import {
+    ASSET_INDEX,
+    type BuildingPlacement,
+    footprintOf,
+    rotatedFootprint,
+    type Rotation,
+    type TileMap
+} from '@cbnsndwch/scene-author';
 
 import { CONFIG } from '../config.js';
 import type { Tool } from './game.js';
@@ -194,6 +201,19 @@ export class SceneView {
         return base;
     }
 
+    /**
+     * Terrain surface altitude at a column — non-ground-anchored heights only
+     * (props/nature clip in at z=0 and don't raise the surface). This is the
+     * altitude a building footprint rests on; mirrors `PlacementSystem.columnBase`.
+     */
+    private columnTerrainBaseZ(gx: number, gy: number): number {
+        let base = 0;
+        for (const c of this.tileMap.getStack(gx, gy)) {
+            if (!this.isGroundAnchored(c.id)) base += this.cellHeight(c.id);
+        }
+        return base;
+    }
+
     /** Cell under a screen pixel, via a ground-plane raycast. */
     cellFromClient(
         clientX: number,
@@ -254,8 +274,59 @@ export class SceneView {
                 if (!anchored) base += this.cellHeight(cell.id);
             }
         });
+        // Buildings render once at their anchor, spanning w·P × d·P world units.
+        // A building mid-pop is drawn by the overlay, so skip it here.
+        for (const b of this.tileMap.getBuildings()) {
+            if (this.animating.has(buildingKey(b))) continue;
+            const voxels = this.assets.get(b.id);
+            if (!voxels.length) continue;
+            const [fw, fd] = footprintOf(b.id);
+            batch.add(voxels, {
+                origin: this.cellOrigin(b.ax, b.ay, b.baseLevel),
+                rotation: b.rot,
+                spanX: fw * CONFIG.voxel.perTile,
+                spanY: fd * CONFIG.voxel.perTile
+            });
+        }
         if (batch.count > 0) this.terrainGroup.add(batch.build());
         this.builtVersion = this.tileMap.terrainVersion;
+    }
+
+    /**
+     * Fold a freshly-placed building in with an elastic pop, scaled from its
+     * footprint center. Excluded from the static mesh while it animates.
+     */
+    onPlacedBuilding(b: BuildingPlacement): void {
+        const voxels = this.assets.get(b.id);
+        if (!voxels.length) {
+            this.syncTerrain();
+            return;
+        }
+        const [fw, fd] = footprintOf(b.id);
+        const [rw, rh] = rotatedFootprint(fw, fd, b.rot);
+        const key = buildingKey(b);
+        const existing = this.animating.get(key);
+        if (existing) {
+            this.overlayGroup.remove(existing.group);
+            this.disposeObject(existing.group);
+        }
+        const [ox, , oz] = this.cellOrigin(b.ax, b.ay, b.baseLevel);
+        const baseWorldY = -G + b.baseLevel * CONFIG.voxel.size;
+        const centerX = ox + (rw * P) / 2;
+        const centerZ = oz + (rh * P) / 2;
+        const batch = new VoxelBatch(CONFIG.voxel.size);
+        batch.add(voxels, {
+            origin: [ox - centerX, 0, oz - centerZ],
+            rotation: b.rot,
+            spanX: fw * CONFIG.voxel.perTile,
+            spanY: fd * CONFIG.voxel.perTile
+        });
+        const group = batch.build();
+        group.position.set(centerX, baseWorldY, centerZ);
+        group.scale.setScalar(0.001);
+        this.overlayGroup.add(group);
+        this.animating.set(key, { start: performance.now(), group });
+        this.rebuildNow();
     }
 
     /**
@@ -303,33 +374,71 @@ export class SceneView {
 
     setHover(
         cell: { gx: number; gy: number } | null,
-        opts: { style: HoverStyle; assetId: string | null; rotation: Rotation }
+        opts: {
+            style: HoverStyle;
+            assetId: string | null;
+            rotation: Rotation;
+            /** Highlight an existing building footprint (e.g. erase preview). */
+            region?: BuildingPlacement;
+        }
     ): void {
         if (!cell) {
             this.highlight.visible = false;
             this.clearGhost();
             return;
         }
-        // The new cell lands on top of the column; float the outline + ghost to
-        // that surface so elevation reads correctly.
-        const base = this.columnBaseZ(cell.gx, cell.gy);
+        if (opts.region) {
+            // Outline an existing building at its real anchor/footprint.
+            const b = opts.region;
+            const [fw, fd] = footprintOf(b.id);
+            const [rw, rh] = rotatedFootprint(fw, fd, b.rot);
+            const [ox, , oz] = this.cellOrigin(b.ax, b.ay);
+            const surfaceY = Math.max(0, -G + b.baseLevel * CONFIG.voxel.size);
+            this.highlight.position.set(
+                ox + (rw * P) / 2,
+                surfaceY + 0.06,
+                oz + (rh * P) / 2
+            );
+            this.highlight.scale.set(rw, 1, rh);
+            this.highlight.visible = true;
+            this.setHighlightColor(HOVER_COLOR[opts.style]);
+            this.clearGhost();
+            return;
+        }
+        // A multi-cell building's footprint is anchored at the hovered cell and
+        // rests on the level terrain surface; a single tile lands atop its column.
+        const [fw, fd] = opts.assetId ? footprintOf(opts.assetId) : [1, 1];
+        const multi = fw > 1 || fd > 1;
+        const [rw, rh] = multi
+            ? rotatedFootprint(fw, fd, opts.rotation)
+            : [1, 1];
+        const base = multi
+            ? this.columnTerrainBaseZ(cell.gx, cell.gy)
+            : this.columnBaseZ(cell.gx, cell.gy);
         const surfaceY = Math.max(0, -G + base * CONFIG.voxel.size);
-        const center = this.cellCenter(cell.gx, cell.gy);
-        this.highlight.position.set(center.x, surfaceY + 0.06, center.z);
+
+        const [ox, , oz] = this.cellOrigin(cell.gx, cell.gy);
+        const centerX = ox + (rw * P) / 2;
+        const centerZ = oz + (rh * P) / 2;
+        this.highlight.position.set(centerX, surfaceY + 0.06, centerZ);
+        this.highlight.scale.set(rw, 1, rh);
         this.highlight.visible = true;
-        const color = HOVER_COLOR[opts.style];
-        (this.highlightFill.material as THREE.MeshBasicMaterial).color.setHex(
-            color
-        );
-        (this.highlightLine.material as THREE.LineBasicMaterial).color.setHex(
-            color
-        );
+        this.setHighlightColor(HOVER_COLOR[opts.style]);
 
         this.updateGhost(
             cell,
             opts.style === 'valid' ? opts.assetId : null,
             opts.rotation,
             base
+        );
+    }
+
+    private setHighlightColor(color: number): void {
+        (this.highlightFill.material as THREE.MeshBasicMaterial).color.setHex(
+            color
+        );
+        (this.highlightLine.material as THREE.LineBasicMaterial).color.setHex(
+            color
         );
     }
 
@@ -343,11 +452,17 @@ export class SceneView {
         if (!assetId) return;
         const voxels = this.assets.get(assetId);
         if (!voxels.length) return;
+        const [fw, fd] = footprintOf(assetId);
         const batch = new VoxelBatch(CONFIG.voxel.size);
         batch.add(voxels, {
-            origin: this.cellOrigin(cell.gx, cell.gy, this.isGroundAnchored(assetId) ? 0 : base),
+            origin: this.cellOrigin(
+                cell.gx,
+                cell.gy,
+                this.isGroundAnchored(assetId) ? 0 : base
+            ),
             rotation,
-            span: CONFIG.voxel.perTile
+            spanX: fw * CONFIG.voxel.perTile,
+            spanY: fd * CONFIG.voxel.perTile
         });
         const group = batch.build();
         group.traverse(o => {
@@ -395,12 +510,16 @@ export class SceneView {
         this.controls.update();
     }
 
-    /** Frame a single origin-centered tile (editing view); stops auto-rotate. */
-    frameEdit(): void {
+    /**
+     * Frame an origin-centered tile (editing view); stops auto-rotate. `cells`
+     * is the footprint's larger edge so multi-cell buildings frame fully.
+     */
+    frameEdit(cells = 1): void {
+        const s = Math.max(1, cells);
         this.controls.autoRotate = false;
         // Let the camera dip below the horizon so the tile's underside is visible.
         this.controls.maxPolarAngle = Math.PI;
-        this.camera.position.set(P * 1.5, P * 1.4, P * 1.5);
+        this.camera.position.set(P * 1.5 * s, P * 1.4 * s, P * 1.5 * s);
         this.controls.target.set(0, G, 0);
         this.controls.update();
     }
@@ -501,6 +620,11 @@ export class SceneView {
             else mat?.dispose();
         });
     }
+}
+
+/** Animation key for a building pop (anchor is unique per building). */
+function buildingKey(b: BuildingPlacement): string {
+    return `b:${b.ax},${b.ay}`;
 }
 
 /** Elastic-ish overshoot used for the placement pop. */

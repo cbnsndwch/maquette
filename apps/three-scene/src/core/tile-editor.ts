@@ -6,8 +6,8 @@ import { CONFIG } from '../config.js';
 import { History } from './history.js';
 import type { SceneView } from './scene-view.js';
 
-const N = CONFIG.voxel.perTile; // 12 — footprint edge in voxels
-const HALF = N / 2;
+const PER_TILE = CONFIG.voxel.perTile; // 12 — voxels per cell edge
+const MAX_Z = 64; // tallest a tile may rise (voxel layers)
 const GROUND = CONFIG.groundLayers; // scene ground line; lower layers are buried
 /** Fixed palette size — an 8×32 grid, matching the importable palette image. */
 const PALETTE_SIZE = 256;
@@ -82,6 +82,15 @@ function toSlots(colors: readonly (string | null)[]): (string | null)[] {
  */
 export class TileEditor {
     voxels: EditVoxel[] = [];
+    /**
+     * Grid footprint `[w, d]` in cells. A multi-cell footprint authors the tile
+     * at `(w·12) × (d·12)` voxels (buildings); the default 1×1 is the legacy
+     * 12×12 author grid. Drives {@link nx}/{@link ny}.
+     */
+    footprint: [number, number] = [1, 1];
+    /** Author-grid voxel extents, derived from the footprint. */
+    private nx: number = PER_TILE;
+    private ny: number = PER_TILE;
     /** Fixed 256-slot palette; null = unassigned (shown as an empty swatch). */
     palette: (string | null)[] = makeDefaultPalette();
     activeColorIdx = 0;
@@ -97,6 +106,14 @@ export class TileEditor {
     /** When set, only this z layer is shown (isolate a layer); null = all. */
     focusLayer: number | null = null;
 
+    private get halfX(): number {
+        return this.nx / 2;
+    }
+
+    private get halfY(): number {
+        return this.ny / 2;
+    }
+
     private readonly root = new THREE.Group();
     private readonly display = new THREE.Group();
     private hitMesh: THREE.InstancedMesh | null = null;
@@ -104,7 +121,8 @@ export class TileEditor {
     private hitVoxels: EditVoxel[] = [];
     private selectionMesh: THREE.InstancedMesh | null = null;
     private edges: THREE.LineSegments | null = null;
-    private grid!: THREE.GridHelper;
+    private grid!: THREE.LineSegments;
+    private datum: THREE.Group | null = null;
     private readonly hitGeo = new THREE.BoxGeometry(1, 1, 1);
     private readonly hitMat = new THREE.MeshBasicMaterial();
     private readonly selGeo = new THREE.BoxGeometry(1.12, 1.12, 1.12);
@@ -169,9 +187,39 @@ export class TileEditor {
         this.explode = 0;
         this.focusLayer = null;
         this.selection.clear();
+        this.applyFootprint([1, 1]);
         this.resetHistory();
         this.rebuild();
         this.onChange?.();
+    }
+
+    /**
+     * Resize the author grid to a new footprint `[w, d]` (buildings). Voxels that
+     * fall outside the new `(w·12) × (d·12)` extent are dropped, and the floor
+     * grid + datum + camera frame are rebuilt. A no-op when unchanged.
+     */
+    setFootprint(footprint: [number, number]): void {
+        const w = Math.max(1, Math.min(8, Math.round(footprint[0])));
+        const d = Math.max(1, Math.min(8, Math.round(footprint[1])));
+        if (w === this.footprint[0] && d === this.footprint[1]) return;
+        this.transact(() => {
+            this.applyFootprint([w, d]);
+            this.voxels = this.voxels.filter(
+                v => v.x >= 0 && v.x < this.nx && v.y >= 0 && v.y < this.ny
+            );
+            this.selection.clear();
+            this.rebuild();
+            this.onChange?.();
+        });
+    }
+
+    /** Set the footprint + derived extents and rebuild the floor / re-frame. */
+    private applyFootprint(footprint: [number, number]): void {
+        this.footprint = footprint;
+        this.nx = footprint[0] * PER_TILE;
+        this.ny = footprint[1] * PER_TILE;
+        if (this.grid) this.buildFloor();
+        this.view.frameEdit(Math.max(footprint[0], footprint[1]));
     }
 
     /**
@@ -181,9 +229,10 @@ export class TileEditor {
     loadTile(
         voxels: readonly Voxel[],
         id: string,
-        palette?: readonly (string | null)[]
+        palette?: readonly (string | null)[],
+        footprint: [number, number] = [1, 1]
     ): void {
-        this.load(voxels, palette, id);
+        this.load(voxels, palette, id, footprint);
     }
 
     /**
@@ -194,7 +243,7 @@ export class TileEditor {
         voxels: readonly Voxel[],
         palette?: readonly (string | null)[]
     ): void {
-        this.load(voxels, palette, null);
+        this.load(voxels, palette, null, [1, 1]);
     }
 
     /** Decode a `.vox` buffer and load it as a new tile. Returns success. */
@@ -211,8 +260,13 @@ export class TileEditor {
     private load(
         voxels: readonly Voxel[],
         palette: readonly (string | null)[] | undefined,
-        id: string | null
+        id: string | null,
+        footprint: [number, number] = [1, 1]
     ): void {
+        this.applyFootprint([
+            Math.max(1, footprint[0]),
+            Math.max(1, footprint[1])
+        ]);
         const hexes = voxels.map(v => v.c.toLowerCase());
         this.palette = this.resolvePalette(hexes, palette);
         // Point every voxel at its palette slot. Colors derive from / were saved
@@ -518,7 +572,14 @@ export class TileEditor {
             const nx = v.x + dx;
             const ny = v.y + dy;
             const nz = v.z + dz;
-            if (nx < 0 || ny < 0 || nx >= N || ny >= N || nz < 0 || nz >= 64) {
+            if (
+                nx < 0 ||
+                ny < 0 ||
+                nx >= this.nx ||
+                ny >= this.ny ||
+                nz < 0 ||
+                nz >= MAX_Z
+            ) {
                 return false;
             }
             if (fixed.has(keyOf(nx, ny, nz))) return false;
@@ -543,8 +604,8 @@ export class TileEditor {
         this.transact(() => {
             const occ = this.occupied();
             for (let z = 0; z < GROUND; z++) {
-                for (let y = 0; y < N; y++) {
-                    for (let x = 0; x < N; x++) {
+                for (let y = 0; y < this.ny; y++) {
+                    for (let x = 0; x < this.nx; x++) {
                         if (!occ.has(keyOf(x, y, z))) {
                             this.voxels.push({
                                 x,
@@ -1073,14 +1134,14 @@ export class TileEditor {
         const ok = this.raycaster.ray.intersectPlane(this.floorPlane, p);
         this.raycaster.layers.set(1);
         if (!ok) return null;
-        const x = Math.floor(p.x + HALF);
-        const y = Math.floor(p.z + HALF);
-        if (x < 0 || y < 0 || x >= N || y >= N) return null;
+        const x = Math.floor(p.x + this.halfX);
+        const y = Math.floor(p.z + this.halfY);
+        if (x < 0 || y < 0 || x >= this.nx || y >= this.ny) return null;
         return { x, y, z: 0 };
     }
 
     private addVoxel(x: number, y: number, z: number): boolean {
-        if (x < 0 || y < 0 || x >= N || y >= N || z < 0 || z >= 64)
+        if (x < 0 || y < 0 || x >= this.nx || y >= this.ny || z < 0 || z >= MAX_Z)
             return false;
         if (this.occupied().has(keyOf(x, y, z))) return false;
         this.voxels.push({ x, y, z, ci: this.activeColorIdx });
@@ -1096,7 +1157,9 @@ export class TileEditor {
         const visible = this.visibleVoxels();
         if (visible.length && this.explode === 0) {
             const batch = new VoxelBatch(CONFIG.voxel.size);
-            batch.add(this.materialize(visible), { origin: [-HALF, 0, -HALF] });
+            batch.add(this.materialize(visible), {
+                origin: [-this.halfX, 0, -this.halfY]
+            });
             this.display.add(batch.build());
         } else if (visible.length) {
             // Exploded: one batch per layer, lifted by the per-layer gap.
@@ -1112,7 +1175,7 @@ export class TileEditor {
             for (const [z, vs] of byLayer) {
                 const batch = new VoxelBatch(CONFIG.voxel.size);
                 batch.add(this.materialize(vs), {
-                    origin: [-HALF, this.layerY(z), -HALF]
+                    origin: [-this.halfX, this.layerY(z), -this.halfY]
                 });
                 this.display.add(batch.build());
             }
@@ -1137,9 +1200,9 @@ export class TileEditor {
         const arr = new Float32Array(visible.length * stride);
         for (let i = 0; i < visible.length; i++) {
             const v = visible[i]!;
-            const ox = v.x + 0.5 - HALF;
+            const ox = v.x + 0.5 - this.halfX;
             const oy = v.z + 0.5 + this.layerY(v.z);
-            const oz = v.y + 0.5 - HALF;
+            const oz = v.y + 0.5 - this.halfY;
             const o = i * stride;
             for (let j = 0; j < stride; j += 3) {
                 arr[o + j] = tpl[j]! + ox;
@@ -1172,9 +1235,9 @@ export class TileEditor {
         for (let i = 0; i < this.hitVoxels.length; i++) {
             const v = this.hitVoxels[i]!;
             m.setPosition(
-                v.x + 0.5 - HALF,
+                v.x + 0.5 - this.halfX,
                 v.z + 0.5 + this.layerY(v.z),
-                v.y + 0.5 - HALF
+                v.y + 0.5 - this.halfY
             );
             mesh.setMatrixAt(i, m);
         }
@@ -1214,9 +1277,9 @@ export class TileEditor {
                 number
             ];
             m.setPosition(
-                x + 0.5 - HALF,
+                x + 0.5 - this.halfX,
                 z + 0.5 + this.layerY(z),
-                y + 0.5 - HALF
+                y + 0.5 - this.halfY
             );
             mesh.setMatrixAt(i++, m);
         }
@@ -1225,18 +1288,54 @@ export class TileEditor {
         this.root.add(mesh);
     }
 
+    /**
+     * (Re)build the floor grid + datum plane for the current footprint. Safe to
+     * call again after {@link setFootprint} resizes the author grid.
+     */
     private buildFloor(): void {
-        this.grid = new THREE.GridHelper(N, N, 0x9c8f6e, 0xc4b99a);
-        (this.grid.material as THREE.Material).transparent = true;
-        (this.grid.material as THREE.Material).opacity = 0.6;
+        const hx = this.halfX;
+        const hy = this.halfY;
+
+        if (this.grid) {
+            this.root.remove(this.grid);
+            this.grid.geometry.dispose();
+        }
+        const lines: number[] = [];
+        for (let i = 0; i <= this.nx; i++) {
+            const x = i - hx;
+            lines.push(x, 0, -hy, x, 0, hy);
+        }
+        for (let j = 0; j <= this.ny; j++) {
+            const z = j - hy;
+            lines.push(-hx, 0, z, hx, 0, z);
+        }
+        const gridGeo = new THREE.BufferGeometry();
+        gridGeo.setAttribute(
+            'position',
+            new THREE.Float32BufferAttribute(lines, 3)
+        );
+        this.grid = new THREE.LineSegments(
+            gridGeo,
+            new THREE.LineBasicMaterial({
+                color: 0x9c8f6e,
+                transparent: true,
+                opacity: 0.6
+            })
+        );
         this.grid.visible = this.gridOn;
         this.root.add(this.grid);
 
+        if (this.datum) {
+            this.root.remove(this.datum);
+            this.datum.traverse(o => {
+                const mesh = o as Partial<THREE.Mesh>;
+                mesh.geometry?.dispose();
+            });
+        }
         // Datum: the fixed plane that meets scene ground (z = GROUND). Voxels
         // below it are buried when placed; the Floor tool shifts the model
-        // relative to this line.
-        // The fill extends far outward but is hollowed over the 12×12 column
-        // footprint so it doesn't clip through tiles inside the column.
+        // relative to this line. The fill extends far outward but is hollowed
+        // over the footprint so it doesn't clip through tiles inside it.
         const outerHalf = 500;
         const shape = new THREE.Shape();
         shape.moveTo(-outerHalf, -outerHalf);
@@ -1245,20 +1344,20 @@ export class TileEditor {
         shape.lineTo(-outerHalf, outerHalf);
         shape.closePath();
         const hole = new THREE.Path();
-        hole.moveTo(-HALF, -HALF);
-        hole.lineTo(-HALF, HALF);
-        hole.lineTo(HALF, HALF);
-        hole.lineTo(HALF, -HALF);
+        hole.moveTo(-hx, -hy);
+        hole.lineTo(-hx, hy);
+        hole.lineTo(hx, hy);
+        hole.lineTo(hx, -hy);
         hole.closePath();
         shape.holes.push(hole);
         const fillGeo = new THREE.ShapeGeometry(shape);
         fillGeo.rotateX(-Math.PI / 2);
 
         const borderCorners = [
-            new THREE.Vector3(-HALF, 0, -HALF),
-            new THREE.Vector3(HALF, 0, -HALF),
-            new THREE.Vector3(HALF, 0, HALF),
-            new THREE.Vector3(-HALF, 0, HALF)
+            new THREE.Vector3(-hx, 0, -hy),
+            new THREE.Vector3(hx, 0, -hy),
+            new THREE.Vector3(hx, 0, hy),
+            new THREE.Vector3(-hx, 0, hy)
         ];
         const borderGeo = new THREE.BufferGeometry().setFromPoints(
             borderCorners
@@ -1285,6 +1384,7 @@ export class TileEditor {
             )
         );
         datum.position.y = GROUND * CONFIG.voxel.size;
+        this.datum = datum;
         this.root.add(datum);
     }
 

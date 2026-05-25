@@ -4,8 +4,8 @@ import {
     PlacementSystem,
     type Category,
     type Rotation,
-    type TerrainState,
-    type TileMap
+    type TileMap,
+    type WorldSnapshot
 } from '@cbnsndwch/scene-author';
 
 import { SaveSystem } from '../storage/save-system.js';
@@ -43,9 +43,9 @@ export class Game {
     gridVisible = true;
 
     private readonly placement: PlacementSystem;
-    private readonly history = new History<TerrainState>();
+    private readonly history = new History<WorldSnapshot>();
     /** Pre-mutation snapshot captured at the start of a stroke (for undo). */
-    private strokeBefore: TerrainState | null = null;
+    private strokeBefore: WorldSnapshot | null = null;
     private lastHover: Cell | null = null;
     ui: GameUI | null = null;
     editor: TileEditor | null = null;
@@ -55,7 +55,10 @@ export class Game {
         readonly assets: VoxelAssets,
         readonly sceneView: SceneView
     ) {
-        this.placement = new PlacementSystem(tileMap);
+        this.placement = new PlacementSystem(
+            tileMap,
+            id => this.assets.dims(id)[2]
+        );
         this.selectedAssetId = assetsForCategory('terrain')[0]?.id ?? '';
         this.sceneView.setGridVisible(this.gridVisible);
         this.sceneView.setCameraButtons(this.tool);
@@ -277,6 +280,16 @@ export class Game {
             return;
         }
         if (this.tool === 'erase') {
+            const building = this.tileMap.buildingAt(cell.gx, cell.gy);
+            if (building) {
+                this.sceneView.setHover(cell, {
+                    style: 'erase',
+                    assetId: null,
+                    rotation: 0,
+                    region: building
+                });
+                return;
+            }
             const has = this.tileMap.stackHeight(cell.gx, cell.gy) > 0;
             this.sceneView.setHover(cell, {
                 style: has ? 'erase' : 'invalid',
@@ -287,7 +300,8 @@ export class Game {
             const valid = this.placement.canPlace(
                 this.selectedAssetId,
                 cell.gx,
-                cell.gy
+                cell.gy,
+                this.rotation
             );
             this.sceneView.setHover(cell, {
                 style: valid ? 'valid' : 'invalid',
@@ -309,14 +323,18 @@ export class Game {
         if (this.tool === 'erase') {
             if (this.placement.erase(gx, gy)) this.sceneView.syncTerrain();
         } else if (this.tool === 'place') {
-            if (
-                this.placement.place(
-                    this.selectedAssetId,
-                    gx,
-                    gy,
-                    this.rotation
-                )
-            ) {
+            const result = this.placement.place(
+                this.selectedAssetId,
+                gx,
+                gy,
+                this.rotation
+            );
+            if (!result) return;
+            if (result.kind === 'building') {
+                const building = this.tileMap.buildingAt(result.ax, result.ay);
+                if (building) this.sceneView.onPlacedBuilding(building);
+                else this.sceneView.syncTerrain();
+            } else {
                 this.sceneView.onPlaced(gx, gy);
             }
         }
@@ -338,17 +356,35 @@ export class Game {
     }
 }
 
-/** True when two terrain snapshots differ (per-column stacks). */
-function changed(a: TerrainState, b: TerrainState): boolean {
-    if (a.length !== b.length) return true;
-    for (let i = 0; i < a.length; i++) {
-        const sa = a[i] ?? [];
-        const sb = b[i] ?? [];
+/** True when two world snapshots differ (terrain stacks or building overlay). */
+function changed(a: WorldSnapshot, b: WorldSnapshot): boolean {
+    const at = a.terrain;
+    const bt = b.terrain;
+    if (at.length !== bt.length) return true;
+    for (let i = 0; i < at.length; i++) {
+        const sa = at[i] ?? [];
+        const sb = bt[i] ?? [];
         if (sa.length !== sb.length) return true;
         for (let j = 0; j < sa.length; j++) {
             if (sa[j]!.id !== sb[j]!.id || sa[j]!.rot !== sb[j]!.rot) {
                 return true;
             }
+        }
+    }
+    const ab = a.buildings;
+    const bb = b.buildings;
+    if (ab.length !== bb.length) return true;
+    for (let i = 0; i < ab.length; i++) {
+        const x = ab[i]!;
+        const y = bb[i]!;
+        if (
+            x.id !== y.id ||
+            x.ax !== y.ax ||
+            x.ay !== y.ay ||
+            x.rot !== y.rot ||
+            x.baseLevel !== y.baseLevel
+        ) {
+            return true;
         }
     }
     return false;

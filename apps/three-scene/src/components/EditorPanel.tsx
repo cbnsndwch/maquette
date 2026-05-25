@@ -163,6 +163,16 @@ export function EditorPanel({
     const [stackable, setStackable] = useState(
         def ? def.stackable : true // terrain default
     );
+    const [footprint, setFootprintState] = useState<[number, number]>(
+        def?.footprint ?? [1, 1]
+    );
+
+    /** Resize the author grid for a building footprint. */
+    function setFootprint(w: number, d: number): void {
+        const fp: [number, number] = [w, d];
+        setFootprintState(fp);
+        editor.setFootprint(fp);
+    }
 
     const setSpread = (v: number): void =>
         setSpreadRaw(Math.max(0, Math.min(100, v)));
@@ -202,7 +212,8 @@ export function EditorPanel({
             id: editingId ?? (slug(cleanName) || `tile_${Date.now()}`),
             name: cleanName,
             category,
-            stackable
+            stackable,
+            footprint: category === 'buildings' ? footprint : [1, 1]
         };
         void saveTileFlow(meta);
     }
@@ -407,6 +418,8 @@ export function EditorPanel({
                             const c = e.target.value as Category;
                             setCategory(c);
                             setStackable(c === 'terrain');
+                            // Footprint applies to buildings only; reset otherwise.
+                            if (c !== 'buildings') setFootprint(1, 1);
                         }}
                         className="w-full rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
                     >
@@ -416,6 +429,42 @@ export function EditorPanel({
                             </option>
                         ))}
                     </select>
+                    {category === 'buildings' && (
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-semibold text-ink-deep opacity-70">
+                                Footprint
+                            </span>
+                            <select
+                                aria-label="Footprint width"
+                                value={footprint[0]}
+                                onChange={e =>
+                                    setFootprint(Number(e.target.value), footprint[1])
+                                }
+                                className="flex-1 rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
+                            >
+                                {[1, 2, 3, 4].map(n => (
+                                    <option key={n} value={n}>
+                                        {n}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="text-xs text-ink-deep opacity-70">×</span>
+                            <select
+                                aria-label="Footprint depth"
+                                value={footprint[1]}
+                                onChange={e =>
+                                    setFootprint(footprint[0], Number(e.target.value))
+                                }
+                                className="flex-1 rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
+                            >
+                                {[1, 2, 3, 4].map(n => (
+                                    <option key={n} value={n}>
+                                        {n}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-ink-deep">
                         <input
                             type="checkbox"

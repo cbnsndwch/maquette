@@ -7,6 +7,8 @@ export interface TileMeta {
     name: string;
     category: Category;
     stackable: boolean;
+    /** Grid footprint `[w, d]` in cells (default `[1, 1]`). */
+    footprint?: [number, number];
 }
 
 /** Base64-encode an ArrayBuffer in chunks (avoids arg-count limits on large files). */

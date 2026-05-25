@@ -27,7 +27,18 @@ interface TileDef {
     category: string;
     file: string;
     stackable: boolean;
+    footprint?: [number, number];
     deleted?: boolean;
+}
+
+/** Coerce an unknown value to a valid `[w, d]` footprint (1..8), or null. */
+function parseFootprint(value: unknown): [number, number] | null {
+    if (!Array.isArray(value) || value.length !== 2) return null;
+    const w = Math.round(Number(value[0]));
+    const d = Math.round(Number(value[1]));
+    if (!Number.isFinite(w) || !Number.isFinite(d)) return null;
+    if (w < 1 || d < 1 || w > 8 || d > 8) return null;
+    return [w, d];
 }
 
 interface Catalog {
@@ -96,10 +107,8 @@ async function handlePost(
         return sendJson(res, 400, { error: 'invalid JSON body' });
     }
 
-    const { id, name, category, stackable, voxBase64 } = (body ?? {}) as Record<
-        string,
-        unknown
-    >;
+    const { id, name, category, stackable, footprint, voxBase64 } = (body ??
+        {}) as Record<string, unknown>;
     if (typeof id !== 'string' || !ID_RE.test(id)) {
         return sendJson(res, 400, { error: 'bad or missing tile id' });
     }
@@ -117,6 +126,9 @@ async function handlePost(
         file: `/voxels/terrain/${id}.vox`,
         stackable: stackable === true
     };
+    // Persist a multi-cell footprint; a 1×1 default stays implicit (back-compat).
+    const fp = parseFootprint(footprint);
+    if (fp && (fp[0] > 1 || fp[1] > 1)) tile.footprint = fp;
 
     try {
         await fs.mkdir(terrainDir, { recursive: true });

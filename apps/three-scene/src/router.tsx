@@ -1,7 +1,11 @@
 import { createBrowserRouter, redirect } from 'react-router';
 
 import { getEngine } from './bootstrap.js';
-import { ASSET_INDEX, type TerrainDef } from '@cbnsndwch/scene-author';
+import {
+    ASSET_INDEX,
+    footprintOf,
+    type TerrainDef
+} from '@cbnsndwch/scene-author';
 import { BuildChrome } from './routes/BuildChrome.js';
 import { EditorChrome } from './routes/EditorChrome.js';
 import { InspectOverlay } from './routes/InspectOverlay.js';
@@ -60,7 +64,8 @@ export function createAppRouter(): ReturnType<typeof createBrowserRouter> {
                                 editor.loadTile(
                                     assets.get(def.id),
                                     def.id,
-                                    assets.palette(def.id)
+                                    assets.palette(def.id),
+                                    footprintOf(def.id)
                                 );
                                 return { def };
                             }

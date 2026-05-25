@@ -41,7 +41,9 @@ export const CONFIG = {
         far: 4000
     },
 
-    storageKey: 'mykonos-three-scene.save.v2'
+    // v3: scene document gained a `buildings` overlay (multi-cell footprints).
+    // Old v2 scenes are dropped on the bump (dev-only scenes; PRD §7 D4).
+    storageKey: 'mykonos-three-scene.save.v3'
 } as const;
 
 /**
