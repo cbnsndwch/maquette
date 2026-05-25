@@ -170,8 +170,22 @@ export function Inspector(): React.JSX.Element {
                                 <span className="rounded-full bg-[rgba(27,91,168,0.1)] px-[7px] py-px text-[11px] font-semibold opacity-70">
                                     {items.length}
                                 </span>
+                                <span className="flex-1" />
+                                <button
+                                    type="button"
+                                    title={`New ${c} tile`}
+                                    aria-label={`New ${c} tile`}
+                                    onClick={e => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        navigate(`/tile?category=${c}`);
+                                    }}
+                                    className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-base font-bold text-ink opacity-60 hover:bg-[rgba(27,91,168,0.12)] hover:opacity-100"
+                                >
+                                    +
+                                </button>
                                 <span
-                                    className="insp-chev ml-auto opacity-60 transition-transform duration-200"
+                                    className="insp-chev opacity-60 transition-transform duration-200"
                                     aria-hidden="true"
                                 >
                                     ▸

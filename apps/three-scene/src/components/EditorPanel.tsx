@@ -1,6 +1,6 @@
 import { Accordion } from '@base-ui-components/react/accordion';
-import { type ReactNode, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 
 import { saveTileFlow } from '@/actions';
 import { getEngine } from '@/bootstrap';
@@ -20,7 +20,8 @@ const TOOLS: { id: EditTool; label: string; key: string }[] = [
     { id: 'delete', label: 'Delete', key: 'D' },
     { id: 'paint', label: 'Paint', key: 'P' },
     { id: 'eyedropper', label: 'Pick', key: 'I' },
-    { id: 'select', label: 'Select', key: 'S' }
+    { id: 'select', label: 'Select', key: 'S' },
+    { id: 'face-select', label: 'Face', key: 'F' }
 ];
 
 const ED_BTN =
@@ -137,12 +138,16 @@ export function EditorPanel({
 }): React.JSX.Element {
     const { editor } = getEngine();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const voxFileRef = useRef<HTMLInputElement>(null);
 
     const tool = useEngineSelector(() => editor.tool);
     const canUndo = useEngineSelector(() => editor.canUndo);
     const canRedo = useEngineSelector(() => editor.canRedo);
+    const nextUndoIsMilestone = useEngineSelector(() => editor.nextUndoIsMilestone);
+    const nextRedoIsMilestone = useEngineSelector(() => editor.nextRedoIsMilestone);
     const selectionSize = useEngineSelector(() => editor.selection.size);
+    const selectionPeek = useEngineSelector(() => editor.selectionPeek);
     const voxelCount = useEngineSelector(() => editor.voxels.length);
     const floorOffset = useEngineSelector(() => editor.floorOffset);
     const gridOn = useEngineSelector(() => editor.gridOn);
@@ -158,9 +163,13 @@ export function EditorPanel({
     } | null>(null);
 
     const [name, setName] = useState(def?.name ?? '');
-    const [category, setCategory] = useState<Category>(
-        def?.category ?? CATEGORIES[0]!
-    );
+    const [category, setCategory] = useState<Category>(() => {
+        if (def?.category) return def.category;
+        const qc = searchParams.get('category') as Category | null;
+        return qc && (CATEGORIES as readonly string[]).includes(qc)
+            ? qc
+            : CATEGORIES[0]!;
+    });
     const [stackable, setStackable] = useState(
         def ? def.stackable : true // terrain default
     );
@@ -229,6 +238,20 @@ export function EditorPanel({
         void saveTileFlow(meta);
     }
 
+    // Keep a stable ref so the effect closure always calls the latest save().
+    const saveRef = useRef(save);
+    saveRef.current = save;
+
+    useEffect(() => {
+        function onKey(e: KeyboardEvent): void {
+            if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== 's') return;
+            e.preventDefault();
+            saveRef.current();
+        }
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
+
     return (
         <section className="fixed right-[14px] top-4 bottom-4 z-10 flex w-[220px] flex-col overflow-y-auto rounded-2xl bg-panel p-[12px_14px] px-3.5 py-3 shadow-panel backdrop-blur-[8px] [scrollbar-width:thin]">
             <div className="mb-1 text-sm font-bold text-ink-deep">
@@ -250,22 +273,25 @@ export function EditorPanel({
                     </div>
                     <div className="grid grid-cols-2 gap-1.5">
                         <EdBtn
-                            title="Undo (Ctrl+Z)"
+                            title={nextUndoIsMilestone ? 'Undo save (Ctrl+Z)' : 'Undo (Ctrl+Z)'}
                             disabled={!canUndo}
                             onClick={() => editor.undo()}
                         >
-                            Undo
+                            Undo{nextUndoIsMilestone ? ' ✦' : ''}
                         </EdBtn>
                         <EdBtn
-                            title="Redo (Ctrl+Shift+Z)"
+                            title={nextRedoIsMilestone ? 'Redo save (Ctrl+Shift+Z)' : 'Redo (Ctrl+Shift+Z)'}
                             disabled={!canRedo}
                             onClick={() => editor.redo()}
                         >
-                            Redo
+                            Redo{nextRedoIsMilestone ? ' ✦' : ''}
                         </EdBtn>
                     </div>
                     <div className="text-[11px] opacity-60">
                         Hold Space to pan · right-click inverts Add/Delete
+                        · Select: shift-click to range-select on a plane
+                        · Face: click to flood-fill by color on a plane
+                        · Hold V to peek selection colors
                     </div>
                 </Section>
 
@@ -304,13 +330,23 @@ export function EditorPanel({
                             All
                         </EdBtn>
                     </div>
-                    <EdBtn
-                        title="Clear the current selection"
-                        disabled={selectionSize === 0}
-                        onClick={() => editor.clearSelection()}
-                    >
-                        Clear selection
-                    </EdBtn>
+                    <div className="grid grid-cols-2 gap-1.5">
+                        <EdBtn
+                            title="Clear the current selection"
+                            disabled={selectionSize === 0}
+                            onClick={() => editor.clearSelection()}
+                        >
+                            Clear sel.
+                        </EdBtn>
+                        <EdBtn
+                            title="Hide selection overlay to preview voxel colors (hold V)"
+                            disabled={selectionSize === 0}
+                            className={selectionPeek ? 'border-ink bg-[rgba(27,91,168,0.12)]' : ''}
+                            onClick={() => editor.setSelectionPeek(!selectionPeek)}
+                        >
+                            Peek{selectionPeek ? ' ●' : ''}
+                        </EdBtn>
+                    </div>
                 </Section>
 
                 <Section value="shade" title="Shade">

@@ -44,6 +44,7 @@ export async function saveTileFlow(meta: TileMeta): Promise<boolean> {
     // Stay in the editor — Save commits, Done leaves. Re-point at the saved tile
     // so further saves update it (no duplicate).
     editor.editingId = def.id;
+    editor.recordSave();
     emit();
     toast(`Saved tile "${def.name}"`);
 

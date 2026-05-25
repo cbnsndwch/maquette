@@ -65,21 +65,6 @@ const SearchIcon = (
     </svg>
 );
 
-const TileIcon = (
-    <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="#1b5ba8"
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="h-[18px] w-[18px]"
-        aria-hidden="true"
-    >
-        <path d="M12 2 3 7v10l9 5 9-5V7z" />
-        <path d="M3 7l9 5 9-5M12 12v10" />
-    </svg>
-);
 
 /** Right-dock palette: collapsible, one accordion per category. */
 export function Palette(): React.JSX.Element {
@@ -130,15 +115,6 @@ export function Palette(): React.JSX.Element {
                         className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-[1.5px] border-transparent transition-[background,border-color] duration-100 hover:bg-[rgba(27,91,168,0.14)]"
                     >
                         {SearchIcon}
-                    </button>
-                    <button
-                        type="button"
-                        title="New tile editor"
-                        aria-label="New tile editor"
-                        onClick={() => navigate('/tile')}
-                        className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-[1.5px] border-transparent transition-[background,border-color] duration-100 hover:bg-[rgba(27,91,168,0.14)]"
-                    >
-                        {TileIcon}
                     </button>
                 </div>
             </header>
