@@ -20,6 +20,13 @@ beforeEach(() => {
             category: 'terrain',
             file: '/voxels/terrain/sea_wall.vox',
             stackable: false
+        },
+        {
+            id: 'boulder',
+            name: 'boulder',
+            category: 'nature',
+            file: '/voxels/nature/boulder.vox',
+            stackable: false
         }
     ]);
 });
@@ -49,14 +56,27 @@ describe('PlacementSystem.checkPlace', () => {
         expect(sys.checkPlace('grass', 1, 1)).toEqual({ ok: true });
     });
 
-    it('rejects stacking onto a non-stackable top', () => {
+    it('rejects non-terrain tiles on a non-stackable top', () => {
         const map = new TileMap(4, 4);
         const sys = new PlacementSystem(map);
         sys.place('sea_wall', 2, 2, 0);
-        expect(sys.checkPlace('grass', 2, 2)).toEqual({
+        expect(sys.checkPlace('boulder', 2, 2)).toEqual({
             ok: false,
             reason: 'not_stackable'
         });
+    });
+
+    it('allows terrain tiles on a non-stackable top (replaces topmost terrain)', () => {
+        const map = new TileMap(4, 4);
+        const sys = new PlacementSystem(map);
+        sys.place('grass', 2, 2, 0);
+        sys.place('boulder', 2, 2, 0);
+        expect(sys.checkPlace('sea_wall', 2, 2)).toEqual({ ok: true });
+        sys.place('sea_wall', 2, 2, 0);
+        const stack = map.getStack(2, 2);
+        expect(stack).toHaveLength(2);
+        expect(stack[0]!.id).toBe('sea_wall');
+        expect(stack[1]!.id).toBe('boulder');
     });
 });
 

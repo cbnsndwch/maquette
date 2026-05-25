@@ -45,6 +45,10 @@ export class PlacementSystem {
         }
         const top = this.tileMap.topCell(gx, gy);
         if (top && !isStackable(top.id)) {
+            // Terrain tiles are allowed even when the top is non-stackable: they
+            // replace the topmost terrain tile already in the column, leaving any
+            // nature/props tiles above it in place (since those are ground-anchored).
+            if (ASSET_INDEX[assetId]?.category === 'terrain') return { ok: true };
             return { ok: false, reason: 'not_stackable' };
         }
         return { ok: true };
@@ -56,6 +60,20 @@ export class PlacementSystem {
 
     place(assetId: string, gx: number, gy: number, rot: Rotation): PlaceResult {
         if (!this.canPlace(assetId, gx, gy)) return null;
+
+        const top = this.tileMap.topCell(gx, gy);
+        if (top && !isStackable(top.id) && ASSET_INDEX[assetId]?.category === 'terrain') {
+            // Find the topmost terrain tile in the stack and replace it in-place.
+            const stack = this.tileMap.getStack(gx, gy);
+            for (let i = stack.length - 1; i >= 0; i--) {
+                if (ASSET_INDEX[stack[i]!.id]?.category === 'terrain') {
+                    this.tileMap.replaceAt(gx, gy, i, { id: assetId, rot });
+                    return { kind: 'terrain', gx, gy, assetId, level: i };
+                }
+            }
+            // No terrain tile found — fall through to push (degenerate case).
+        }
+
         this.tileMap.push(gx, gy, { id: assetId, rot });
         return {
             kind: 'terrain',

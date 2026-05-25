@@ -1,5 +1,6 @@
 import { encodeVox, type Voxel } from '@cbnsndwch/world-core';
 
+import { ASSET_INDEX } from './catalog.mjs';
 import { VOXEL_PER_TILE } from './constants.mjs';
 import type { Rotation, TileMap } from './tile-map.mjs';
 
@@ -44,16 +45,24 @@ export function composeSceneVoxels(
     tileMap.forEachColumn((gx, gy, stack) => {
         let base = 0;
         for (const cell of stack) {
+            // Nature and props tiles are ground-anchored: they render at the
+            // column base (z=0) so their geometry clips into the terrain rather
+            // than floating above it. Only terrain and buildings advance base.
+            const cat = ASSET_INDEX[cell.id]?.category ?? 'terrain';
+            const groundAnchored = cat === 'nature' || cat === 'props';
+            const zBase = groundAnchored ? 0 : base;
             for (const v of source.get(cell.id)) {
                 const [rx, ry] = rotateXY(v.x, v.y, cell.rot);
                 out.push({
                     x: gx * SPAN + rx,
                     y: gy * SPAN + ry,
-                    z: base + v.z,
+                    z: zBase + v.z,
                     c: v.c
                 });
             }
-            base += source.dims(cell.id)[2];
+            if (!groundAnchored) {
+                base += source.dims(cell.id)[2];
+            }
         }
     });
     if (out.length === 0) return out;

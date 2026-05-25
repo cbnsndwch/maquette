@@ -75,6 +75,16 @@ export class TileMap {
         return cell;
     }
 
+    /** Replace the cell at a specific index in a column's stack. */
+    replaceAt(gx: number, gy: number, index: number, cell: TerrainCell): void {
+        if (!this.inBounds(gx, gy)) return;
+        const stack = this.columns[gy * this.width + gx]!;
+        if (index >= 0 && index < stack.length) {
+            stack[index] = cell;
+            this.terrainVersion++;
+        }
+    }
+
     /** Iterate every non-empty column with its bottom→top stack. */
     forEachColumn(
         cb: (gx: number, gy: number, stack: readonly TerrainCell[]) => void
