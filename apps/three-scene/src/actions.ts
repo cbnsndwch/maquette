@@ -5,11 +5,21 @@ import {
     addTile,
     assetsForCategory,
     removeTile,
-    TERRAIN_MANIFEST
+    TERRAIN_MANIFEST,
+    type TerrainDef
 } from '@cbnsndwch/scene-author';
+import { loadCatalog } from './config.js';
 import { deleteTile, saveTile, type TileMeta } from './core/tile-save.js';
 import { renderThumbnail } from './ui/thumbnails.js';
 import { emit } from './store.js';
+
+/** Return `base` if unused in the catalog, otherwise `base_2`, `base_3`, … */
+function uniqueId(base: string): string {
+    if (!TERRAIN_MANIFEST.some(t => t.id === base)) return base;
+    let n = 2;
+    while (TERRAIN_MANIFEST.some(t => t.id === `${base}_${n}`)) n++;
+    return `${base}_${n}`;
+}
 
 /**
  * Encode + persist the authored tile, refresh its cached asset + thumbnail,
@@ -49,6 +59,56 @@ export async function saveTileFlow(meta: TileMeta): Promise<boolean> {
     toast(`Saved tile "${def.name}"`);
 
     return true;
+}
+
+/**
+ * Duplicate a tile: save a copy under a new id, refresh the catalog + thumbnail,
+ * and notify React. Returns true on success.
+ */
+export async function duplicateTileFlow(def: TerrainDef): Promise<boolean> {
+    const { assets, thumbnails } = getEngine();
+    const voxels = assets.get(def.id);
+    const newName = `${def.name} copy`;
+    const newId = uniqueId(`${def.id}_copy`);
+    const meta: TileMeta = {
+        id: newId,
+        name: newName,
+        category: def.category,
+        stackable: def.stackable ?? true,
+        footprint: def.footprint,
+        resolution: def.resolution
+    };
+    const saved = await saveTile(meta, voxels);
+    if (!saved) {
+        toast('Duplicate failed');
+        return false;
+    }
+    addTile(saved);
+    await assets.loadOne(saved.id, saved.file);
+    const thumb = renderThumbnail(assets, saved.id);
+    if (thumb) thumbnails.set(saved.id, thumb);
+    emit();
+    toast(`Duplicated as "${saved.name}"`);
+    return true;
+}
+
+/**
+ * Re-fetch the catalog from disk, reload any new or changed tile assets
+ * (cache-busted), re-render their thumbnails, and notify React. Use after
+ * external edits (MagicaVoxel, MCP server) that bypassed the in-app save flow.
+ */
+export async function reloadCatalogFlow(): Promise<void> {
+    const { assets, thumbnails } = getEngine();
+    await loadCatalog();
+    await Promise.all(
+        TERRAIN_MANIFEST.map(def => assets.loadOne(def.id, def.file))
+    );
+    for (const def of TERRAIN_MANIFEST) {
+        const thumb = renderThumbnail(assets, def.id);
+        if (thumb) thumbnails.set(def.id, thumb);
+    }
+    emit();
+    toast('Catalog reloaded');
 }
 
 /**

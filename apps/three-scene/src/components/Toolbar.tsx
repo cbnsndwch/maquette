@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { reloadCatalogFlow } from '@/actions';
 import { getEngine } from '@/bootstrap';
 import {
     Tooltip,
@@ -82,6 +83,14 @@ const ICONS: Record<string, ReactNode> = {
         <>
             <path d="M19 12a7 7 0 1 1-2.3-5.2" />
             <path d="M19 4v4h-4" />
+        </>
+    ),
+    sync: (
+        <>
+            <path d="M21 12a9 9 0 0 0-9-9 9 9 0 0 0-6.2 2.5L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 9 9 9 9 0 0 0 6.2-2.5L21 16" />
+            <path d="M16 16h5v5" />
         </>
     )
 };
@@ -221,6 +230,12 @@ export function Toolbar(): React.JSX.Element {
                 label="Export"
                 title="Export scene .vox (X)"
                 onClick={() => game.exportScene()}
+            />
+            <ToolButton
+                icon={ICONS.sync}
+                label="Sync"
+                title="Reload tile catalog from disk"
+                onClick={() => void reloadCatalogFlow()}
             />
             <ToolButton
                 icon={ICONS.reset}

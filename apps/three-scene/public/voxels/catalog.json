@@ -272,6 +272,30 @@
                 3,
                 3
             ]
+        },
+        {
+            "id": "mediterranean_pergola_house_copy",
+            "name": "Pergola House v3",
+            "category": "buildings",
+            "file": "/voxels/terrain/mediterranean_pergola_house_copy.vox",
+            "stackable": false,
+            "footprint": [
+                3,
+                3
+            ],
+            "resolution": 24
+        },
+        {
+            "id": "mediterranean_pergola_house_copy_copy",
+            "name": "Pergola House v2 copy copy",
+            "category": "buildings",
+            "file": "/voxels/terrain/mediterranean_pergola_house_copy_copy.vox",
+            "stackable": false,
+            "footprint": [
+                3,
+                3
+            ],
+            "deleted": true
         }
     ]
 }

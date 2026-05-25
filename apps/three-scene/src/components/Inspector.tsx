@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { deleteTileFlow } from '@/actions';
+import { deleteTileFlow, duplicateTileFlow } from '@/actions';
 import { getEngine } from '@/bootstrap';
 import {
     assetsForCategory,
@@ -47,11 +47,13 @@ function TileDetailModal({
     def,
     onClose,
     onEdit,
+    onDuplicate,
     onDelete
 }: {
     def: TerrainDef;
     onClose: () => void;
     onEdit: () => void;
+    onDuplicate: () => void;
     onDelete: () => void;
 }): React.JSX.Element {
     const { assets, thumbnails } = getEngine();
@@ -103,6 +105,9 @@ function TileDetailModal({
                         )}
                     >
                         Delete
+                    </button>
+                    <button type="button" onClick={onDuplicate} className={ED_BTN}>
+                        Duplicate
                     </button>
                     <button type="button" onClick={onClose} className={ED_BTN}>
                         Close
@@ -217,6 +222,11 @@ export function Inspector(): React.JSX.Element {
                     def={selected}
                     onClose={() => setSelected(null)}
                     onEdit={() => navigate(`/tile/${selected.id}`)}
+                    onDuplicate={() => {
+                        void duplicateTileFlow(selected).then(ok => {
+                            if (ok) setSelected(null);
+                        });
+                    }}
                     onDelete={() => {
                         void deleteTileFlow(selected.id);
                         setSelected(null);
