@@ -249,6 +249,18 @@
                 2,
                 2
             ]
+        },
+        {
+            "id": "pergola_house",
+            "name": "Pergola House",
+            "category": "buildings",
+            "file": "/voxels/terrain/pergola_house.vox",
+            "stackable": false,
+            "footprint": [
+                3,
+                3
+            ],
+            "resolution": 24
         }
     ]
 }
