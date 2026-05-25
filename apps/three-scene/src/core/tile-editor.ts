@@ -23,6 +23,13 @@ const FALLBACK_COLOR = '#ff00ff';
 
 export type EditTool = 'add' | 'delete' | 'paint' | 'eyedropper' | 'select' | 'face-select';
 
+/** A named visibility group for a subset of voxels. */
+export interface EditorLayer {
+    id: string;
+    name: string;
+    visible: boolean;
+}
+
 /**
  * Editor-internal voxel: position plus the palette **slot index** that colors it.
  * The index is the source of truth — editing a slot's color (or swapping the whole
@@ -36,12 +43,15 @@ interface EditVoxel {
     z: number;
     /** Index into {@link TileEditor.palette}. */
     ci: number;
+    /** Layer this voxel belongs to, if any. */
+    layerId?: string | null;
 }
 
-/** Undoable document state: the voxels and the palette that colors them. */
+/** Undoable document state: the voxels, the palette that colors them, and named layers. */
 interface TileSnapshot {
     voxels: EditVoxel[];
     palette: (string | null)[];
+    layers: EditorLayer[];
 }
 
 const DEFAULT_PALETTE = [
@@ -117,12 +127,21 @@ export class TileEditor {
     selectionPeek = false;
     /** Id of the tile being edited (set by {@link loadTile}); null for a new tile. */
     editingId: string | null = null;
-    gridOn = true;
-    edgesOn = true;
+    gridOn = false;
+    edgesOn = false;
+    groundGridOn = true;
+    wallsOn = true;
     /** Exploded view: extra vertical gap (in voxels) inserted between layers. */
     explode = 0;
     /** When set, only this z layer is shown (isolate a layer); null = all. */
     focusLayer: number | null = null;
+
+    private _layers = new Map<string, EditorLayer>();
+    private _layerCounter = 0;
+
+    get layers(): EditorLayer[] {
+        return [...this._layers.values()];
+    }
 
     private get halfX(): number {
         return this.nx / 2;
@@ -153,7 +172,10 @@ export class TileEditor {
     private hitVoxels: EditVoxel[] = [];
     private selectionMesh: THREE.InstancedMesh | null = null;
     private edges: THREE.LineSegments | null = null;
-    private grid!: THREE.LineSegments;
+    private grid!: THREE.Group;
+    private groundGridMesh: THREE.Group | null = null;
+    private wallsGroup: THREE.Group | null = null;
+    private wallFaces: Record<'px' | 'nx' | 'pz' | 'nz', THREE.Group | null> = { px: null, nx: null, pz: null, nz: null };
     private datum: THREE.Group | null = null;
     private readonly hitGeo = new THREE.BoxGeometry(1, 1, 1);
     private readonly hitMat = new THREE.MeshBasicMaterial();
@@ -198,6 +220,7 @@ export class TileEditor {
         this.root.add(this.display);
         this.buildFloor();
         this.view.scene.add(this.root);
+        this.view.controls.addEventListener('change', () => this.updateWallsForCamera());
     }
 
     get activeColor(): string {
@@ -220,6 +243,7 @@ export class TileEditor {
         this.focusLayer = null;
         this.selection.clear();
         this.selectionAnchor = null;
+        this._layers.clear();
         this.applyFootprint([1, 1], PER_TILE);
         this.resetHistory();
         this.rebuild();
@@ -363,6 +387,7 @@ export class TileEditor {
         this.focusLayer = null;
         this.selection.clear();
         this.selectionAnchor = null;
+        this._layers.clear();
         this.resetHistory();
         this.rebuild();
         this.onChange?.();
@@ -935,6 +960,28 @@ export class TileEditor {
         this.onChange?.();
     }
 
+    setGroundGridVisible(on: boolean): void {
+        this.groundGridOn = on;
+        if (this.groundGridMesh) this.groundGridMesh.visible = on;
+        this.onChange?.();
+    }
+
+    setWallsVisible(on: boolean): void {
+        this.wallsOn = on;
+        this.updateWallsForCamera();
+        this.onChange?.();
+    }
+
+    updateWallsForCamera(): void {
+        const { px, nx, pz, nz } = this.wallFaces;
+        if (!px || !nx || !pz || !nz) return;
+        const { x: cx, z: cz } = this.view.camera.position;
+        px.visible = this.wallsOn && cx < 0;
+        nx.visible = this.wallsOn && cx > 0;
+        pz.visible = this.wallsOn && cz < 0;
+        nz.visible = this.wallsOn && cz > 0;
+    }
+
     /** Spread the layers apart vertically (0 = stacked normally). */
     setExplode(amount: number): void {
         const next = Math.max(0, Math.min(8, Math.round(amount)));
@@ -977,6 +1024,152 @@ export class TileEditor {
         this.setFocusLayer(null);
     }
 
+    /* ── 90° rotations ───────────────────────────────────────── */
+
+    /**
+     * Rotate all voxels 90° clockwise around the vertical (Z) axis when viewed
+     * from above. Swaps the footprint width and depth.
+     */
+    rotateZ(): void {
+        if (!this.voxels.length) return;
+        this.transact(() => {
+            const nx = this.nx;
+            for (const v of this.voxels) {
+                const ox = v.x, oy = v.y;
+                v.x = oy;
+                v.y = nx - 1 - ox;
+            }
+            this.applyFootprint(
+                [this.footprint[1], this.footprint[0]],
+                this.resolution
+            );
+            this._clearView();
+            this.rebuild();
+            this.onChange?.();
+        });
+    }
+
+    /**
+     * Rotate all voxels 90° clockwise around the X axis when viewed from the
+     * right side. Old depth (y) becomes height; old height (z) becomes depth.
+     * Footprint depth expands to contain the former Z range.
+     */
+    rotateX(): void {
+        if (!this.voxels.length) return;
+        this.transact(() => {
+            let maxZ = 0;
+            for (const v of this.voxels) if (v.z > maxZ) maxZ = v.z;
+            const ny = this.ny;
+            for (const v of this.voxels) {
+                const oy = v.y, oz = v.z;
+                v.y = oz;
+                v.z = ny - 1 - oy;
+            }
+            const newD = Math.max(
+                1,
+                Math.min(8, Math.ceil((maxZ + 1) / this.resolution))
+            );
+            this.applyFootprint([this.footprint[0], newD], this.resolution);
+            this.voxels = this.voxels.filter(v => v.z >= 0 && v.z < this.zCap);
+            this._clearView();
+            this.rebuild();
+            this.onChange?.();
+        });
+    }
+
+    /**
+     * Rotate all voxels 90° clockwise around the Y axis when viewed from the
+     * front. Old width (x) becomes height; old height (z) becomes width.
+     * Footprint width expands to contain the former Z range.
+     */
+    rotateY(): void {
+        if (!this.voxels.length) return;
+        this.transact(() => {
+            let maxZ = 0;
+            for (const v of this.voxels) if (v.z > maxZ) maxZ = v.z;
+            const nx = this.nx;
+            for (const v of this.voxels) {
+                const ox = v.x, oz = v.z;
+                v.x = oz;
+                v.z = nx - 1 - ox;
+            }
+            const newW = Math.max(
+                1,
+                Math.min(8, Math.ceil((maxZ + 1) / this.resolution))
+            );
+            this.applyFootprint([newW, this.footprint[1]], this.resolution);
+            this.voxels = this.voxels.filter(v => v.z >= 0 && v.z < this.zCap);
+            this._clearView();
+            this.rebuild();
+            this.onChange?.();
+        });
+    }
+
+    /** Clear transient view state that becomes stale after a rotation. */
+    private _clearView(): void {
+        this.selection.clear();
+        this.selectionAnchor = null;
+        this.focusLayer = null;
+    }
+
+    /* ── Named layers ─────────────────────────────────────────── */
+
+    /**
+     * Assign all currently selected voxels to a new named layer and return its id.
+     * The operation is undoable; the selection is preserved.
+     */
+    captureSelectionAsLayer(name: string): string {
+        const id = `layer_${++this._layerCounter}`;
+        this.transact(() => {
+            this._layers.set(id, {
+                id,
+                name: name.trim() || 'Layer',
+                visible: true
+            });
+            for (const v of this.voxels) {
+                if (this.selection.has(keyOf(v.x, v.y, v.z))) v.layerId = id;
+            }
+            this.rebuild();
+            this.onChange?.();
+        });
+        return id;
+    }
+
+    /** Toggle a layer's visibility. Hidden voxels are excluded from the render and hit-test. */
+    setLayerVisible(id: string, visible: boolean): void {
+        const layer = this._layers.get(id);
+        if (!layer || layer.visible === visible) return;
+        layer.visible = visible;
+        this.rebuild();
+        this.onChange?.();
+    }
+
+    /** Rename a layer (not undoable — like renaming a palette slot). */
+    renameLayer(id: string, name: string): void {
+        const layer = this._layers.get(id);
+        const trimmed = name.trim();
+        if (!layer || !trimmed || layer.name === trimmed) return;
+        layer.name = trimmed;
+        this.onChange?.();
+    }
+
+    /** Remove the layer; its voxels remain but are no longer layer-assigned. Undoable. */
+    deleteLayer(id: string): void {
+        if (!this._layers.has(id)) return;
+        this.transact(() => {
+            this._layers.delete(id);
+            for (const v of this.voxels) {
+                if (v.layerId === id) v.layerId = null;
+            }
+            this.rebuild();
+            this.onChange?.();
+        });
+    }
+
+    getLayerVoxelCount(id: string): number {
+        return this.voxels.filter(v => v.layerId === id).length;
+    }
+
     private maxZ(): number {
         let mz = 0;
         for (const v of this.voxels) if (v.z > mz) mz = v.z;
@@ -988,10 +1181,16 @@ export class TileEditor {
         return z * this.explode * CONFIG.voxel.size;
     }
 
-    /** Voxels currently shown (focus filter applied). */
+    /** Voxels currently shown (focus-layer and layer-visibility filters applied). */
     private visibleVoxels(): EditVoxel[] {
-        if (this.focusLayer == null) return this.voxels;
-        return this.voxels.filter(v => v.z === this.focusLayer);
+        return this.voxels.filter(v => {
+            if (this.focusLayer !== null && v.z !== this.focusLayer) return false;
+            if (v.layerId) {
+                const layer = this._layers.get(v.layerId);
+                if (layer && !layer.visible) return false;
+            }
+            return true;
+        });
     }
 
     clearAll(): void {
@@ -1009,7 +1208,8 @@ export class TileEditor {
     private snapshot(): TileSnapshot {
         return {
             voxels: this.voxels.map(v => ({ ...v })),
-            palette: [...this.palette]
+            palette: [...this.palette],
+            layers: [...this._layers.values()].map(l => ({ ...l }))
         };
     }
 
@@ -1062,7 +1262,13 @@ export class TileEditor {
         for (let i = 0; i < this.voxels.length; i++) {
             const a = this.voxels[i]!;
             const b = before.voxels[i]!;
-            if (a.x !== b.x || a.y !== b.y || a.z !== b.z || a.ci !== b.ci) {
+            if (
+                a.x !== b.x ||
+                a.y !== b.y ||
+                a.z !== b.z ||
+                a.ci !== b.ci ||
+                a.layerId !== b.layerId
+            ) {
                 return true;
             }
         }
@@ -1070,12 +1276,18 @@ export class TileEditor {
         for (let i = 0; i < this.palette.length; i++) {
             if (this.palette[i] !== before.palette[i]) return true;
         }
+        if (this._layers.size !== before.layers.length) return true;
+        for (const bl of before.layers) {
+            const l = this._layers.get(bl.id);
+            if (!l || l.name !== bl.name) return true;
+        }
         return false;
     }
 
     private restore(snap: TileSnapshot): void {
         this.voxels = snap.voxels.map(v => ({ ...v }));
         this.palette = [...snap.palette];
+        this._layers = new Map(snap.layers.map(l => [l.id, { ...l }]));
         if (this.palette[this.activeColorIdx] == null) {
             const first = this.palette.findIndex(c => c != null);
             this.activeColorIdx = first >= 0 ? first : 0;
@@ -1488,11 +1700,11 @@ export class TileEditor {
         for (const k of [...this.selection]) {
             if (!occ.has(k)) this.selection.delete(k);
         }
-        // Only highlight selected voxels that are currently shown (focus filter).
-        const visKeys = [...this.selection].filter(k => {
-            if (this.focusLayer == null) return true;
-            return Number(k.split(',')[2]) === this.focusLayer;
-        });
+        // Only highlight selected voxels that are currently visible (focus + layer filters).
+        const visibleKeySet = new Set(
+            this.visibleVoxels().map(v => keyOf(v.x, v.y, v.z))
+        );
+        const visKeys = [...this.selection].filter(k => visibleKeySet.has(k));
         if (visKeys.length === 0) return;
 
         const mesh = new THREE.InstancedMesh(
@@ -1531,30 +1743,9 @@ export class TileEditor {
 
         if (this.grid) {
             this.root.remove(this.grid);
-            this.grid.geometry.dispose();
+            this.disposeGridGroup(this.grid);
         }
-        const lines: number[] = [];
-        for (let i = 0; i <= this.nx; i++) {
-            const x = i - hx;
-            lines.push(x, 0, -hy, x, 0, hy);
-        }
-        for (let j = 0; j <= this.ny; j++) {
-            const z = j - hy;
-            lines.push(-hx, 0, z, hx, 0, z);
-        }
-        const gridGeo = new THREE.BufferGeometry();
-        gridGeo.setAttribute(
-            'position',
-            new THREE.Float32BufferAttribute(lines, 3)
-        );
-        this.grid = new THREE.LineSegments(
-            gridGeo,
-            new THREE.LineBasicMaterial({
-                color: 0x9c8f6e,
-                transparent: true,
-                opacity: 0.6
-            })
-        );
+        this.grid = this.buildFlatGridGroup(0, 0x9c8f6e, 0.7, 0.25);
         this.grid.visible = this.gridOn;
         this.root.add(this.grid);
 
@@ -1619,6 +1810,159 @@ export class TileEditor {
         datum.position.y = this.ground * CONFIG.voxel.size;
         this.datum = datum;
         this.root.add(datum);
+
+        this.buildGroundGrid();
+        this.buildWalls();
+    }
+
+    private buildGroundGrid(): void {
+        if (this.groundGridMesh) {
+            this.root.remove(this.groundGridMesh);
+            this.disposeGridGroup(this.groundGridMesh);
+            this.groundGridMesh = null;
+        }
+        const yg = this.ground * CONFIG.voxel.size;
+        this.groundGridMesh = this.buildFlatGridGroup(yg, 0x4a7fb5, 0.65, 0.2);
+        this.groundGridMesh.visible = this.groundGridOn;
+        this.root.add(this.groundGridMesh);
+    }
+
+    private buildWalls(): void {
+        if (this.wallsGroup) {
+            this.root.remove(this.wallsGroup);
+            this.wallsGroup = null;
+        }
+        for (const key of ['px', 'nx', 'pz', 'nz'] as const) {
+            this.disposeGridGroup(this.wallFaces[key]);
+            this.wallFaces[key] = null;
+        }
+
+        const hx = this.halfX;
+        const hy = this.halfY;
+
+        this.wallFaces.nx = this.buildWallFaceGroup('x', -hx, -hy, hy, this.ny);
+        this.wallFaces.px = this.buildWallFaceGroup('x',  hx, -hy, hy, this.ny);
+        this.wallFaces.nz = this.buildWallFaceGroup('z', -hy, -hx, hx, this.nx);
+        this.wallFaces.pz = this.buildWallFaceGroup('z',  hy, -hx, hx, this.nx);
+
+        const group = new THREE.Group();
+        group.add(this.wallFaces.nx!, this.wallFaces.px!, this.wallFaces.nz!, this.wallFaces.pz!);
+        this.wallsGroup = group;
+        this.root.add(group);
+        this.updateWallsForCamera();
+    }
+
+    /** Build a Group with two LineSegments children: major (world-cell boundaries) and minor. */
+    private makeLinesGroup(
+        major: number[],
+        minor: number[],
+        color: number,
+        majorOpacity: number,
+        minorOpacity: number
+    ): THREE.Group {
+        const group = new THREE.Group();
+        if (major.length) {
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(major, 3));
+            group.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: majorOpacity })));
+        }
+        if (minor.length) {
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(minor, 3));
+            group.add(new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity: minorOpacity })));
+        }
+        return group;
+    }
+
+    private disposeGridGroup(group: THREE.Group | null): void {
+        if (!group) return;
+        group.traverse(o => {
+            const ls = o as THREE.LineSegments;
+            if (ls.isLineSegments) {
+                ls.geometry.dispose();
+                (ls.material as THREE.Material).dispose();
+            }
+        });
+    }
+
+    /**
+     * Flat (horizontal) grid at world y=`yPos`. Lines at base-12-aligned voxel
+     * positions are darker; sub-cell lines are lighter.
+     */
+    private buildFlatGridGroup(yPos: number, color: number, majorOpacity: number, minorOpacity: number): THREE.Group {
+        const hx = this.halfX;
+        const hy = this.halfY;
+        const step = this.resolution / PER_TILE; // base-12 interval in voxels
+        const major: number[] = [];
+        const minor: number[] = [];
+        for (let i = 0; i <= this.nx; i++) {
+            const x = i - hx;
+            (i % step === 0 ? major : minor).push(x, yPos, -hy, x, yPos, hy);
+        }
+        for (let j = 0; j <= this.ny; j++) {
+            const z = j - hy;
+            (j % step === 0 ? major : minor).push(-hx, yPos, z, hx, yPos, z);
+        }
+        return this.makeLinesGroup(major, minor, color, majorOpacity, minorOpacity);
+    }
+
+    /**
+     * One wall face of the tile bounding box. `fixedAxis` is the axis held
+     * constant; `fixedVal` is that coordinate; `rangeMin/Max` are the span along
+     * the perpendicular axis; `nRange` is the voxel count along that axis.
+     * Horizontal lines (one per layer) and vertical lines (one per column) are
+     * colour-weighted by the base-12 step.
+     */
+    private buildWallFaceGroup(
+        fixedAxis: 'x' | 'z',
+        fixedVal: number,
+        rangeMin: number,
+        rangeMax: number,
+        nRange: number
+    ): THREE.Group {
+        const top = this.zCap * CONFIG.voxel.size;
+        const vs = CONFIG.voxel.size;
+        const step = this.resolution / PER_TILE;
+        const color = 0x7a6d5c;
+        const major: number[] = [];
+        const minor: number[] = [];
+        const v = fixedVal;
+
+        if (fixedAxis === 'x') {
+            // Outline (always major)
+            major.push(v, 0,   rangeMin,  v, 0,   rangeMax);
+            major.push(v, top, rangeMin,  v, top,  rangeMax);
+            major.push(v, 0,   rangeMin,  v, top,  rangeMin);
+            major.push(v, 0,   rangeMax,  v, top,  rangeMax);
+            // Horizontal lines at each voxel layer
+            for (let z = 1; z < this.zCap; z++) {
+                const y = z * vs;
+                (z % step === 0 ? major : minor).push(v, y, rangeMin, v, y, rangeMax);
+            }
+            // Vertical lines along the range axis
+            for (let j = 1; j < nRange; j++) {
+                const r = rangeMin + j;
+                (j % step === 0 ? major : minor).push(v, 0, r, v, top, r);
+            }
+        } else {
+            // Outline (always major)
+            major.push(rangeMin, 0,   v,  rangeMax, 0,   v);
+            major.push(rangeMin, top, v,  rangeMax, top, v);
+            major.push(rangeMin, 0,   v,  rangeMin, top, v);
+            major.push(rangeMax, 0,   v,  rangeMax, top, v);
+            // Horizontal lines at each voxel layer
+            for (let z = 1; z < this.zCap; z++) {
+                const y = z * vs;
+                (z % step === 0 ? major : minor).push(rangeMin, y, v, rangeMax, y, v);
+            }
+            // Vertical lines along the range axis
+            for (let i = 1; i < nRange; i++) {
+                const r = rangeMin + i;
+                (i % step === 0 ? major : minor).push(r, 0, v, r, top, v);
+            }
+        }
+
+        return this.makeLinesGroup(major, minor, color, 0.45, 0.15);
     }
 
     private occupied(): Set<string> {

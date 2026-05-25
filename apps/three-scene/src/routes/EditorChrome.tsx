@@ -3,6 +3,7 @@ import { useLoaderData } from 'react-router';
 import { ColorPalette } from '@/components/ColorPalette';
 import { EditContextMenu } from '@/components/EditContextMenu';
 import { EditorPanel } from '@/components/EditorPanel';
+import { RotationToolbar } from '@/components/RotationToolbar';
 
 import type { EditorLoaderData } from '../router.js';
 
@@ -17,6 +18,7 @@ export function EditorChrome(): React.JSX.Element {
             <ColorPalette />
             <EditorPanel key={def?.id ?? 'new'} def={def} />
             <EditContextMenu />
+            <RotationToolbar />
         </>
     );
 }

@@ -583,6 +583,17 @@ export class SceneView {
                   };
     }
 
+    /** Rotate the camera orbit by `deltaTheta` radians (positive = counter-clockwise viewed from above). */
+    orbitCamera(deltaTheta: number): void {
+        const offset = this.camera.position.clone().sub(this.controls.target);
+        const s = new THREE.Spherical().setFromVector3(offset);
+        s.theta += deltaTheta;
+        offset.setFromSpherical(s);
+        this.camera.position.copy(this.controls.target).add(offset);
+        this.camera.lookAt(this.controls.target);
+        this.controls.update();
+    }
+
     private frame(now: number): void {
         for (const [key, pop] of this.animating) {
             const t = (now - pop.start) / 380;
