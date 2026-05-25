@@ -1,6 +1,7 @@
 import {
     ASSET_INDEX,
     CATEGORIES,
+    composeSceneVoxels,
     DEFAULT_GRID,
     GROUND_LAYERS,
     TERRAIN_MANIFEST,
@@ -9,12 +10,16 @@ import {
     type Rotation
 } from '@cbnsndwch/scene-author';
 import { encodeVox, type Voxel } from '@cbnsndwch/world-core';
+import { writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
-import { computeCatalogVersion, type FsVoxelSource } from './catalog.mjs';
+import { computeCatalogVersion, loadCatalogFromDisk, type FsVoxelSource } from './catalog.mjs';
 import { finalizeScene } from './finalize.mjs';
+import { renderVoxels, renderVoxelsMultiView } from './render.mjs';
 import type { SceneSession, SessionStore } from './sessions.mjs';
 import {
     analyzeTile,
@@ -48,10 +53,26 @@ function json(
     };
 }
 
+/** Tool result carrying an isometric PNG preview plus its metadata. */
+function image(
+    pngBase64: string,
+    meta: Record<string, unknown>
+): CallToolResult {
+    return {
+        content: [
+            { type: 'image', data: pngBase64, mimeType: 'image/png' },
+            { type: 'text', text: JSON.stringify(meta, null, 2) }
+        ],
+        structuredContent: meta
+    };
+}
+
 const STACKING_RULE =
     'A cell may start any empty column. Stacking onto an existing column ' +
     'requires the supporting top cell to be stackable; non-stackable tops ' +
     '(e.g. sea wall, props) reject anything placed on them.';
+
+const resolutionSchema = z.number().int().min(64).max(1024).default(512);
 
 const N = VOXEL_PER_TILE;
 const categorySchema = z.enum(['terrain', 'nature', 'props', 'buildings']);
@@ -102,6 +123,34 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                 catalogVersion: computeCatalogVersion(tiles),
                 count: tiles.length,
                 categories: CATEGORIES,
+                tiles: tiles.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    category: t.category,
+                    stackable: t.stackable
+                }))
+            });
+        }
+    );
+
+    server.registerTool(
+        'reload_catalog',
+        {
+            title: 'Reload tile catalog from disk',
+            description:
+                'Re-read catalog.json from disk and reload all tile voxels into the ' +
+                'live server. Call after adding or un-deleting entries in catalog.json ' +
+                'or dropping new .vox files into voxels/terrain/. Returns the refreshed ' +
+                'tile list and new catalogVersion.',
+            inputSchema: {}
+        },
+        async () => {
+            const tiles = await loadCatalogFromDisk(publicDir);
+            await voxSource.preload(tiles);
+            return json({
+                ok: true,
+                count: tiles.length,
+                catalogVersion: computeCatalogVersion(tiles),
                 tiles: tiles.map(t => ({
                     id: t.id,
                     name: t.name,
@@ -375,6 +424,35 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
             })
     );
 
+    server.registerTool(
+        'render_scene',
+        {
+            title: 'Render an isometric preview of the scene',
+            description:
+                'Bake the scene to voxels and return an isometric PNG preview so ' +
+                'you can SEE the result and self-correct. Headless (no browser). ' +
+                'resolution is the square pixel size (64..512).',
+            inputSchema: { sceneId: z.string(), resolution: resolutionSchema }
+        },
+        ({ sceneId, resolution }) =>
+            needScene(sceneId, async session => {
+                const voxels = composeSceneVoxels(session.tileMap, voxSource);
+                if (voxels.length === 0) {
+                    return json(
+                        { ok: false, error: 'empty_scene', sceneId },
+                        true
+                    );
+                }
+                const r = await renderVoxels(voxels, resolution);
+                return image(r.pngBase64, {
+                    sceneId,
+                    voxelCount: r.voxelCount,
+                    width: r.width,
+                    height: r.height
+                });
+            })
+    );
+
     /* ── Tile authoring ──────────────────────────────────────────── */
 
     const needTile = (
@@ -572,6 +650,51 @@ export function registerTools(server: McpServer, deps: ToolDeps): void {
                     ready: a.errors.length === 0,
                     issues: a.errors,
                     meta: builder.meta
+                });
+            })
+    );
+
+    server.registerTool(
+        'render_tile',
+        {
+            title: 'Render an isometric preview of the tile',
+            description:
+                'Return an isometric PNG preview of the tile you are building so ' +
+                'you can SEE it and compare against a reference, then adjust shapes ' +
+                'and re-render. Headless (no browser). Returns a 2×2 composite of ' +
+                'four 90°-rotated isometric views (NE top-left, NW top-right, ' +
+                'SW bottom-left, SE bottom-right) so all four faces are visible. ' +
+                'Tip: pick flat base colors — the renderer adds its own top/side ' +
+                'shading, so do not paint shadows in.',
+            inputSchema: {
+                tileSessionId: z.string(),
+                resolution: resolutionSchema
+            }
+        },
+        ({ tileSessionId, resolution }) =>
+            needTile(tileSessionId, async builder => {
+                const voxels = builder.materialize();
+                if (voxels.length === 0) {
+                    return json(
+                        { ok: false, error: 'empty_tile', tileSessionId },
+                        true
+                    );
+                }
+                // panelRes: each of the 4 sub-views; composite output is 2× that.
+                const panelRes = Math.max(64, Math.min(512, Math.round(resolution / 2)));
+                const r = await renderVoxelsMultiView(voxels, panelRes);
+                // Save to disk so the user can open the file directly.
+                const rendersDir = join(publicDir, 'renders');
+                await mkdir(rendersDir, { recursive: true });
+                const outPath = join(rendersDir, `${tileSessionId}.png`);
+                await writeFile(outPath, Buffer.from(r.pngBase64, 'base64'));
+                return image(r.pngBase64, {
+                    tileSessionId,
+                    voxelCount: r.voxelCount,
+                    width: r.width,
+                    height: r.height,
+                    layout: '2x2 composite: NE top-left, NW top-right, SW bottom-left, SE bottom-right',
+                    savedTo: outPath
                 });
             })
     );
