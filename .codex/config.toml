@@ -1,0 +1,3 @@
+[mcp_servers.maquette-world]
+args = ["apps/world-mcp/dist/index.js"]
+command = "node"
