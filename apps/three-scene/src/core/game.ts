@@ -130,9 +130,10 @@ export class Game {
         clientX: number,
         clientY: number,
         remove = false,
+        extend = false,
         toolOverride?: EditTool
     ): void {
-        this.editor?.editAt(clientX, clientY, remove, toolOverride);
+        this.editor?.editAt(clientX, clientY, remove, extend, toolOverride);
     }
 
     setCategory(cat: Category): void {

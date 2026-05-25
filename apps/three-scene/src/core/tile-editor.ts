@@ -21,7 +21,7 @@ const SHADE_STEPS = 7;
 /** Rendered for a voxel whose palette slot was cleared/unassigned (flags the orphan). */
 const FALLBACK_COLOR = '#ff00ff';
 
-export type EditTool = 'add' | 'delete' | 'paint' | 'eyedropper' | 'select';
+export type EditTool = 'add' | 'delete' | 'paint' | 'eyedropper' | 'select' | 'face-select';
 
 /**
  * Editor-internal voxel: position plus the palette **slot index** that colors it.
@@ -108,6 +108,13 @@ export class TileEditor {
     tool: EditTool = 'add';
     /** Selected voxel position keys ("x,y,z"). */
     readonly selection = new Set<string>();
+    /** Anchor for planar range selection — set on each bare click with the Select tool. */
+    selectionAnchor: { x: number; y: number; z: number } | null = null;
+    /**
+     * When true the selection overlay mesh is hidden so the author can inspect
+     * the underlying voxel colors without disturbing the selection.
+     */
+    selectionPeek = false;
     /** Id of the tile being edited (set by {@link loadTile}); null for a new tile. */
     editingId: string | null = null;
     gridOn = true;
@@ -212,6 +219,7 @@ export class TileEditor {
         this.explode = 0;
         this.focusLayer = null;
         this.selection.clear();
+        this.selectionAnchor = null;
         this.applyFootprint([1, 1], PER_TILE);
         this.resetHistory();
         this.rebuild();
@@ -233,6 +241,7 @@ export class TileEditor {
                 v => v.x >= 0 && v.x < this.nx && v.y >= 0 && v.y < this.ny
             );
             this.selection.clear();
+            this.selectionAnchor = null;
             this.rebuild();
             this.onChange?.();
         });
@@ -257,6 +266,7 @@ export class TileEditor {
                     v.z < this.zCap
             );
             this.selection.clear();
+            this.selectionAnchor = null;
             this.rebuild();
             this.onChange?.();
         });
@@ -320,6 +330,13 @@ export class TileEditor {
         footprint: [number, number] = [1, 1],
         resolution: number = PER_TILE
     ): void {
+        // Re-entering the same tile (e.g. Save → Done → back to edit) preserves
+        // the full editing session — voxels, history, selection all stay intact.
+        if (id != null && id === this.editingId) {
+            this.rebuild();
+            this.onChange?.();
+            return;
+        }
         this.applyFootprint(
             [Math.max(1, footprint[0]), Math.max(1, footprint[1])],
             isAllowedResolution(resolution) ? resolution : PER_TILE
@@ -345,6 +362,7 @@ export class TileEditor {
         this.explode = 0;
         this.focusLayer = null;
         this.selection.clear();
+        this.selectionAnchor = null;
         this.resetHistory();
         this.rebuild();
         this.onChange?.();
@@ -569,9 +587,21 @@ export class TileEditor {
         }
     }
 
+    /**
+     * Toggle the selection overlay visibility without changing the selection.
+     * Useful for a quick before/after peek while keeping the selection intact.
+     */
+    setSelectionPeek(on: boolean): void {
+        if (this.selectionPeek === on) return;
+        this.selectionPeek = on;
+        if (this.selectionMesh) this.selectionMesh.visible = !on;
+        this.onChange?.();
+    }
+
     clearSelection(): void {
         if (this.selection.size === 0) return;
         this.selection.clear();
+        this.selectionAnchor = null;
         this.rebuildSelection();
         this.onChange?.();
     }
@@ -586,6 +616,7 @@ export class TileEditor {
                 v => !this.selection.has(keyOf(v.x, v.y, v.z))
             );
             this.selection.clear();
+            this.selectionAnchor = null;
             this.rebuild();
             this.onChange?.();
         });
@@ -643,6 +674,7 @@ export class TileEditor {
             moves.push({ v, nx, ny, nz });
         }
         this.selection.clear();
+        this.selectionAnchor = null;
         for (const m of moves) {
             m.v.x = m.nx;
             m.v.y = m.ny;
@@ -924,6 +956,7 @@ export class TileEditor {
     setFocusLayer(z: number | null): void {
         this.focusLayer = z;
         this.selection.clear();
+        this.selectionAnchor = null;
         this.rebuild();
         this.onChange?.();
     }
@@ -965,6 +998,7 @@ export class TileEditor {
         this.transact(() => {
             this.voxels = [];
             this.selection.clear();
+            this.selectionAnchor = null;
             this.rebuild();
             this.onChange?.();
         });
@@ -1051,6 +1085,16 @@ export class TileEditor {
         this.onChange?.();
     }
 
+    /**
+     * Record the current state as a save milestone in the undo stack. Navigating
+     * through it with undo/redo works like any other step; the milestone flag lets
+     * the UI label the buttons ("Undo ✦" / "Redo ✦").
+     */
+    recordSave(): void {
+        this.history.milestone(this.snapshot());
+        this.onChange?.();
+    }
+
     undo(): void {
         const prev = this.history.undo(this.snapshot());
         if (prev) this.restore(prev);
@@ -1067,6 +1111,14 @@ export class TileEditor {
 
     get canRedo(): boolean {
         return this.history.canRedo;
+    }
+
+    get nextUndoIsMilestone(): boolean {
+        return this.history.nextUndoIsMilestone;
+    }
+
+    get nextRedoIsMilestone(): boolean {
+        return this.history.nextRedoIsMilestone;
     }
 
     /* ── Editing via raycast ──────────────────────────────────── */
@@ -1094,6 +1146,7 @@ export class TileEditor {
         clientX: number,
         clientY: number,
         remove = false,
+        extend = false,
         toolOverride?: EditTool
     ): boolean {
         const tool = toolOverride ?? this.tool;
@@ -1137,13 +1190,31 @@ export class TileEditor {
                 if (this.selection.size > 0) this.applyToSelection('paint');
                 else this.paintAt(here);
                 return true;
-            case 'select':
+            case 'select': {
                 if (!this.claimTarget(here)) return false;
-                if (remove) this.selection.delete(here);
-                else this.selection.add(here);
+                if (extend && this.selectionAnchor != null) {
+                    // Shift+click: range add/remove from anchor (Alt = remove)
+                    this.selectPlanarRange(this.selectionAnchor, v, hit.face!.normal, remove);
+                } else if (remove) {
+                    // Alt+click (no range): deselect the single voxel
+                    this.selection.delete(here);
+                    this.selectionAnchor = null;
+                } else {
+                    // Normal click (or Shift with no anchor): add + set anchor
+                    this.selection.add(here);
+                    this.selectionAnchor = { x: v.x, y: v.y, z: v.z };
+                }
                 this.rebuildSelection();
                 this.onChange?.();
                 return true;
+            }
+            case 'face-select': {
+                if (!this.claimTarget(here)) return false;
+                this.selectFaceFloodFill(v, hit.face!.normal, remove);
+                this.rebuildSelection();
+                this.onChange?.();
+                return true;
+            }
             case 'eyedropper':
                 this.selectColorIdx(v.ci);
                 return true;
@@ -1169,8 +1240,100 @@ export class TileEditor {
             }
         }
         this.selection.clear();
+        this.selectionAnchor = null;
         this.rebuild();
         this.onChange?.();
+    }
+
+    /**
+     * Add all visible voxels within the bounding rectangle between `anchor` and
+     * `target` on the plane determined by `faceNormal` to the selection.
+     * THREE.y maps to voxel-z (vertical); THREE.z maps to voxel-y (depth).
+     */
+    private selectPlanarRange(
+        anchor: { x: number; y: number; z: number },
+        target: EditVoxel,
+        faceNormal: THREE.Vector3,
+        deselect = false
+    ): void {
+        const fny = Math.round(faceNormal.y);
+        const fnx = Math.round(faceNormal.x);
+        const toggle = (v: EditVoxel) => {
+            const k = keyOf(v.x, v.y, v.z);
+            if (deselect) this.selection.delete(k);
+            else this.selection.add(k);
+        };
+        for (const v of this.visibleVoxels()) {
+            if (fny !== 0) {
+                if (
+                    v.z === target.z &&
+                    v.x >= Math.min(anchor.x, target.x) &&
+                    v.x <= Math.max(anchor.x, target.x) &&
+                    v.y >= Math.min(anchor.y, target.y) &&
+                    v.y <= Math.max(anchor.y, target.y)
+                ) toggle(v);
+            } else if (fnx !== 0) {
+                if (
+                    v.x === target.x &&
+                    v.y >= Math.min(anchor.y, target.y) &&
+                    v.y <= Math.max(anchor.y, target.y) &&
+                    v.z >= Math.min(anchor.z, target.z) &&
+                    v.z <= Math.max(anchor.z, target.z)
+                ) toggle(v);
+            } else {
+                if (
+                    v.y === target.y &&
+                    v.x >= Math.min(anchor.x, target.x) &&
+                    v.x <= Math.max(anchor.x, target.x) &&
+                    v.z >= Math.min(anchor.z, target.z) &&
+                    v.z <= Math.max(anchor.z, target.z)
+                ) toggle(v);
+            }
+        }
+    }
+
+    /**
+     * BFS flood-fill: starting at `voxel`, add all contiguous visible voxels of
+     * the same color that lie on the same plane (defined by `faceNormal`) to the
+     * selection. Stops at color boundaries.
+     */
+    private selectFaceFloodFill(
+        voxel: EditVoxel,
+        faceNormal: THREE.Vector3,
+        deselect = false
+    ): void {
+        const fny = Math.round(faceNormal.y);
+        const fnx = Math.round(faceNormal.x);
+        // 4-connected neighbor offsets on the plane (THREE.y=voxelZ, THREE.z=voxelY).
+        const deltas: [number, number, number][] =
+            fny !== 0
+                ? [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0]]  // horizontal
+                : fnx !== 0
+                    ? [[0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]] // X-slice
+                    : [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]]; // Y-slice
+
+        const targetCi = voxel.ci;
+        const voxelMap = new Map<string, EditVoxel>();
+        for (const v of this.visibleVoxels()) voxelMap.set(keyOf(v.x, v.y, v.z), v);
+
+        const visited = new Set<string>();
+        const queue: EditVoxel[] = [voxel];
+        while (queue.length > 0) {
+            const cur = queue.shift()!;
+            const key = keyOf(cur.x, cur.y, cur.z);
+            if (visited.has(key)) continue;
+            visited.add(key);
+            if (cur.ci !== targetCi) continue;
+            if (deselect) this.selection.delete(key);
+            else this.selection.add(key);
+            for (const [dx, dy, dz] of deltas) {
+                const nk = keyOf(cur.x + dx, cur.y + dy, cur.z + dz);
+                if (!visited.has(nk)) {
+                    const nv = voxelMap.get(nk);
+                    if (nv) queue.push(nv);
+                }
+            }
+        }
     }
 
     private removeAt(key: string): void {
@@ -1353,6 +1516,7 @@ export class TileEditor {
             mesh.setMatrixAt(i++, m);
         }
         mesh.instanceMatrix.needsUpdate = true;
+        mesh.visible = !this.selectionPeek;
         this.selectionMesh = mesh;
         this.root.add(mesh);
     }

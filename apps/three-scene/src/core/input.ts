@@ -11,7 +11,8 @@ const EDIT_KEYS: Record<string, EditTool> = {
     d: 'delete',
     p: 'paint',
     i: 'eyedropper',
-    s: 'select'
+    s: 'select',
+    f: 'face-select'
 };
 
 /**
@@ -74,7 +75,7 @@ export class Input {
             this.lastEditX = e.clientX;
             this.lastEditY = e.clientY;
             this.game.beginEditStroke();
-            this.game.editAt(e.clientX, e.clientY, e.shiftKey || e.altKey);
+            this.game.editAt(e.clientX, e.clientY, e.altKey, e.shiftKey);
             return;
         }
 
@@ -100,7 +101,7 @@ export class Input {
             ) {
                 this.lastEditX = e.clientX;
                 this.lastEditY = e.clientY;
-                this.game.editAt(e.clientX, e.clientY, e.shiftKey || e.altKey);
+                this.game.editAt(e.clientX, e.clientY, e.altKey, e.shiftKey);
             }
             return;
         }
@@ -161,7 +162,7 @@ export class Input {
             ed.tool === 'add' ? 'delete' : ed.tool === 'delete' ? 'add' : null;
         if (!inverse) return;
         this.game.beginEditStroke();
-        this.game.editAt(e.clientX, e.clientY, false, inverse);
+        this.game.editAt(e.clientX, e.clientY, false, false, inverse);
         this.game.endEditStroke();
     }
 
@@ -203,6 +204,11 @@ export class Input {
                     this.editing = false; // drop any in-progress brush stroke
                     this.game.setEditPan(true);
                 }
+                e.preventDefault();
+                return;
+            }
+            if (e.code === 'KeyV' && !e.repeat) {
+                ed.setSelectionPeek(true);
                 e.preventDefault();
                 return;
             }
@@ -281,6 +287,11 @@ export class Input {
     }
 
     private onKeyUp(e: KeyboardEvent): void {
+        if (this.game.mode === 'edit' && e.code === 'KeyV') {
+            this.game.editor?.setSelectionPeek(false);
+            e.preventDefault();
+            return;
+        }
         if (e.code !== 'Space') return;
         if (this.editPanning) {
             this.editPanning = false;
