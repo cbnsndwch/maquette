@@ -124,6 +124,33 @@ function Section({
     );
 }
 
+/** Shared border/bg/padding for every form control in the Save section. */
+const FIELD_CTRL =
+    "rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-xs text-ink-deep";
+
+/** Stacked label + control pair with consistent spacing and accessible association. */
+function FormField({
+    label,
+    htmlFor,
+    children,
+}: {
+    label: string;
+    htmlFor: string;
+    children: ReactNode;
+}): React.JSX.Element {
+    return (
+        <div className="flex flex-col gap-1">
+            <label
+                htmlFor={htmlFor}
+                className="text-[11px] font-semibold text-ink-deep opacity-70"
+            >
+                {label}
+            </label>
+            {children}
+        </div>
+    );
+}
+
 const slug = (name: string): string =>
     name
         .toLowerCase()
@@ -641,89 +668,87 @@ export function EditorPanel({
                 </Section>
 
                 <Section value="save" title="Save as tile">
-                    <input
-                        type="text"
-                        placeholder="tile name"
-                        aria-label="Tile name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
-                    />
-                    <select
-                        id="category-select"
-                        aria-label="Tile category"
-                        value={category}
-                        onChange={(e) => {
-                            const c = e.target.value as Category;
-                            setCategory(c);
-                            setStackable(c === "terrain");
-                            // Footprint applies to buildings only; reset otherwise.
-                            if (c !== "buildings") setFootprint(1, 1);
-                        }}
-                        className="w-full rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
-                    >
-                        {CATEGORIES.map((c) => (
-                            <option key={c} value={c}>
-                                {c[0]!.toUpperCase() + c.slice(1)}
-                            </option>
-                        ))}
-                    </select>
+                    <FormField label="Name" htmlFor="tile-name">
+                        <input
+                            id="tile-name"
+                            type="text"
+                            placeholder="tile name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className={cn("w-full", FIELD_CTRL)}
+                        />
+                    </FormField>
+                    <FormField label="Category" htmlFor="category-select">
+                        <select
+                            id="category-select"
+                            value={category}
+                            onChange={(e) => {
+                                const c = e.target.value as Category;
+                                setCategory(c);
+                                setStackable(c === "terrain");
+                                if (c !== "buildings") setFootprint(1, 1);
+                            }}
+                            className={cn("w-full", FIELD_CTRL)}
+                        >
+                            {CATEGORIES.map((c) => (
+                                <option key={c} value={c}>
+                                    {c[0]!.toUpperCase() + c.slice(1)}
+                                </option>
+                            ))}
+                        </select>
+                    </FormField>
                     {category === "buildings" && (
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[11px] font-semibold text-ink-deep opacity-70">
-                                Footprint
-                            </span>
-                            <select
-                                aria-label="Footprint width"
-                                value={footprint[0]}
-                                onChange={(e) =>
-                                    setFootprint(
-                                        Number(e.target.value),
-                                        footprint[1]
-                                    )
-                                }
-                                className="flex-1 rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
-                            >
-                                {[1, 2, 3, 4].map((n) => (
-                                    <option key={n} value={n}>
-                                        {n}
-                                    </option>
-                                ))}
-                            </select>
-                            <span className="text-xs text-ink-deep opacity-70">
-                                ×
-                            </span>
-                            <select
-                                aria-label="Footprint depth"
-                                value={footprint[1]}
-                                onChange={(e) =>
-                                    setFootprint(
-                                        footprint[0],
-                                        Number(e.target.value)
-                                    )
-                                }
-                                className="flex-1 rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
-                            >
-                                {[1, 2, 3, 4].map((n) => (
-                                    <option key={n} value={n}>
-                                        {n}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                        <FormField label="Footprint" htmlFor="footprint-w">
+                            <div className="flex items-center gap-1.5">
+                                <select
+                                    id="footprint-w"
+                                    aria-label="Footprint width"
+                                    value={footprint[0]}
+                                    onChange={(e) =>
+                                        setFootprint(
+                                            Number(e.target.value),
+                                            footprint[1]
+                                        )
+                                    }
+                                    className={cn("flex-1", FIELD_CTRL)}
+                                >
+                                    {[1, 2, 3, 4].map((n) => (
+                                        <option key={n} value={n}>
+                                            {n}
+                                        </option>
+                                    ))}
+                                </select>
+                                <span className="text-xs text-ink-deep opacity-70">
+                                    ×
+                                </span>
+                                <select
+                                    aria-label="Footprint depth"
+                                    value={footprint[1]}
+                                    onChange={(e) =>
+                                        setFootprint(
+                                            footprint[0],
+                                            Number(e.target.value)
+                                        )
+                                    }
+                                    className={cn("flex-1", FIELD_CTRL)}
+                                >
+                                    {[1, 2, 3, 4].map((n) => (
+                                        <option key={n} value={n}>
+                                            {n}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </FormField>
                     )}
-                    <div className="flex flex-col justify-start items-stretch">
-                        <span className="text-[11px] font-semibold text-ink-deep opacity-70">
-                            Resolution
-                        </span>
+                    <FormField label="Resolution" htmlFor="tile-resolution-select">
                         <select
                             id="tile-resolution-select"
-                            aria-label="Tile resolution"
                             value={resolution}
                             onChange={(e) =>
                                 setResolution(Number(e.target.value))
                             }
-                            className="flex-1 rounded-lg border border-[rgba(27,91,168,0.3)] bg-white/70 px-2 py-1.5 text-ink-deep"
+                            className={cn("w-full", FIELD_CTRL)}
                         >
                             {ALLOWED_RESOLUTIONS.map((n) => (
                                 <option key={n} value={n}>
@@ -731,7 +756,7 @@ export function EditorPanel({
                                 </option>
                             ))}
                         </select>
-                    </div>
+                    </FormField>
                     <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-ink-deep">
                         <input
                             type="checkbox"
