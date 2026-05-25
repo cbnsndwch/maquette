@@ -44,7 +44,7 @@
         },
         {
             "id": "boulder",
-            "name": "boulder",
+            "name": "Boulder",
             "category": "nature",
             "file": "/voxels/terrain/boulder.vox",
             "stackable": false
@@ -59,9 +59,184 @@
         },
         {
             "id": "fine_path",
-            "name": "Fine Path",
+            "name": "fine path",
             "category": "terrain",
             "file": "/voxels/terrain/fine_path.vox",
+            "stackable": false
+        },
+        {
+            "id": "amphora",
+            "name": "Amphora",
+            "category": "props",
+            "file": "/voxels/terrain/amphora.vox",
+            "stackable": false
+        },
+        {
+            "id": "blue_railing",
+            "name": "Blue Railing",
+            "category": "props",
+            "file": "/voxels/terrain/blue_railing.vox",
+            "stackable": false
+        },
+        {
+            "id": "flat_stone",
+            "name": "Flat Stone",
+            "category": "props",
+            "file": "/voxels/terrain/flat_stone.vox",
+            "stackable": false
+        },
+        {
+            "id": "hay_bale",
+            "name": "Hay Bale",
+            "category": "props",
+            "file": "/voxels/terrain/hay_bale.vox",
+            "stackable": false
+        },
+        {
+            "id": "banner",
+            "name": "Banner",
+            "category": "props",
+            "file": "/voxels/terrain/banner.vox",
+            "stackable": false
+        },
+        {
+            "id": "crate",
+            "name": "Crate",
+            "category": "props",
+            "file": "/voxels/terrain/crate.vox",
+            "stackable": true
+        },
+        {
+            "id": "rocks",
+            "name": "rocks",
+            "category": "terrain",
+            "file": "/voxels/terrain/rocks.vox",
+            "stackable": true
+        },
+        {
+            "id": "gate_fence",
+            "name": "Gate Fence",
+            "category": "props",
+            "file": "/voxels/terrain/gate_fence.vox",
+            "stackable": false
+        },
+        {
+            "id": "signpost",
+            "name": "Signpost",
+            "category": "props",
+            "file": "/voxels/terrain/signpost.vox",
+            "stackable": false
+        },
+        {
+            "id": "stone_basin",
+            "name": "Stone Basin",
+            "category": "props",
+            "file": "/voxels/terrain/stone_basin.vox",
+            "stackable": false
+        },
+        {
+            "id": "pebbles",
+            "name": "Pebbles",
+            "category": "nature",
+            "file": "/voxels/terrain/pebbles.vox",
+            "stackable": false
+        },
+        {
+            "id": "large_rock",
+            "name": "Large Rock",
+            "category": "nature",
+            "file": "/voxels/terrain/large_rock.vox",
+            "stackable": false
+        },
+        {
+            "id": "storage_box",
+            "name": "Storage Box",
+            "category": "props",
+            "file": "/voxels/terrain/storage_box.vox",
+            "stackable": false
+        },
+        {
+            "id": "stone_pile",
+            "name": "Stone Pile",
+            "category": "nature",
+            "file": "/voxels/terrain/stone_pile.vox",
+            "stackable": false
+        },
+        {
+            "id": "bench",
+            "name": "bench",
+            "category": "props",
+            "file": "/voxels/terrain/bench.vox",
+            "stackable": false
+        },
+        {
+            "id": "mossy_stone",
+            "name": "Mossy Stone",
+            "category": "nature",
+            "file": "/voxels/terrain/mossy_stone.vox",
+            "stackable": false
+        },
+        {
+            "id": "water_bucket",
+            "name": "Water Bucket",
+            "category": "props",
+            "file": "/voxels/terrain/water_bucket.vox",
+            "stackable": false
+        },
+        {
+            "id": "terracotta_pot",
+            "name": "Terracotta Pot",
+            "category": "props",
+            "file": "/voxels/terrain/terracotta_pot.vox",
+            "stackable": false
+        },
+        {
+            "id": "hanging_lantern",
+            "name": "Hanging Lantern",
+            "category": "props",
+            "file": "/voxels/terrain/hanging_lantern.vox",
+            "stackable": false
+        },
+        {
+            "id": "wood_pile",
+            "name": "Wood Pile",
+            "category": "props",
+            "file": "/voxels/terrain/wood_pile.vox",
+            "stackable": false
+        },
+        {
+            "id": "stone_lantern",
+            "name": "stone_lantern",
+            "category": "props",
+            "file": "/voxels/terrain/stone_lantern.vox",
+            "stackable": false
+        },
+        {
+            "id": "crop_patch",
+            "name": "Crop Patch",
+            "category": "props",
+            "file": "/voxels/terrain/crop_patch.vox",
+            "stackable": false
+        },
+        {
+            "id": "veg_garden",
+            "name": "Vegetable Garden",
+            "category": "props",
+            "file": "/voxels/terrain/veg_garden.vox",
+            "stackable": false
+        },
+        {
+            "id": "garden_bed",
+            "name": "Garden Bed",
+            "category": "props",
+            "file": "/voxels/terrain/garden_bed.vox",
+            "stackable": false
+        },
+        {
+            "id": "flower_pot",
+            "name": "Flower Pot",
+            "category": "props",
+            "file": "/voxels/terrain/flower_pot.vox",
             "stackable": false
         }
     ]
